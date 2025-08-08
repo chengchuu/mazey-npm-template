@@ -10,22 +10,22 @@ import { dts } from "rollup-plugin-dts";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import pkg from '../package.json' assert { type: "json" };
+import pkg from "../package.json" assert { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const _resolve = (_path) => path.resolve(__dirname, _path);
 const pkgName = pkg.name;
-const iifeName = pkgName.replace(/-/g, '_').toUpperCase();
+const iifeName = pkgName.replace(/-/g, "_").toUpperCase();
 const pkgVersion = process.env.SCRIPTS_NPM_PACKAGE_VERSION || process.env.VERSION || "unknown";
 const debugMode = process.env.SCRIPTS_NPM_PACKAGE_DEBUG;
-const inputResolve = _resolve('../src/index.ts');
+const inputResolve = _resolve("../src/index.ts");
 const banner =
-  '/*!\n' +
+  "/*!\n" +
   ` * ${pkgName} v${pkgVersion}\n` +
   ` * (c) 2018-${new Date().getFullYear()} Cheng https://www.npmjs.com/package/mazey-npm-template\n` +
-  ' * Released under the MIT License.\n' +
-  ' */';
+  " * Released under the MIT License.\n" +
+  " */";
 const external = [ "mazey" ];
 
 const plugins = [
@@ -120,7 +120,7 @@ export default [
     output: [
       {
         file: _resolve(`../lib/${pkgName}.min.js`),
-        format: 'iife',
+        format: "iife",
         name: iifeName,
         banner,
       },

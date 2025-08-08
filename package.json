@@ -1,6 +1,6 @@
 {
   "name": "mazey-npm-template",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Mazey's npm template description.",
   "main": "lib/index.cjs.js",
   "module": "lib/index.esm.js",
@@ -25,7 +25,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mazeyqian/mazey-npm-template.git"
+    "url": "git+https://github.com/chengchuu/mazey-npm-template.git"
   },
   "keywords": [
     "template",
@@ -37,13 +37,13 @@
   "author": {
     "name": "Cheng",
     "email": "mazeyqian@gmail.com",
-    "url": "https://github.com/mazeyqian"
+    "url": "https://github.com/chengchuu"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mazeyqian/mazey-npm-template/issues"
+    "url": "https://github.com/chengchuu/mazey-npm-template/issues"
   },
-  "homepage": "https://github.com/mazeyqian/mazey-npm-template#readme",
+  "homepage": "https://github.com/chengchuu/mazey-npm-template#readme",
   "devDependencies": {
     "@babel/core": "^7.23.2",
     "@babel/plugin-transform-class-properties": "^7.22.5",

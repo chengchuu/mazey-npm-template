@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD041 -->
+
 ⚠️ Note: The project is a template for npm. Please don't use it directly.
 
 # mazey-npm-template
@@ -8,7 +10,7 @@
 [npm-image]: https://img.shields.io/npm/v/mazey-npm-template
 [npm-url]: https://npmjs.org/package/mazey-npm-template
 [l-image]: https://img.shields.io/npm/l/mazey-npm-template
-[l-url]: https://github.com/mazeyqian/mazey-npm-template
+[l-url]: https://github.com/chengchuu/mazey-npm-template
 
 Mazey's npm template description.
 
@@ -16,7 +18,7 @@ Mazey's npm template description.
 
 Use mazey-npm-template via [npm](https://www.npmjs.com/package/mazey-npm-template).
 
-```shell
+```bash
 npm install mazey-npm-template --save
 ```
 
@@ -27,7 +29,7 @@ Of course, you can also download this file and serve it yourself. The file locat
 Foo foo foo example.
 
 ```javascript
-import { foo } from 'mazey-npm-template';
+import { foo } from "mazey-npm-template";
 
 foo(); // true
 ```
@@ -35,7 +37,7 @@ foo(); // true
 Bar bar bar example.
 
 ```javascript
-import { bar } from 'mazey-npm-template';
+import { bar } from "mazey-npm-template";
 
 bar(); // false
 ```
@@ -44,46 +46,43 @@ bar(); // false
 
 ### Development Environment
 
-#### Node.js
-
-- v16.19.0
-
-#### TypeScript
-
-- v5.1.6
+| Dependency | Version  |
+|------------|----------|
+| Node.js    | v16.19.0 |
+| TypeScript | v5.1.6   |
 
 ### Scripts
 
 Install Dependencies:
 
-```shell
+```bash
 npm i
 ```
 
 Development:
 
-```shell
+```bash
 npm run dev
 ```
 
 Build:
 
-```shell
+```bash
 npm run build
-```
-
-Document:
-
-```shell
-npm run docs
 ```
 
 Test:
 
-```shell
+```bash
 npm run test
+```
+
+Document:
+
+```bash
+npm run docs
 ```
 
 ## License
 
-This software is released under the terms of the [MIT license](https://github.com/mazeyqian/mazey-npm-template/blob/main/LICENSE).
+This software is released under the terms of the [MIT license](https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE).

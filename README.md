@@ -10,7 +10,7 @@
 [npm-image]: https://img.shields.io/npm/v/mazey-npm-template
 [npm-url]: https://npmjs.org/package/mazey-npm-template
 [l-image]: https://img.shields.io/npm/l/mazey-npm-template
-[l-url]: https://github.com/mazeyqian/mazey-npm-template
+[l-url]: https://github.com/chengchuu/mazey-npm-template
 
 Mazey's npm template description.
 
@@ -85,4 +85,4 @@ npm run docs
 
 ## License
 
-This software is released under the terms of the [MIT license](https://github.com/mazeyqian/mazey-npm-template/blob/main/LICENSE).
+This software is released under the terms of the [MIT license](https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE).

@@ -12,7 +12,7 @@
 [l-image]: https://img.shields.io/npm/l/mazey-npm-template
 [l-url]: https://github.com/chengchuu/mazey-npm-template
 
-Mazey's npm template description.
+npm template description.
 
 ## Install
 

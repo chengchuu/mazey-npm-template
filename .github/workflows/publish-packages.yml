@@ -57,6 +57,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
 
+      - name: Configure .npmrc for GitHub Packages
+        run: |
+          echo "@${{ github.actor }}:registry=https://npm.pkg.github.com/" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
+
       - name: Publish to GitHub Packages
         if: success() # Only if previous steps succeed
         env:
@@ -65,9 +70,9 @@ jobs:
           node scripts/change-package-name.js "@${{ github.actor }}/mazey-npm-template"
           npm publish --registry=https://npm.pkg.github.com/
 
-      - name: Restore package.json
+      - name: Restore modified files
         if: always()
-        run: git checkout -- package.json
+        run: git checkout -- package.json .npmrc
 
       - name: Create git tag for version
         if: success() # Only if previous steps succeed

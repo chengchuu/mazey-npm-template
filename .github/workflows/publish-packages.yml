@@ -1,4 +1,4 @@
-name: Publish npm Package
+name: Publish Package
 
 env:
   NODE_VERSION: '20'

@@ -63,7 +63,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node scripts/change-package-name.js "@${{ github.actor }}/mazey-npm-template"
-          npm publish --access public --registry=https://npm.pkg.github.com/
+          npm publish --registry=https://npm.pkg.github.com/
 
       - name: Restore package.json
         if: always()

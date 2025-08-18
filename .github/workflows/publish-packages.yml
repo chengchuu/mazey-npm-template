@@ -1,4 +1,4 @@
-name: Publish npm Package
+name: Publish Packages
 
 env:
   NODE_VERSION: '20'
@@ -56,6 +56,18 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
+
+      - name: Publish to GitHub Packages
+        if: success() # Only if previous steps succeed
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/change-package-name.js "@${{ github.actor }}/mazey-npm-template"
+          npm publish --access public --registry=https://npm.pkg.github.com/
+
+      - name: Restore package.json
+        if: always()
+        run: git checkout -- package.json
 
       - name: Create git tag for version
         if: success() # Only if previous steps succeed

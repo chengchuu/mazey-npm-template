@@ -1,7 +1,8 @@
-name: Publish Packages
+name: Publish npm Packages
 
 env:
   NODE_VERSION: '20'
+  PROJECT_NAME: 'mazey-npm-template'
 
 on:
   push:
@@ -67,17 +68,17 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node scripts/change-package-name.js "@${{ github.actor }}/mazey-npm-template"
+          node scripts/change-package-name.js "@${{ github.actor }}/${{ env.PROJECT_NAME }}"
           npm publish --registry=https://npm.pkg.github.com/
 
       - name: Restore modified files
-        if: always()
+        if: always() # Always run this step
         run: git checkout -- package.json .npmrc
 
       - name: Create git tag for version
         if: success() # Only if previous steps succeed
         run: |
-          VERSION=$(npm pkg get version | tr -d '"')
+          VERSION=$(node -p "require('./package.json').version")
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$VERSION" -m "Release v$VERSION"

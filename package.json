@@ -1,7 +1,7 @@
 {
   "name": "mazey-npm-template",
-  "version": "2.0.2",
-  "description": "Mazey's npm template description.",
+  "version": "2.0.10",
+  "description": "npm template description.",
   "main": "lib/index.cjs.js",
   "module": "lib/index.esm.js",
   "typings": "lib/index.d.ts",
@@ -103,6 +103,6 @@
     }
   },
   "dependencies": {
-    "mazey": "4.3.3"
+    "mazey": "4.7.15"
   }
 }

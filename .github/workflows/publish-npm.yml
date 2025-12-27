@@ -1,15 +1,15 @@
 name: Publish npm Packages
 
 env:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PROJECT_NAME: 'mazey-npm-template'
 
 on:
-  push:
+  pull_request: # Test on pull requests to main or release branches
     branches:
       - main
       - 'release/v*'
-  pull_request:
+  push: # Publish on pushes to release branches
     branches:
       - main
       - 'release/v*'

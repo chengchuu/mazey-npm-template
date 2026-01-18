@@ -83,6 +83,12 @@ Documentation:
 npm run docs
 ```
 
+Docker:
+
+```bash
+docker compose up -d --build
+```
+
 ## License
 
 This software is released under the terms of the [MIT license](https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE).

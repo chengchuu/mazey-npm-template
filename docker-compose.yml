@@ -16,3 +16,4 @@ services:
       - ./examples:/web/examples
       - ./test:/web/test
       - ./lib:/web/lib
+      - ./scripts:/web/scripts

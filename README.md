@@ -77,7 +77,7 @@ Test:
 npm run test
 ```
 
-Document:
+Documentation:
 
 ```bash
 npm run docs

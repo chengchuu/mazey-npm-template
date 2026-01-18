@@ -3,6 +3,6 @@
  */
 /* eslint-disable no-undef */
 
-test("Is Mazey() true?", () => {
-  expect("Mazey".length === 5).toBe(true);
+test("Is foo() true?", () => {
+  expect("foo".length === 3).toBe(true);
 });

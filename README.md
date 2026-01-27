@@ -89,6 +89,8 @@ Docker:
 docker compose up -d --build
 ```
 
+Visit: <http://localhost:8080>
+
 ## License
 
 This software is released under the terms of the [MIT license](https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE).

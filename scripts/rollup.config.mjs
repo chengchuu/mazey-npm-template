@@ -10,7 +10,7 @@ import { dts } from "rollup-plugin-dts";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
-import pkg from "../package.json" assert { type: "json" };
+import pkg from "../package.json" with { type: "json" };
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

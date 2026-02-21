@@ -48,7 +48,7 @@ bar(); // false
 
 | Dependency | Version  |
 |------------|----------|
-| Node.js    | v16.19.0 |
+| Node.js    | v22.21.1 |
 | TypeScript | v5.1.6   |
 
 ### Scripts

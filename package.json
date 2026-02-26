@@ -1,6 +1,6 @@
 {
   "name": "mazey-npm-template",
-  "version": "2.0.12",
+  "version": "2.1.0",
   "description": "npm template description.",
   "main": "lib/index.cjs.js",
   "module": "lib/index.esm.js",
@@ -13,7 +13,8 @@
   "unpkg": "lib/mazey-npm-template.min.js",
   "jsdelivr": "lib/mazey-npm-template.min.js",
   "scripts": {
-    "dev": "webpack-dev-server --config ./scripts/webpack.config.dev.js --open",
+    "dev": "webpack-dev-server --config ./scripts/webpack.config.dev.js",
+    "dev:open": "webpack-dev-server --config ./scripts/webpack.config.dev.js --open",
     "build": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=close SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
     "build:debug": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=open SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
     "test": "jest",
@@ -59,6 +60,7 @@
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-terser": "^0.4.4",
     "@types/jquery": "^3.5.29",
+    "@types/node": "^25.0.9",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "@typescript-eslint/parser": "^6.12.0",
     "clean-webpack-plugin": "^4.0.0",

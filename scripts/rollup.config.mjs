@@ -109,7 +109,7 @@ export default [
       ...plugins,
       cleaner({
         targets: [
-          _resolve("../lib/"),
+          _resolve("../lib/*"),
         ],
       }),
     ],
@@ -123,6 +123,7 @@ export default [
         format: "iife",
         name: iifeName,
         banner,
+        plugins: iifePlugins,
       },
     ],
     plugins: [

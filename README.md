@@ -77,11 +77,19 @@ Test:
 npm run test
 ```
 
-Document:
+Documentation:
 
 ```bash
 npm run docs
 ```
+
+Docker:
+
+```bash
+docker compose up -d --build
+```
+
+Visit: <http://localhost:8080>
 
 ## License
 

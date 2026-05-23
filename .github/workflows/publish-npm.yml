@@ -5,11 +5,13 @@ env:
   PROJECT_NAME: 'mazey-npm-template'
 
 on:
-  pull_request: # Test on pull requests to main or release branches
+  # Test on pull requests to main or release branches
+  pull_request:
     branches:
       - main
       - 'release/v*'
-  push: # Publish on pushes to release branches
+  # Publish on pushes to release branches
+  push:
     branches:
       - main
       - 'release/v*'

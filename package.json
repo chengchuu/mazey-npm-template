@@ -105,6 +105,6 @@
     }
   },
   "dependencies": {
-    "mazey": "4.7.15"
+    "mazey": "^4.11.0"
   }
 }

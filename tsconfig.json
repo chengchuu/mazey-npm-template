@@ -9,7 +9,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "outDir": "./lib",
-    "rootDir": "./src",
+    "rootDir": ".",
     "importHelpers": true,
     "strict": true,
     "noImplicitThis": false,

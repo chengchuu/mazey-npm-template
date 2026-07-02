@@ -17,6 +17,7 @@
     "dev:open": "webpack-dev-server --config ./scripts/webpack.config.dev.js --open",
     "build": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=close SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
     "build:debug": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=open SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
+    "build:dev": "webpack --config ./scripts/webpack.config.dev.js",
     "test": "jest",
     "docs": "typedoc --readme ./README.md --excludeProtected --excludePrivate --excludeInternal --hideGenerator",
     "lint:fix": "eslint --ext 'js,ts,tsx' --fix ./examples ./scripts ./src ./test ./types",

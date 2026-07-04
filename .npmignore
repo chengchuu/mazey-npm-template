@@ -23,9 +23,12 @@ scripts/
 # Code Linters & Formatters
 .editorconfig
 .eslintignore
+.dockerignore
 .lintstagedrc
 .prettierignore
 .prettierrc
+.gitattributes
+.markdownlint.json
 .eslintrc.js
 .babelrc
 .eslintrc
@@ -62,3 +65,7 @@ README_ZH.md
 # System files
 .DS_Store
 Thumbs.db
+
+# Additional files
+Dockerfile
+AGENTS.md

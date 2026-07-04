@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
-/* eslint-disable no-undef */
+/* eslint-disable @typescript-eslint/no-var-requires, no-undef */
 import { babel } from "@rollup/plugin-babel";
 import commonjs from "@rollup/plugin-commonjs";
 import rollupTypescript from "rollup-plugin-typescript2";
@@ -45,7 +44,7 @@ const plugins = [
   }),
 ];
 const iifePlugins = [];
-const dTsConf = {
+const typingDtsConf = {
   input: _resolve("../src/typing.d.ts"),
   // https://rollupjs.org/guide/en/#outputformat
   output: [
@@ -59,7 +58,20 @@ const dTsConf = {
   ],
   external,
 };
-const gTsConf = {
+const indexDtsConf = {
+  input: _resolve("../src/index.ts"),
+  output: [
+    {
+      file: _resolve("../lib/index.d.ts"),
+      format: "es",
+    },
+  ],
+  plugins: [
+    dts(),
+  ],
+  external: [],
+};
+const globalDtsConf = {
   input: _resolve("../types/global.d.ts"),
   output: [
     {
@@ -131,6 +143,7 @@ export default [
     ],
     external,
   },
-  dTsConf,
-  gTsConf,
+  indexDtsConf,
+  typingDtsConf,
+  globalDtsConf,
 ];

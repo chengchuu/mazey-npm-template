@@ -1,6 +1,6 @@
 {
   "name": "mazey-npm-template",
-  "version": "2.1.0",
+  "version": "2.1.5",
   "description": "npm template description.",
   "main": "lib/index.cjs.js",
   "module": "lib/index.esm.js",
@@ -17,9 +17,10 @@
     "dev:open": "webpack-dev-server --config ./scripts/webpack.config.dev.js --open",
     "build": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=close SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
     "build:debug": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=open SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
+    "build:dev": "webpack --config ./scripts/webpack.config.dev.js",
     "test": "jest",
     "docs": "typedoc --readme ./README.md --excludeProtected --excludePrivate --excludeInternal --hideGenerator",
-    "lint:fix": "eslint --ext 'js,ts,tsx' --fix ./src ./test ./scripts",
+    "lint:fix": "eslint --ext 'js,ts,tsx' --fix ./examples ./scripts ./src ./test ./types",
     "preview": "npm run build && npm run test",
     "release": "npm run preview && cross-env SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version node ./scripts/release.js",
     "release:win": "bash scripts/env-win.sh && npm i --registry=https://registry.npmjs.org && npm run release"
@@ -92,8 +93,8 @@
     "rollup-plugin-typescript2": "^0.34.1",
     "ts-loader": "^9.4.4",
     "tslib": "^2.6.2",
-    "typedoc": "^0.25.4",
-    "typescript": "5.3.2",
+    "typedoc": "^0.28.19",
+    "typescript": "5.9.3",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^4.15.1"
@@ -105,6 +106,6 @@
     }
   },
   "dependencies": {
-    "mazey": "4.7.15"
+    "mazey": "^4.11.0"
   }
 }

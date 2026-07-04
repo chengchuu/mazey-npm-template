@@ -6,7 +6,7 @@ env:
 on:
   push:
     branches:
-      - docs/github-pages-typedoc
+      - main
   workflow_dispatch:
 
 permissions:

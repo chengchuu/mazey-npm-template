@@ -49,43 +49,22 @@ packageInfo.name; // "mazey-npm-template"
 
 ### Scripts
 
-Install Dependencies:
-
 ```bash
+# Install dependencies
 npm i
-```
 
-Development:
-
-```bash
+# Start the development server
 npm run dev
-```
 
-Build:
-
-```bash
+# Build the package
 npm run build
-```
 
-Test:
-
-```bash
+# Run tests
 npm run test
-```
 
-Documentation:
-
-```bash
+# Generate documentation
 npm run docs
 ```
-
-Docker:
-
-```bash
-docker compose up -d --build
-```
-
-Visit: <http://localhost:8080>
 
 ## License
 

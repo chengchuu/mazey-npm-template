@@ -21,7 +21,10 @@ export const packageInfo: PackageInfo = {
  * @param options - Optional formatting options.
  * @returns The generated greeting message.
  */
-export function createGreeting(name: string, options: CreateGreetingOptions = {}): string {
+export function createGreeting(
+  name: string,
+  options: CreateGreetingOptions = {},
+): string {
   const normalizedName = name.trim();
   const punctuation = options.punctuation ?? "!";
 

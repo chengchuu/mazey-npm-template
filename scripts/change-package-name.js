@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires, no-undef */
 const fs = require("node:fs");
 
 const newName = process.argv[2];

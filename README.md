@@ -10,7 +10,7 @@
 [l-image]: https://img.shields.io/npm/l/mazey-npm-template
 [l-url]: https://github.com/chengchuu/mazey-npm-template
 
-npm template description.
+A TypeScript template for publishing npm packages in CJS, ESM, and browser formats.
 
 ## Install
 
@@ -43,9 +43,9 @@ packageInfo.name; // "mazey-npm-template"
 ### Development Environment
 
 | Dependency | Version  |
-|------------|----------|
+| ---------- | -------- |
 | Node.js    | v22.21.1 |
-| TypeScript | v5.1.6   |
+| TypeScript | v5.9.3   |
 
 ### Scripts
 

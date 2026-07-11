@@ -141,8 +141,12 @@ Update `README.md` when changing:
 - Node.js or TypeScript requirements;
 - release or documentation workflows visible to maintainers.
 
-TypeDoc generates `docs` from `src/index.ts`. Keep public TSDoc useful and concise. Generated docs
-are output, not hand-maintained source.
+TypeDoc configuration lives in `tsconfig.json`. It generates `./docs` from the public entrypoint
+`./src/index.ts`, uses `https://chengchuu.github.io/mazey-npm-template/` as its hosted base URL, and
+uses `./images/logo-dark-circle-transparent-32x32.png` as the favicon. Keep the hosted URL aligned
+with the GitHub Pages location and the matching `homepage` field in `package.json`. Preserve the
+favicon asset when changing documentation output. Keep public TSDoc useful and concise. Generated
+docs are output, not hand-maintained source.
 
 ## Git Hooks And Formatting
 
@@ -170,8 +174,16 @@ tag.
 - Do not expose registry tokens in logs or committed configuration.
 - Do not publish, push tags, or trigger releases unless the user explicitly requests it.
 
-The Pages workflow builds TypeDoc with Node.js 22 and deploys `docs` using GitHub Pages actions.
-Keep its explicit permissions: `contents: read`, `pages: write`, and `id-token: write`.
+The Pages workflow is `.github/workflows/pages.yml`. It deploys on pushes to `main` and manual
+`workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`, builds
+TypeDoc with `npm run docs`, uploads `docs`, and deploys through the `github-pages` environment.
+
+- Keep its explicit permissions: `contents: read`, `pages: write`, and `id-token: write`.
+- Keep the deployment step id as `deployment`; the environment URL reads
+  `steps.deployment.outputs.page_url`.
+- Keep Pages runs in the `pages` concurrency group with `cancel-in-progress: false` so an active
+  deployment is not cancelled by a newer run.
+- Keep the uploaded artifact path synchronized with the TypeDoc output directory.
 
 ## Package Rename Helper
 

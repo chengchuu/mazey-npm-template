@@ -19,6 +19,7 @@
   "exclude": ["./coverage", "./dist-dev", "./docs", "./lib", "./node_modules"],
   "typedocOptions": {
     "entryPoints": ["./src/index.ts"],
-    "out": "./docs"
+    "out": "./docs",
+    "favicon": "./images/logo-dark-circle-transparent-32x32.png"
   }
 }

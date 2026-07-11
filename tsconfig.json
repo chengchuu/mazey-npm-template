@@ -20,6 +20,7 @@
   "typedocOptions": {
     "entryPoints": ["./src/index.ts"],
     "out": "./docs",
+    "hostedBaseUrl": "https://chengchuu.github.io/mazey-npm-template/",
     "favicon": "./images/logo-dark-circle-transparent-32x32.png"
   }
 }

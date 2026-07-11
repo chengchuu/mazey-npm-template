@@ -66,7 +66,7 @@ const indexDtsConf = {
     {
       file: _resolve("../lib/index.d.ts"),
       format: "es",
-      banner: '/// <reference path="./global.d.ts" />',
+      banner: `/// <reference path="./global.d.ts" />`,
     },
   ],
   plugins: [dts()],

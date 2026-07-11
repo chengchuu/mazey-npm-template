@@ -2,13 +2,13 @@
 
 # mazey-npm-template
 
-[![npm version][npm-image]][npm-url]
-[![l][l-image]][l-url]
+[![npm version][npm-version-image]][npm-url]
+[![license][license-image]][license-url]
 
-[npm-image]: https://img.shields.io/npm/v/mazey-npm-template
-[npm-url]: https://npmjs.org/package/mazey-npm-template
-[l-image]: https://img.shields.io/npm/l/mazey-npm-template
-[l-url]: https://github.com/chengchuu/mazey-npm-template
+[npm-version-image]: https://img.shields.io/npm/v/mazey-npm-template.svg
+[npm-url]: https://www.npmjs.com/package/mazey-npm-template
+[license-image]: https://img.shields.io/npm/l/mazey-npm-template.svg
+[license-url]: https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE
 
 A TypeScript template for publishing npm packages in CJS, ESM, and browser formats.
 

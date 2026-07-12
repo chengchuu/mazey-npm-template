@@ -1,0 +1,91 @@
+:root[data-bs-theme="light"] {
+  --light-color-background: #f7f9fa;
+  --light-color-background-secondary: #edf3f2;
+  --light-color-background-active: #dff1ef;
+  --light-color-text: #172322;
+  --light-color-text-aside: #536260;
+  --light-color-link: #0b6b66;
+  --light-color-focus-outline: #a54628;
+}
+
+:root[data-bs-theme="dark"] {
+  --dark-color-background: #101716;
+  --dark-color-background-secondary: #21302d;
+  --dark-color-background-active: #173f3b;
+  --dark-color-text: #edf5f3;
+  --dark-color-text-aside: #b2c1be;
+  --dark-color-link: #62c8bf;
+  --dark-color-focus-outline: #f0a083;
+}
+
+.mazey-project-links {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: 0.75rem;
+  margin-right: 1rem;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.mazey-project-links a {
+  flex: none;
+}
+
+.mazey-project-links .theme-control {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.mazey-project-links select,
+.tsd-theme-toggle select {
+  min-height: 2rem;
+  border: 1px solid currentColor;
+  border-radius: 0.35rem;
+  color: inherit;
+  background: var(--color-background);
+}
+
+:where(.mazey-project-links a, .mazey-project-links select):focus-visible {
+  outline: 3px solid var(--color-focus-outline);
+  outline-offset: 2px;
+}
+
+.tsd-typography table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+@media (max-width: 600px) {
+  .tsd-toolbar-contents > a.title {
+    display: none;
+  }
+
+  .mazey-project-links a:not(:first-child) {
+    display: none;
+  }
+
+  .mazey-project-links .theme-control span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

@@ -11,7 +11,7 @@ export type { CreateGreetingOptions, PackageInfo } from "./typing";
  */
 export const packageInfo: PackageInfo = {
   name: "mazey-npm-template",
-  version: "2.1.5",
+  version: "2.1.6",
 };
 
 /**

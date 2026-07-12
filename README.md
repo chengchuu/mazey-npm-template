@@ -13,6 +13,10 @@
 
 A TypeScript template for publishing npm packages in CJS, ESM, and browser formats.
 
+- [Project website](https://chengchuu.github.io/mazey-npm-template/)
+- [Live playground](https://chengchuu.github.io/mazey-npm-template/playground/)
+- [API documentation](https://chengchuu.github.io/mazey-npm-template/api/)
+
 ## Installation
 
 Use mazey-npm-template via [npm](https://www.npmjs.com/package/mazey-npm-template).
@@ -21,7 +25,7 @@ Use mazey-npm-template via [npm](https://www.npmjs.com/package/mazey-npm-templat
 npm install mazey-npm-template
 ```
 
-Of course, you can also download this file and serve it yourself. The file locates at the `lib/mazey-npm-template.min.js`.
+For direct browser usage, load the published `lib/mazey-npm-template.min.js` IIFE bundle.
 
 ## Quick Start
 
@@ -109,6 +113,9 @@ interface PackageInfo {
 }
 ```
 
+The generated [API documentation](https://chengchuu.github.io/mazey-npm-template/api/)
+describes the complete public surface.
+
 ## Package Formats
 
 | Consumer           | Package field | Published file                  |
@@ -130,7 +137,21 @@ npm install
 npm run dev
 ```
 
-The example is served at <http://localhost:8080> and imports the public API directly from `src`.
+The project website is served at <http://localhost:8080/>. The playground is available at
+<http://localhost:8080/playground/> and imports the public API directly from `src`.
+
+Generate the complete GitHub Pages artifact, including the website, playground, API documentation,
+`robots.txt`, and `sitemap.xml`:
+
+```bash
+npm run docs
+npm run seo:validate
+```
+
+The deployed crawler files are
+[`/mazey-npm-template/robots.txt`](https://chengchuu.github.io/mazey-npm-template/robots.txt)
+and
+[`/mazey-npm-template/sitemap.xml`](https://chengchuu.github.io/mazey-npm-template/sitemap.xml).
 
 ## License
 

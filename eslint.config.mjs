@@ -24,6 +24,12 @@ export default tseslint.config(
     },
   },
   {
+    files: ["site/**/*.{ts,tsx}"],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+  {
     files: ["scripts/**/*.{js,cjs,mjs}", "*.{js,cjs,mjs}"],
     languageOptions: {
       globals: globals.node,
@@ -35,6 +41,7 @@ export default tseslint.config(
       globals: {
         ...globals.jest,
         ...globals.node,
+        ...globals.browser,
       },
     },
   },

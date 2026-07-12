@@ -18,5 +18,8 @@ test("falls back to a friendly name when input is blank", () => {
 });
 
 test("exposes package metadata", () => {
-  expect(packageInfo.name).toBe("mazey-npm-template");
+  expect(packageInfo).toEqual({
+    name: "mazey-npm-template",
+    version: "2.1.6",
+  });
 });

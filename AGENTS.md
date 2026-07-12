@@ -16,8 +16,12 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `types/global.d.ts`: ambient browser type augmentations.
 - `test`: Jest tests for public behavior.
 - `examples`: lightweight Webpack development demo.
+- `site`: source-controlled landing page, Bootstrap theme, and shared browser behavior.
 - `scripts/rollup.config.mjs`: production JavaScript and declaration builds.
-- `scripts/webpack.config.dev.js`: development/demo build and dev server.
+- `scripts/webpack.config.dev.js`: website/playground build and development server.
+- `scripts/build-pages.js`: combines the website, playground, and generated TypeDoc output.
+- `scripts/site-config.js`: canonical public URLs and shared SEO metadata.
+- `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
 - `lib`: generated publish output; do not edit it by hand.
 - `dist-dev`, `docs`, and `coverage`: generated development, documentation, and test output.
@@ -90,10 +94,11 @@ Rollup owns production output. Preserve CJS, ESM, IIFE, source maps, declaration
 license banner, and minification controlled by `SCRIPTS_NPM_PACKAGE_DEBUG`. Babel helpers are
 bundled, and generated JavaScript must not acquire undeclared runtime helper imports.
 
-Webpack owns only the local example and development server. `npm run dev` serves the example on
-port 8080. Keep `examples/index.ts` small and representative of the public root API. Do not couple
-the publish build to Webpack or make development depend on prebuilt `lib` files without a clear
-reason.
+Webpack owns the public landing page, local development server, and interactive playground.
+`npm run dev` serves the website on port 8080 and the playground at `/playground/`. Keep
+`examples/index.ts` small and representative of the public root API. Bootstrap is a build-time
+development dependency and must not become a published runtime dependency. Do not couple the npm
+package build to Webpack or make development depend on prebuilt `lib` files without a clear reason.
 
 Never edit generated files under `lib`, `dist-dev`, `docs`, or `coverage` as source changes. Rebuild
 them through the owning command when verification needs them.
@@ -141,12 +146,19 @@ Update `README.md` when changing:
 - Node.js or TypeScript requirements;
 - release or documentation workflows visible to maintainers.
 
-TypeDoc configuration lives in `tsconfig.json`. It generates `./docs` from the public entrypoint
-`./src/index.ts`, uses `https://chengchuu.github.io/mazey-npm-template/` as its hosted base URL, and
-uses `./images/logo-dark-circle-transparent-32x32.png` as the favicon. Keep the hosted URL aligned
-with the GitHub Pages location and the matching `homepage` field in `package.json`. Preserve the
-favicon asset when changing documentation output. Keep public TSDoc useful and concise. Generated
-docs are output, not hand-maintained source.
+TypeDoc configuration lives in `tsconfig.json`. `npm run docs` generates TypeDoc at `./docs/api`,
+builds the Webpack website and playground, runs `scripts/build-pages.js`, and validates the final
+artifact. Stable public routes are `/`, `/playground/`, and `/api/` below the project Pages base
+path. Keep the TypeDoc hosted URL at
+`https://chengchuu.github.io/mazey-npm-template/api/`, preserve the favicon, and keep all canonical
+URLs synchronized through `scripts/site-config.js`.
+
+SEO source files live under `site`. Do not edit generated output under `docs`; update source
+templates, the deterministic API transformation, or build scripts instead. The final artifact must
+include `robots.txt`, `sitemap.xml`, unique page metadata, one primary heading per page, crawlable
+content, and working project-subpath links. Keep theme values `system`, `light`, and `dark` stored
+under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap's
+`data-bs-theme` attribute.
 
 ## Git Hooks And Formatting
 
@@ -175,8 +187,9 @@ tag.
 - Do not publish, push tags, or trigger releases unless the user explicitly requests it.
 
 The Pages workflow is `.github/workflows/pages.yml`. It deploys on pushes to `main` and manual
-`workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`, builds
-TypeDoc with `npm run docs`, uploads `docs`, and deploys through the `github-pages` environment.
+`workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`, builds the
+complete Pages site with `npm run docs`, validates SEO, uploads `docs`, and deploys through the
+`github-pages` environment.
 
 - Keep its explicit permissions: `contents: read`, `pages: write`, and `id-token: write`.
 - Keep the deployment step id as `deployment`; the environment URL reads

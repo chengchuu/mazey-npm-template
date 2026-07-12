@@ -1,0 +1,72 @@
+export const THEME_STORAGE_KEY = "mazey-npm-template-theme";
+
+export type ThemePreference = "system" | "light" | "dark";
+
+const preferences = new Set<ThemePreference>(["system", "light", "dark"]);
+
+function readPreference(storage: Storage): ThemePreference {
+  try {
+    const value = storage.getItem(THEME_STORAGE_KEY) as ThemePreference | null;
+    return value && preferences.has(value) ? value : "system";
+  } catch {
+    return "system";
+  }
+}
+
+export function initializeThemeControls(
+  documentRef: Document = document,
+  windowRef: Window = window,
+): () => void {
+  const root = documentRef.documentElement;
+  if (root.dataset.themeControlsReady === "true") return () => undefined;
+
+  const media = windowRef.matchMedia("(prefers-color-scheme: dark)");
+
+  const apply = (value: ThemePreference, persist: boolean) => {
+    const selected = preferences.has(value) ? value : "system";
+    const resolved =
+      selected === "system" ? (media.matches ? "dark" : "light") : selected;
+
+    root.dataset.bsTheme = resolved;
+    root.dataset.theme = resolved;
+    root.style.colorScheme = resolved;
+
+    try {
+      if (persist) windowRef.localStorage.setItem(THEME_STORAGE_KEY, selected);
+      windowRef.localStorage.setItem(
+        "tsd-theme",
+        selected === "system" ? "os" : selected,
+      );
+    } catch {
+      // Storage may be unavailable in privacy-restricted contexts.
+    }
+
+    documentRef
+      .querySelectorAll<HTMLSelectElement>("[data-theme-select]")
+      .forEach((control) => {
+        if (control.value !== selected) control.value = selected;
+      });
+  };
+
+  const handleChange = (event: Event) => {
+    const control = event.target;
+    if (!(control instanceof HTMLSelectElement)) return;
+    if (!control.matches("[data-theme-select]")) return;
+    apply(control.value as ThemePreference, true);
+  };
+  const handleSystemTheme = () => {
+    if (readPreference(windowRef.localStorage) === "system")
+      apply("system", false);
+  };
+
+  root.dataset.themeControlsReady = "true";
+  apply(readPreference(windowRef.localStorage), false);
+  documentRef.addEventListener("change", handleChange);
+  media.addEventListener?.("change", handleSystemTheme);
+
+  return () => {
+    documentRef.removeEventListener("change", handleChange);
+    media.removeEventListener?.("change", handleSystemTheme);
+    delete root.dataset.themeControlsReady;
+  };
+}

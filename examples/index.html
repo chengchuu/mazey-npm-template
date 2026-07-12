@@ -1,30 +1,269 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>mazey-npm-template</title>
-    <link
-      rel="shortcut icon"
-      type="image/png"
-      href="//i.mazey.net/icon/fav/logo-dark-circle-transparent-144x144.png"
-    />
-    <link
-      rel="stylesheet"
-      href="//i.mazey.net/lib/bootstrap/5.3.8/css/bootstrap.min.css"
-      crossorigin="anonymous"
-    />
-    <style>
-      .box {
-        color: #333;
-      }
-    </style>
+    <title><%= PLAYGROUND_TITLE %></title>
+    <meta name="description" content="<%= PLAYGROUND_DESCRIPTION %>" />
+    <link rel="canonical" href="<%= PLAYGROUND_URL %>" />
+    <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="mazey-npm-template" />
+    <meta property="og:title" content="<%= PLAYGROUND_TITLE %>" />
+    <meta property="og:description" content="<%= PLAYGROUND_DESCRIPTION %>" />
+    <meta property="og:url" content="<%= PLAYGROUND_URL %>" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="<%= PLAYGROUND_TITLE %>" />
+    <meta name="twitter:description" content="<%= PLAYGROUND_DESCRIPTION %>" />
+    <script type="application/ld+json">
+      <%= PLAYGROUND_JSON_LD %>
+    </script>
+    <script>
+      (() => {
+        try {
+          const key = "mazey-npm-template-theme";
+          const value = localStorage.getItem(key) || "system";
+          const theme =
+            value === "system"
+              ? matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light"
+              : value;
+          const resolved = theme === "dark" ? "dark" : "light";
+          document.documentElement.dataset.bsTheme = resolved;
+          document.documentElement.dataset.theme = resolved;
+          document.documentElement.style.colorScheme = resolved;
+          localStorage.setItem("tsd-theme", value === "system" ? "os" : value);
+        } catch {}
+      })();
+    </script>
   </head>
-  <body>
-    <div class="container">
-      <div class="box">
-        <span>Content: mazey-npm-template </span>
+  <body id="top">
+    <a class="skip-link" href="#main-content">Skip to playground controls</a>
+    <header class="site-header">
+      <nav
+        class="navbar navbar-expand-xl site-navbar"
+        aria-label="Primary navigation"
+        data-site-navbar
+      >
+        <div class="container">
+          <a class="navbar-brand d-flex align-items-center gap-2" href="../">
+            <img
+              class="brand-logo"
+              src="<%= FAVICON_URL %>"
+              width="32"
+              height="32"
+              alt=""
+            />
+            <span>mazey-npm-template</span>
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            aria-controls="playground-navigation"
+            aria-expanded="false"
+            aria-label="Toggle project navigation"
+            data-nav-toggle
+          >
+            <span class="navbar-toggler-icon" aria-hidden="true"></span>
+          </button>
+          <div
+            id="playground-navigation"
+            class="navbar-collapse"
+            data-mobile-nav
+          >
+            <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
+              <li class="nav-item"><a class="nav-link" href="../">Home</a></li>
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="./">Playground</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../api/">API</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= README_URL %>">Documentation</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= GITHUB_URL %>">GitHub</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= NPM_URL %>">npm</a>
+              </li>
+            </ul>
+            <label class="theme-control ms-xl-3">
+              <span>Theme</span>
+              <select
+                class="form-select form-select-sm"
+                data-theme-select
+                aria-label="Choose playground theme"
+              >
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="section-band" aria-labelledby="playground-title">
+        <div class="container">
+          <div class="section-heading">
+            <p class="text-uppercase fw-semibold text-muted-custom mb-2">
+              Interactive example
+            </p>
+            <h1 id="playground-title">Greeting API playground</h1>
+            <p>
+              Enter a name, choose punctuation, and activate the generate button
+              to run <code>createGreeting</code>. The result and exported
+              <code>packageInfo</code> values are displayed below. Unexpected
+              errors are reported next to the controls.
+            </p>
+          </div>
+
+          <div class="row g-4 align-items-start">
+            <section class="col-lg-7" aria-labelledby="controls-title">
+              <div class="playground-panel p-4">
+                <h2 id="controls-title" class="h4">Create a greeting</h2>
+                <form data-greeting-form novalidate>
+                  <div class="mb-3">
+                    <label class="form-label" for="greeting-name">Name</label>
+                    <input
+                      id="greeting-name"
+                      class="form-control"
+                      name="name"
+                      type="text"
+                      value="developer"
+                      maxlength="80"
+                      aria-describedby="name-help"
+                      data-greeting-name
+                    />
+                    <div id="name-help" class="form-text">
+                      Blank or whitespace-only input uses the library fallback
+                      name, <code>friend</code>.
+                    </div>
+                  </div>
+                  <div class="mb-4">
+                    <label class="form-label" for="greeting-punctuation"
+                      >Punctuation</label
+                    >
+                    <select
+                      id="greeting-punctuation"
+                      class="form-select"
+                      name="punctuation"
+                      data-greeting-punctuation
+                    >
+                      <option value="!">Exclamation mark (!)</option>
+                      <option value=".">Period (.)</option>
+                      <option value="?">Question mark (?)</option>
+                      <option value="">No punctuation</option>
+                    </select>
+                  </div>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary" type="submit">
+                      Generate greeting
+                    </button>
+                    <button
+                      class="btn btn-outline-secondary"
+                      type="button"
+                      data-use-blank-name
+                    >
+                      Try blank-name fallback
+                    </button>
+                  </div>
+                </form>
+                <p
+                  class="alert alert-danger playground-error mt-3 mb-0"
+                  role="alert"
+                  data-greeting-error
+                ></p>
+              </div>
+            </section>
+
+            <section class="col-lg-5" aria-labelledby="result-title">
+              <div class="playground-panel p-4">
+                <h2 id="result-title" class="h4">Result</h2>
+                <p
+                  class="playground-output"
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  data-greeting-output
+                >
+                  <code>Hello, developer!</code>
+                </p>
+                <h3 class="h5 mt-4">Package information</h3>
+                <dl class="row mb-0">
+                  <dt class="col-sm-5">Name</dt>
+                  <dd class="col-sm-7" data-package-name>mazey-npm-template</dd>
+                  <dt class="col-sm-5">Version</dt>
+                  <dd class="col-sm-7" data-package-version>2.1.6</dd>
+                </dl>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="section-band section-band--muted"
+        aria-labelledby="supported-title"
+      >
+        <div class="container">
+          <div class="row g-4">
+            <article class="col-md-6">
+              <h2 id="supported-title" class="h4">What this demonstrates</h2>
+              <p>
+                The playground imports the same root API used by package
+                consumers. It demonstrates name trimming, blank-name fallback,
+                optional punctuation, and package metadata without private
+                module imports.
+              </p>
+            </article>
+            <article class="col-md-6">
+              <h2 class="h4">Continue with the documentation</h2>
+              <ul>
+                <li><a href="../">Return to the project home page</a></li>
+                <li><a href="../api/">Read the API documentation</a></li>
+                <li>
+                  <a href="<%= GITHUB_URL %>">View the GitHub repository</a>
+                </li>
+                <li><a href="<%= NPM_URL %>">Open the npm package page</a></li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <noscript>
+      <div class="container py-4">
+        <p class="alert alert-warning">
+          JavaScript is required to run the interactive greeting examples. You
+          can still read the <a href="../api/">API documentation</a>, visit the
+          <a href="../">project home page</a>, or view the
+          <a href="<%= GITHUB_URL %>">GitHub repository</a>.
+        </p>
       </div>
-    </div>
+    </noscript>
+
+    <footer class="site-footer">
+      <div class="container d-lg-flex justify-content-between gap-4">
+        <p class="mb-3 mb-lg-0">
+          <strong>mazey-npm-template playground</strong><br />Runs the public
+          greeting API in your browser.
+        </p>
+        <nav aria-label="Footer navigation">
+          <ul class="list-inline d-flex flex-wrap gap-3">
+            <li><a href="../">Project home</a></li>
+            <li><a href="../api/">API documentation</a></li>
+            <li><a href="<%= GITHUB_URL %>">GitHub repository</a></li>
+            <li><a href="<%= NPM_URL %>">npm package</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

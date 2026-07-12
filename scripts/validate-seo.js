@@ -11,6 +11,7 @@ const {
   PLAYGROUND_URL,
   ROOT_DESCRIPTION,
   ROOT_TITLE,
+  SITEMAP_URL,
   SITE_URL,
 } = require("./site-config");
 
@@ -92,6 +93,7 @@ function validatePage({
   expectedDescription,
   expectedCss,
   expectedScripts,
+  expectedSitemap,
   requireNavigationToggle = false,
 }) {
   if (!existsSync(file)) {
@@ -113,6 +115,11 @@ function validatePage({
     fail(`${label}: canonical must be ${canonical}`);
   if (!attribute(html, "link", "rel", "icon"))
     fail(`${label}: missing favicon`);
+  if (
+    expectedSitemap &&
+    attribute(html, "link", "rel", "sitemap")?.href !== expectedSitemap
+  )
+    fail(`${label}: sitemap link must be ${expectedSitemap}`);
   if (!attribute(html, "html", "data-bs-theme", "light"))
     fail(`${label}: missing Bootstrap color-mode default`);
   for (const property of [
@@ -237,9 +244,11 @@ function validateStaticFiles() {
   const homeCss = path.join(docs, "assets", "shared.css");
   if (
     existsSync(homeCss) &&
-    !readFileSync(homeCss, "utf8").includes("--bs-body-color")
+    !/Bootstrap\s+v5\.3\.8/.test(readFileSync(homeCss, "utf8"))
   )
-    fail("assets/shared.css: Bootstrap was not included in the site build");
+    fail(
+      "assets/shared.css: Bootstrap 5.3.8 was not included in the site build",
+    );
 
   if (!existsSync(robotsPath)) fail("robots.txt: missing from Pages artifact");
   else {
@@ -276,7 +285,16 @@ function validateSite() {
       label: "Root page",
       file: path.join(docs, "index.html"),
       canonical: SITE_URL,
-      requiredLinks: ["./api/", "./playground/", GITHUB_URL, NPM_URL],
+      requiredLinks: [
+        "#features",
+        "#installation",
+        "#basic-usage",
+        "./api/",
+        "./playground/",
+        "./sitemap.xml",
+        GITHUB_URL,
+        NPM_URL,
+      ],
       expectedTitle: ROOT_TITLE,
       expectedDescription: ROOT_DESCRIPTION,
       expectedCss: "/mazey-npm-template/assets/shared.css",
@@ -284,13 +302,22 @@ function validateSite() {
         "/mazey-npm-template/assets/shared.js",
         "/mazey-npm-template/assets/home.js",
       ],
+      expectedSitemap: SITEMAP_URL,
       requireNavigationToggle: true,
     }),
     validatePage({
       label: "Playground",
       file: path.join(docs, "playground", "index.html"),
       canonical: PLAYGROUND_URL,
-      requiredLinks: ["../", "../api/", GITHUB_URL, NPM_URL],
+      requiredLinks: [
+        "../",
+        "../#features",
+        "../#installation",
+        "../#basic-usage",
+        "../api/",
+        GITHUB_URL,
+        NPM_URL,
+      ],
       expectedTitle: PLAYGROUND_TITLE,
       expectedDescription: PLAYGROUND_DESCRIPTION,
       expectedCss: "/mazey-npm-template/assets/shared.css",

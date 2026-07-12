@@ -1,4 +1,5 @@
 const SITE_URL = "https://chengchuu.github.io/mazey-npm-template/";
+const SITEMAP_URL = `${SITE_URL}sitemap.xml`;
 const GITHUB_URL = "https://github.com/chengchuu/mazey-npm-template";
 const NPM_URL = "https://www.npmjs.com/package/mazey-npm-template";
 const ROOT_TITLE = "mazey-npm-template - TypeScript npm Library Template";
@@ -24,6 +25,7 @@ const software = {
 
 module.exports = Object.freeze({
   SITE_URL,
+  SITEMAP_URL,
   API_URL: `${SITE_URL}api/`,
   PLAYGROUND_URL: `${SITE_URL}playground/`,
   GITHUB_URL,

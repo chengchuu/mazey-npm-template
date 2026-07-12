@@ -6,6 +6,7 @@
     <title><%= ROOT_TITLE %></title>
     <meta name="description" content="<%= ROOT_DESCRIPTION %>" />
     <link rel="canonical" href="<%= SITE_URL %>" />
+    <link rel="sitemap" type="application/xml" href="<%= SITEMAP_URL %>" />
     <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="mazey-npm-template" />
@@ -42,7 +43,7 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="site-header">
       <nav
-        class="navbar navbar-expand-xl site-navbar"
+        class="navbar navbar-expand-xxl site-navbar"
         aria-label="Primary navigation"
         data-site-navbar
       >
@@ -68,8 +69,17 @@
             <span class="navbar-toggler-icon" aria-hidden="true"></span>
           </button>
           <div id="primary-navigation" class="navbar-collapse" data-mobile-nav>
-            <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
+            <ul class="navbar-nav ms-auto align-items-xxl-center gap-xxl-1">
               <li class="nav-item"><a class="nav-link" href="./">Home</a></li>
+              <li class="nav-item">
+                <a class="nav-link" href="#features">Features</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#installation">Installation</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#basic-usage">Basic Usage</a>
+              </li>
               <li class="nav-item">
                 <a class="nav-link" href="./playground/">Playground</a>
               </li>
@@ -86,7 +96,7 @@
                 <a class="nav-link" href="<%= NPM_URL %>">npm</a>
               </li>
             </ul>
-            <label class="theme-control ms-xl-3">
+            <label class="theme-control ms-xxl-3">
               <span>Theme</span>
               <select
                 class="form-select form-select-sm"
@@ -310,6 +320,7 @@ createGreeting("community", { punctuation: "." });
             <li><a href="./api/">API documentation</a></li>
             <li><a href="<%= GITHUB_URL %>">GitHub repository</a></li>
             <li><a href="<%= NPM_URL %>">npm package</a></li>
+            <li><a href="./sitemap.xml">XML sitemap</a></li>
             <li><a href="<%= LICENSE_URL %>">MIT License</a></li>
           </ul>
         </nav>

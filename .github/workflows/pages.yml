@@ -36,11 +36,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Check types and lint
+        run: npm run typecheck && npm run lint
+
+      - name: Run tests
+        run: npm test -- --runInBand
+
       - name: Build docs
         run: npm run docs
 
       - name: Validate generated SEO
         run: npm run seo:validate
+
+      - name: Validate generated PWA
+        run: npm run pwa:validate
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

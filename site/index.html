@@ -8,6 +8,14 @@
     <link rel="canonical" href="<%= SITE_URL %>" />
     <link rel="sitemap" type="application/xml" href="<%= SITEMAP_URL %>" />
     <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
+    <link rel="manifest" href="<%= MANIFEST_URL %>" />
+    <meta
+      name="theme-color"
+      content="<%= THEME_COLOR_LIGHT %>"
+      data-theme-color
+      data-theme-color-light="<%= THEME_COLOR_LIGHT %>"
+      data-theme-color-dark="<%= THEME_COLOR_DARK %>"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="mazey-npm-template" />
     <meta property="og:title" content="<%= ROOT_TITLE %>" />
@@ -34,6 +42,15 @@
           document.documentElement.dataset.bsTheme = resolved;
           document.documentElement.dataset.theme = resolved;
           document.documentElement.style.colorScheme = resolved;
+          const themeColor = document.querySelector(
+            'meta[name="theme-color"][data-theme-color]',
+          );
+          if (themeColor) {
+            themeColor.content =
+              resolved === "dark"
+                ? themeColor.dataset.themeColorDark
+                : themeColor.dataset.themeColorLight;
+          }
           localStorage.setItem("tsd-theme", value === "system" ? "os" : value);
         } catch {}
       })();
@@ -138,6 +155,14 @@
             <a class="btn btn-outline-secondary btn-lg" href="<%= NPM_URL %>"
               >View npm package</a
             >
+            <button
+              class="btn btn-outline-secondary btn-lg"
+              type="button"
+              data-pwa-install
+              hidden
+            >
+              Install app
+            </button>
           </div>
           <div class="install-command" aria-label="npm installation command">
             <code>npm install mazey-npm-template</code>
@@ -150,6 +175,12 @@
             role="status"
             aria-live="polite"
             data-copy-status
+          ></p>
+          <p
+            class="pwa-status"
+            role="status"
+            aria-live="polite"
+            data-pwa-status
           ></p>
         </div>
       </section>
@@ -281,7 +312,7 @@ createGreeting("community", { punctuation: "." });
               <p class="text-muted-custom">
                 The live playground runs <code>createGreeting</code> in your
                 browser, lets you adjust its supported options, and displays the
-                exported package metadata.
+                generated result immediately.
               </p>
             </div>
             <div class="col-lg-5 text-lg-end">
@@ -314,7 +345,45 @@ createGreeting("community", { punctuation: "." });
           </dl>
         </div>
       </section>
+
+      <section
+        id="install-project-website"
+        class="section-band section-band--muted"
+        aria-labelledby="add-website-to-device-title"
+        data-pwa-install-help
+      >
+        <div class="container">
+          <div class="section-heading mb-0">
+            <h2 id="add-website-to-device-title">
+              Add the website to your device
+            </h2>
+            <p>
+              Supported Chrome and Edge browsers may expose an install icon or
+              the Install app action above. Other browsers may require their own
+              menus; availability depends on the browser and platform.
+            </p>
+            <p>
+              On iPhone and iPad, Safari users can use Share, then Add to Home
+              Screen. This does not provide exactly the same capabilities as a
+              Chrome installation. Installing the website also does not grant
+              native Fullscreen API support.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
+
+    <aside
+      class="pwa-update-notice"
+      aria-label="Website update"
+      data-pwa-update
+      hidden
+    >
+      <span>A new version of the mazey-npm-template website is available.</span>
+      <button class="btn btn-primary btn-sm" type="button" data-pwa-update-now>
+        Update now
+      </button>
+    </aside>
 
     <footer class="site-footer">
       <div class="container d-lg-flex justify-content-between gap-4">

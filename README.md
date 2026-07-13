@@ -129,12 +129,37 @@ Generate the complete GitHub Pages artifact, including the website, playground, 
 ```bash
 npm run docs
 npm run seo:validate
+npm run pwa:validate
 ```
 
 The deployed crawler files are
 [`/mazey-npm-template/robots.txt`](https://chengchuu.github.io/mazey-npm-template/robots.txt)
 and
 [`/mazey-npm-template/sitemap.xml`](https://chengchuu.github.io/mazey-npm-template/sitemap.xml).
+
+### Add The Website To Your Device
+
+The project website is a Progressive Web App scoped to
+`/mazey-npm-template/`. Supported Chrome and Edge browsers may show their own install icon or the
+site's **Install app** action when the browser exposes an install prompt. Other browsers may require
+installation through their menus. On iPhone and iPad, Safari users can choose **Share**, then
+**Add to Home Screen**; its capabilities are not identical to a Chrome installation.
+
+Installed standalone mode keeps Home, Playground, API, GitHub, and npm navigation available.
+Adding the website to your device and the browser Fullscreen API are separate capabilities, so
+using the standalone app does not guarantee native fullscreen support.
+
+Build and serve a production-like local PWA at
+<http://127.0.0.1:4173/mazey-npm-template/>:
+
+```bash
+npm run pwa:preview
+```
+
+Normal `npm run dev` does not register the production service worker. When testing worker updates,
+use the browser's Application tools to unregister older workers or clear site data before a clean
+install. Do not open generated HTML directly from the filesystem; service workers require HTTPS or
+a trusted local origin such as `localhost`.
 
 ## License
 

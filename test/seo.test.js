@@ -22,9 +22,13 @@ test("API metadata transformation is complete and idempotent", () => {
   const transformed = transformApiHtml(typeDocHtml, "index.html");
   expect(transformApiHtml(transformed, "index.html")).toBe(transformed);
   expect(transformed).toContain(`<link rel="canonical" href="${API_URL}"/>`);
+  expect(transformed).toContain(
+    '<link rel="icon" href="/mazey-npm-template/images/logo-dark-circle-transparent-32x32.png" type="image/png"/>',
+  );
   expect(transformed).toContain(`<a href="${SITE_URL}">Project home</a>`);
   expect(transformed).toContain('href="../assets/api.css"');
   expect(transformed).toContain('src="../assets/api.js"');
+  expect(transformed).not.toMatch(/<button\b[^>]*data-pwa-install\b/);
   expect(transformed.match(/<h1\b/g)).toHaveLength(1);
   expect(transformed).not.toContain('document.body.style.display="none"');
   expect(() =>
@@ -81,6 +85,11 @@ test("Pages assembly is repeatable without duplicating API metadata", () => {
     "dist-dev/assets/api.js": "void 0;",
     "site/robots.txt": "User-agent: *\nAllow: /\n",
     "site/sitemap.xml": '<?xml version="1.0"?><urlset></urlset>\n',
+    "site/manifest.webmanifest": "{}\n",
+    "site/service-worker.js": 'const cache = "__MAZEY_PWA_CACHE_VERSION__";\n',
+    "images/logo-dark-circle-transparent-192x192.png": "192",
+    "images/logo-dark-circle-transparent-512x512.png": "512",
+    "images/logo-dark-circle-transparent-maskable-512x512.png": "maskable",
   };
   try {
     for (const [relative, contents] of Object.entries(files)) {
@@ -93,13 +102,22 @@ test("Pages assembly is repeatable without duplicating API metadata", () => {
       path.join(rootDir, "docs/api/index.html"),
       "utf8",
     );
+    const firstWorker = readFileSync(
+      path.join(rootDir, "docs/service-worker.js"),
+      "utf8",
+    );
     buildPages({ rootDir });
     const second = readFileSync(
       path.join(rootDir, "docs/api/index.html"),
       "utf8",
     );
     expect(second).toBe(first);
+    expect(
+      readFileSync(path.join(rootDir, "docs/service-worker.js"), "utf8"),
+    ).toBe(firstWorker);
     expect(second.match(/mazey-npm-template-seo:start/g)).toHaveLength(1);
+    expect(second.match(/mazey-npm-template-pwa-ui:start/g)).toHaveLength(1);
+    expect(firstWorker).not.toContain("__MAZEY_PWA_CACHE_VERSION__");
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
   }

@@ -15,12 +15,22 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `src/typing.d.ts`: public TypeScript interfaces and type aliases.
 - `types/global.d.ts`: ambient browser type augmentations.
 - `test`: Jest tests for public behavior.
-- `examples`: lightweight Webpack development demo.
-- `site`: source-controlled landing page, Bootstrap theme, and shared browser behavior.
+- `examples`: source-controlled playground HTML and TypeScript that exercise the package root API.
+- `site/index.html` and `site/index.ts`: landing-page template and page-specific behavior.
+- `site/shared.ts`, `site/navigation.ts`, and `site/theme.ts`: shared Bootstrap, navigation, and theme
+  behavior for the website and playground.
+- `site/pwa.ts` and `site/pwa-config.ts`: website-only install, registration, installed-state, and
+  service-worker update behavior.
+- `site/manifest.webmanifest` and `site/service-worker.js`: source PWA manifest and worker.
+- `site/api.ts` and `site/api.css`: behavior and styling added to generated TypeDoc pages.
+- `images`: source logo, favicon, and PWA icon assets copied or emitted by the site build.
 - `scripts/rollup.config.mjs`: production JavaScript and declaration builds.
 - `scripts/webpack.config.dev.js`: website/playground build and development server.
-- `scripts/build-pages.js`: combines the website, playground, and generated TypeDoc output.
-- `scripts/site-config.js`: canonical public URLs and shared SEO metadata.
+- `scripts/build-pages.js`: combines Webpack and TypeDoc output, transforms API HTML, and emits PWA
+  files into the final Pages artifact.
+- `scripts/site-config.js`: canonical public URLs, the GitHub Pages base path, local asset paths,
+  theme colors, PWA URLs, and shared SEO metadata.
+- `scripts/preview-pages.js`: project-subpath-aware static server for the generated `docs` artifact.
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
@@ -101,6 +111,17 @@ Webpack owns the public landing page, local development server, and interactive 
 development dependency and must not become a published runtime dependency. Do not couple the npm
 package build to Webpack or make development depend on prebuilt `lib` files without a clear reason.
 
+Webpack has two intentional URL modes:
+
+- Ordinary `npm run dev` and `npm run build:dev` use `/` as the asset base and disable service-worker
+  registration.
+- `npm run build:site` sets `GITHUB_PAGES=true`, emits assets below `/mazey-npm-template/`, and enables
+  the website PWA.
+
+Keep `site/shared.ts` limited to behavior shared by the homepage and playground. API documentation
+loads its own `site/api.ts` entry after TypeDoc generation. None of these website entries may be
+imported by `src/index.ts` or emitted into the npm package.
+
 Never edit generated files under `lib`, `dist-dev`, `docs`, or `coverage` as source changes. Rebuild
 them through the owning command when verification needs them.
 
@@ -123,6 +144,18 @@ npm run preview
 npm pack --dry-run
 ```
 
+`npm run preview` is a verification pipeline and exits after all checks; it does not start a web
+server. For an installable, production-like local Pages preview, run:
+
+```bash
+npm run pwa:preview
+```
+
+This rebuilds `docs` and serves it at
+`http://127.0.0.1:4173/mazey-npm-template/`. Use the project-prefixed homepage, playground, and API
+routes when testing this server. A previously installed worker may require unregistering the worker
+or clearing site data before retesting lifecycle changes.
+
 For narrow script changes, use focused checks such as:
 
 ```bash
@@ -132,6 +165,18 @@ node --check scripts/change-package-name.js
 Add or update Jest tests when public behavior changes. Keep tests deterministic and independent of
 network services. For packaging changes, inspect the generated `lib` files and the `npm pack`
 manifest, not only whether Rollup exits successfully.
+
+Website and Pages changes are covered by dedicated suites:
+
+- `test/seo.test.js`: API HTML transformation, canonical metadata, favicon paths, headings, and
+  repeatable Pages assembly.
+- `test/theme.test.js`: system/light/dark preference and dynamic browser theme-color behavior.
+- `test/pwa.test.js`: registration guards, install prompt behavior, installed state, and update UX.
+- `test/service-worker.test.js`: manifest icons, scoped requests, cache cleanup, cache failures, and
+  network-first versus cache-first behavior.
+
+When modifying site metadata, PWA files, TypeDoc integration, or Pages assembly, run `npm run docs`
+so `seo:validate` and `pwa:validate` inspect the final artifact rather than only source templates.
 
 Do not run `scripts/change-package-name.js` casually during verification because it mutates
 `package.json`. When explicitly testing it, restore the normal package identity or intentionally
@@ -148,9 +193,11 @@ Update `README.md` when changing:
 - release or documentation workflows visible to maintainers.
 
 TypeDoc configuration lives in `tsconfig.json`. `npm run docs` generates TypeDoc at `./docs/api`,
-builds the Webpack website and playground, runs `scripts/build-pages.js`, and validates the final
-artifact. Stable public routes are `/`, `/playground/`, and `/api/` below the project Pages base
-path. Keep the TypeDoc hosted URL at
+builds the Webpack website and playground into `dist-dev`, runs `scripts/build-pages.js`, and
+validates the final artifact. The Pages assembly copies Webpack output, preserves the TypeDoc API
+tree, deterministically transforms every API HTML page, copies SEO/PWA static files, and replaces the
+service-worker cache token with a content fingerprint. Stable public routes are `/`,
+`/playground/`, and `/api/` below the project Pages base path. Keep the TypeDoc hosted URL at
 `https://chengchuu.github.io/mazey-npm-template/api/`, preserve the favicon, and keep all canonical
 URLs synchronized through `scripts/site-config.js`.
 
@@ -159,13 +206,40 @@ templates, the deterministic API transformation, or build scripts instead. The f
 include `robots.txt`, `sitemap.xml`, unique page metadata, one primary heading per page, crawlable
 content, and working project-subpath links. Keep theme values `system`, `light`, and `dark` stored
 under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap's
-`data-bs-theme` attribute.
+`data-bs-theme` attribute. `site/theme.ts` also keeps the browser's theme-color metadata and
+TypeDoc's `tsd-theme` preference synchronized.
+
+Canonical URLs, Open Graph URLs, and structured data should use the production `SITE_URL`. Assets
+that the browser must load from the current deployment, including the favicon, manifest, worker,
+and PWA icons, must use the project-root `/mazey-npm-template/` base path instead of a hard-coded
+`https://chengchuu.github.io` origin. This keeps both GitHub Pages and
+`http://127.0.0.1:4173/mazey-npm-template/` working. Webpack may override image URLs with its current
+`pagesBase` for ordinary port-8080 development.
 
 PWA sources live under `site`: `manifest.webmanifest`, `service-worker.js`, and browser-only
 registration/install logic. `scripts/build-pages.js` versions and emits the worker at the project
 root. Keep the PWA identity, start URL, worker registration, and scope at `/mazey-npm-template/`.
 Normal `npm run dev` must not register the production worker; use `npm run pwa:preview` for local
 production-like testing. Never move PWA registration into `src` or package output.
+
+Preserve the current PWA behavior:
+
+- The manifest provides 192x192 and 512x512 PNG icons plus a padded maskable 512x512 icon.
+- The homepage and playground may expose an accessible `Install app` button only after the browser
+  fires `beforeinstallprompt`; TypeDoc API pages intentionally do not show an install button.
+- All three entry experiences keep an update notice, explicit `Update now` action, and live status
+  region. A waiting worker activates only after the user's action and reloads once after
+  `controllerchange`.
+- Standalone mode hides install controls. Unsupported browsers receive guidance without a broken or
+  automatic prompt.
+- Service-worker registration is delayed until page load/idle time, allowed only when enabled, on
+  HTTPS or localhost, and within the project scope.
+
+The handwritten service worker only handles same-origin GET requests below the project base and
+ignores source maps. Documents, scripts, and styles are network-first so fresh HTML is not paired
+with stale unversioned bundles. Local images and fonts are cache-first. Keep caches bounded, reject
+opaque or failed responses, delete only obsolete project caches, and retain offline fallbacks. Do
+not unconditionally call `skipWaiting()` or broaden interception to cross-origin or non-GET traffic.
 
 ## Git Hooks And Formatting
 
@@ -194,9 +268,9 @@ tag.
 - Do not publish, push tags, or trigger releases unless the user explicitly requests it.
 
 The Pages workflow is `.github/workflows/pages.yml`. It deploys on pushes to `main` and manual
-`workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`, builds the
-complete Pages site with `npm run docs`, validates SEO, uploads `docs`, and deploys through the
-`github-pages` environment.
+`workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`, checks types
+and lint, runs Jest, builds the complete Pages site with `npm run docs`, explicitly validates SEO and
+PWA output, uploads `docs`, and deploys through the `github-pages` environment.
 
 - Keep its explicit permissions: `contents: read`, `pages: write`, and `id-token: write`.
 - Keep the deployment step id as `deployment`; the environment URL reads

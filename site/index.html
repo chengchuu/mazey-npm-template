@@ -43,7 +43,7 @@
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="site-header">
       <nav
-        class="navbar navbar-expand-xxl site-navbar"
+        class="navbar navbar-expand-xl site-navbar"
         aria-label="Primary navigation"
         data-site-navbar
       >
@@ -69,16 +69,15 @@
             <span class="navbar-toggler-icon" aria-hidden="true"></span>
           </button>
           <div id="primary-navigation" class="navbar-collapse" data-mobile-nav>
-            <ul class="navbar-nav ms-auto align-items-xxl-center gap-xxl-1">
-              <li class="nav-item"><a class="nav-link" href="./">Home</a></li>
+            <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="./">Home</a>
+              </li>
               <li class="nav-item">
                 <a class="nav-link" href="#features">Features</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#installation">Installation</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="#basic-usage">Basic Usage</a>
+                <a class="nav-link" href="#usage">Usage</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="./playground/">Playground</a>
@@ -87,19 +86,16 @@
                 <a class="nav-link" href="./api/">API</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="<%= README_URL %>">Documentation</a>
-              </li>
-              <li class="nav-item">
                 <a class="nav-link" href="<%= GITHUB_URL %>">GitHub</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="<%= NPM_URL %>">npm</a>
               </li>
             </ul>
-            <label class="theme-control ms-xxl-3">
+            <label class="theme-control ms-xl-3">
               <span>Theme</span>
               <select
-                class="form-select form-select-sm"
+                class="form-select form-select-sm w-auto"
                 data-theme-select
                 aria-label="Choose website theme"
               >
@@ -231,15 +227,11 @@
         </div>
       </section>
 
-      <section
-        id="basic-usage"
-        class="section-band"
-        aria-labelledby="usage-title"
-      >
+      <section id="usage" class="section-band" aria-labelledby="usage-title">
         <div class="container">
           <div class="row g-4 align-items-start">
             <div class="col-lg-5">
-              <h2 id="usage-title">Basic usage</h2>
+              <h2 id="usage-title">Usage</h2>
               <p class="text-muted-custom">
                 Import from the package root. The sample API trims the provided
                 name, falls back to <code>friend</code> for blank input, and

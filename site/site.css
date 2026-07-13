@@ -138,8 +138,6 @@ a {
 }
 
 .theme-control .form-select {
-  width: 7rem;
-  min-height: 2.75rem;
   color: var(--mn-text);
   background-color: var(--mn-surface);
   border-color: var(--mn-border);
@@ -339,7 +337,7 @@ a {
   margin: 0;
 }
 
-@media (max-width: 1399.98px) {
+@media (max-width: 1199.98px) {
   [data-nav-enhanced="true"] .site-navbar .navbar-toggler {
     display: inline-flex;
     align-items: center;

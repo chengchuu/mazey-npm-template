@@ -30,7 +30,6 @@ module.exports = Object.freeze({
   PLAYGROUND_URL: `${SITE_URL}playground/`,
   GITHUB_URL,
   NPM_URL,
-  README_URL: `${GITHUB_URL}#readme`,
   LICENSE_URL: `${GITHUB_URL}/blob/main/LICENSE`,
   FAVICON_URL:
     "https://i.mazey.net/icon/fav/logo-dark-circle-transparent-32x32.png",

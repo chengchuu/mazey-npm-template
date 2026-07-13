@@ -287,8 +287,7 @@ function validateSite() {
       canonical: SITE_URL,
       requiredLinks: [
         "#features",
-        "#installation",
-        "#basic-usage",
+        "#usage",
         "./api/",
         "./playground/",
         "./sitemap.xml",
@@ -312,8 +311,7 @@ function validateSite() {
       requiredLinks: [
         "../",
         "../#features",
-        "../#installation",
-        "../#basic-usage",
+        "../#usage",
         "../api/",
         GITHUB_URL,
         NPM_URL,

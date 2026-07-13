@@ -1,4 +1,5 @@
 declare module "*.css";
+declare module "*.png";
 
 declare module "bootstrap/js/dist/collapse" {
   interface CollapseOptions {

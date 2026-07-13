@@ -6,6 +6,11 @@ const siteConfig = require("./site-config");
 const _resolve = (_path) => path.resolve(__dirname, _path);
 const pagesBase =
   process.env.GITHUB_PAGES === "true" ? "/mazey-npm-template/" : "/";
+const templateParameters = {
+  ...siteConfig,
+  FAVICON_URL: `${pagesBase}images/logo-dark-circle-transparent-32x32.png`,
+  LOGO_URL: `${pagesBase}images/logo-dark-circle-transparent-200x200.png`,
+};
 
 module.exports = {
   mode: "development",
@@ -47,6 +52,13 @@ module.exports = {
         test: /\.css$/i,
         use: [MiniCssExtractPlugin.loader, "css-loader"],
       },
+      {
+        test: /\.png$/i,
+        type: "asset/resource",
+        generator: {
+          filename: "images/[name][ext]",
+        },
+      },
     ],
   },
   plugins: [
@@ -58,14 +70,14 @@ module.exports = {
       template: _resolve("../site/index.html"),
       chunks: ["shared", "home"],
       inject: "body",
-      templateParameters: siteConfig,
+      templateParameters,
     }),
     new HtmlWebpackPlugin({
       filename: "playground/index.html",
       template: _resolve("../examples/index.html"),
       chunks: ["shared", "playground"],
       inject: "body",
-      templateParameters: siteConfig,
+      templateParameters,
     }),
   ],
   resolve: {

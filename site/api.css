@@ -51,11 +51,6 @@
   background: var(--color-background);
 }
 
-:where(.mazey-project-links a, .mazey-project-links select):focus-visible {
-  outline: 3px solid var(--color-focus-outline);
-  outline-offset: 2px;
-}
-
 .tsd-typography table {
   display: block;
   max-width: 100%;

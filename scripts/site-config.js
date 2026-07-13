@@ -31,8 +31,8 @@ module.exports = Object.freeze({
   GITHUB_URL,
   NPM_URL,
   LICENSE_URL: `${GITHUB_URL}/blob/main/LICENSE`,
-  FAVICON_URL:
-    "https://i.mazey.net/icon/fav/logo-dark-circle-transparent-32x32.png",
+  FAVICON_URL: `${SITE_URL}images/logo-dark-circle-transparent-32x32.png`,
+  LOGO_URL: `${SITE_URL}images/logo-dark-circle-transparent-200x200.png`,
   ROOT_TITLE,
   ROOT_DESCRIPTION,
   PLAYGROUND_TITLE,

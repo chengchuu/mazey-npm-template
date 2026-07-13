@@ -237,6 +237,8 @@ function validateStaticFiles() {
     "assets/playground.js",
     "assets/api.css",
     "assets/api.js",
+    "images/logo-dark-circle-transparent-32x32.png",
+    "images/logo-dark-circle-transparent-200x200.png",
   ]) {
     if (!existsSync(path.join(docs, asset)))
       fail(`${asset}: missing from Pages artifact`);

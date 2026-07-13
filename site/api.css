@@ -44,7 +44,7 @@
 
 .mazey-project-links select,
 .tsd-theme-toggle select {
-  min-height: 2rem;
+  min-height: 1.75rem;
   border: 1px solid currentColor;
   border-radius: 0.35rem;
   color: inherit;

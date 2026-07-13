@@ -288,7 +288,7 @@ function validateSite() {
       file: path.join(docs, "index.html"),
       canonical: SITE_URL,
       requiredLinks: [
-        "#features",
+        "#installation",
         "#usage",
         "./api/",
         "./playground/",
@@ -312,7 +312,7 @@ function validateSite() {
       canonical: PLAYGROUND_URL,
       requiredLinks: [
         "../",
-        "../#features",
+        "../#installation",
         "../#usage",
         "../api/",
         GITHUB_URL,

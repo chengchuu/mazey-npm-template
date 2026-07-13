@@ -74,13 +74,13 @@
                 <a class="nav-link" aria-current="page" href="./">Home</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#features">Features</a>
+                <a class="nav-link" href="./playground/">Playground</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#installation">Installation</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#usage">Usage</a>
-              </li>
-              <li class="nav-item">
-                <a class="nav-link" href="./playground/">Playground</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="./api/">API</a>
@@ -208,21 +208,37 @@
         aria-labelledby="installation-title"
       >
         <div class="container">
-          <div class="row g-4 align-items-center">
-            <div class="col-lg-5">
-              <h2 id="installation-title">Installation</h2>
+          <div class="section-heading">
+            <h2 id="installation-title">Installation</h2>
+            <p>
+              Use the package through a module-aware project or load the browser
+              bundle directly from a CDN.
+            </p>
+          </div>
+          <div class="row g-4">
+            <article class="col-lg-6">
+              <h3 class="h5">npm</h3>
               <p class="text-muted-custom">
-                Install from npm. TypeScript discovers the published
-                declarations automatically, so a separate
-                <code>@types</code> package is not required.
+                TypeScript discovers the published declarations automatically;
+                no separate <code>@types</code> package is required.
               </p>
-              <a href="<%= NPM_URL %>">Install mazey-npm-template from npm</a>
-            </div>
-            <div class="col-lg-7">
               <pre
                 class="code-sample"
               ><code>npm install mazey-npm-template</code></pre>
-            </div>
+            </article>
+            <article class="col-lg-6">
+              <h3 class="h5">Browser CDN</h3>
+              <p class="text-muted-custom">
+                Load the IIFE bundle when a package manager or bundler is not
+                available. Pin an exact version for production use.
+              </p>
+              <pre
+                class="code-sample"
+              ><code>&lt;script src="https://cdn.jsdelivr.net/npm/mazey-npm-template/lib/mazey-npm-template.min.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const message = MAZEY_NPM_TEMPLATE.createGreeting("browser");
+&lt;/script&gt;</code></pre>
+            </article>
           </div>
         </div>
       </section>

@@ -1,4 +1,9 @@
 const SITE_URL = "https://chengchuu.github.io/mazey-npm-template/";
+const PWA_BASE_PATH = "/mazey-npm-template/";
+const MANIFEST_URL = `${PWA_BASE_PATH}manifest.webmanifest`;
+const SERVICE_WORKER_URL = `${PWA_BASE_PATH}service-worker.js`;
+const THEME_COLOR_LIGHT = "#f7f8fc";
+const THEME_COLOR_DARK = "#0d1220";
 const SITEMAP_URL = `${SITE_URL}sitemap.xml`;
 const GITHUB_URL = "https://github.com/chengchuu/mazey-npm-template";
 const NPM_URL = "https://www.npmjs.com/package/mazey-npm-template";
@@ -25,13 +30,18 @@ const software = {
 
 module.exports = Object.freeze({
   SITE_URL,
+  PWA_BASE_PATH,
+  MANIFEST_URL,
+  SERVICE_WORKER_URL,
+  THEME_COLOR_LIGHT,
+  THEME_COLOR_DARK,
   SITEMAP_URL,
   API_URL: `${SITE_URL}api/`,
   PLAYGROUND_URL: `${SITE_URL}playground/`,
   GITHUB_URL,
   NPM_URL,
   LICENSE_URL: `${GITHUB_URL}/blob/main/LICENSE`,
-  FAVICON_URL: `${SITE_URL}images/logo-dark-circle-transparent-32x32.png`,
+  FAVICON_URL: `${PWA_BASE_PATH}images/logo-dark-circle-transparent-32x32.png`,
   LOGO_URL: `${SITE_URL}images/logo-dark-circle-transparent-200x200.png`,
   ROOT_TITLE,
   ROOT_DESCRIPTION,

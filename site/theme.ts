@@ -30,6 +30,15 @@ export function initializeThemeControls(
     root.dataset.bsTheme = resolved;
     root.dataset.theme = resolved;
     root.style.colorScheme = resolved;
+    const themeColor = documentRef.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"][data-theme-color]',
+    );
+    if (themeColor) {
+      themeColor.content =
+        resolved === "dark"
+          ? (themeColor.dataset.themeColorDark ?? themeColor.content)
+          : (themeColor.dataset.themeColorLight ?? themeColor.content);
+    }
 
     try {
       if (persist) windowRef.localStorage.setItem(THEME_STORAGE_KEY, selected);

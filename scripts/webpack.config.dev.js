@@ -1,11 +1,14 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const path = require("node:path");
+const webpack = require("webpack");
 const siteConfig = require("./site-config");
 
 const _resolve = (_path) => path.resolve(__dirname, _path);
 const pagesBase =
   process.env.GITHUB_PAGES === "true" ? "/mazey-npm-template/" : "/";
+const pwaEnabled =
+  process.env.GITHUB_PAGES === "true" || process.env.PWA_ENABLED === "true";
 const templateParameters = {
   ...siteConfig,
   FAVICON_URL: `${pagesBase}images/logo-dark-circle-transparent-32x32.png`,
@@ -62,6 +65,11 @@ module.exports = {
     ],
   },
   plugins: [
+    new webpack.DefinePlugin({
+      __PWA_ENABLED__: JSON.stringify(pwaEnabled),
+      __PWA_SCOPE__: JSON.stringify(siteConfig.PWA_BASE_PATH),
+      __PWA_SERVICE_WORKER_URL__: JSON.stringify(siteConfig.SERVICE_WORKER_URL),
+    }),
     new MiniCssExtractPlugin({
       filename: "assets/[name].css",
     }),

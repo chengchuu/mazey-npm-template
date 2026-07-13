@@ -238,6 +238,38 @@ a {
   font-size: 0.875rem;
 }
 
+.pwa-status {
+  min-height: 1.5rem;
+  margin: 0;
+  color: var(--mn-muted);
+  font-size: 0.875rem;
+}
+
+.pwa-update-notice {
+  position: fixed;
+  z-index: 1090;
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: min(32rem, calc(100% - 2rem));
+  padding: 1rem;
+  border: 1px solid var(--mn-border);
+  border-radius: 0.5rem;
+  color: var(--mn-text);
+  background: var(--mn-surface);
+  box-shadow: 0 0.75rem 2rem rgb(15 23 42 / 18%);
+}
+
+.pwa-update-notice[hidden] {
+  display: none;
+}
+
+.pwa-update-notice span {
+  flex: 1;
+}
+
 .section-band {
   padding: 5rem 0;
   border-bottom: 1px solid var(--mn-border);
@@ -336,6 +368,21 @@ a {
   color: var(--mn-text);
 }
 
+.pwa-footer-install {
+  padding: 0;
+  border: 0;
+  color: var(--mn-text);
+  background: transparent;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.pwa-footer-install:hover {
+  color: var(--mn-primary-hover);
+}
+
 .site-footer ul {
   margin: 0;
 }
@@ -394,6 +441,11 @@ a {
 
   .section-band {
     padding: 3.5rem 0;
+  }
+
+  .pwa-update-notice {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 

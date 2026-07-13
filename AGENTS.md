@@ -22,6 +22,7 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `scripts/build-pages.js`: combines the website, playground, and generated TypeDoc output.
 - `scripts/site-config.js`: canonical public URLs and shared SEO metadata.
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
+- `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
 - `lib`: generated publish output; do not edit it by hand.
 - `dist-dev`, `docs`, and `coverage`: generated development, documentation, and test output.
@@ -159,6 +160,12 @@ include `robots.txt`, `sitemap.xml`, unique page metadata, one primary heading p
 content, and working project-subpath links. Keep theme values `system`, `light`, and `dark` stored
 under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap's
 `data-bs-theme` attribute.
+
+PWA sources live under `site`: `manifest.webmanifest`, `service-worker.js`, and browser-only
+registration/install logic. `scripts/build-pages.js` versions and emits the worker at the project
+root. Keep the PWA identity, start URL, worker registration, and scope at `/mazey-npm-template/`.
+Normal `npm run dev` must not register the production worker; use `npm run pwa:preview` for local
+production-like testing. Never move PWA registration into `src` or package output.
 
 ## Git Hooks And Formatting
 

@@ -1,0 +1,31 @@
+{
+  "name": "mazey-npm-template",
+  "short_name": "mazey template",
+  "description": "Project website, playground, and TypeScript API documentation for the mazey-npm-template npm library template.",
+  "id": "/mazey-npm-template/",
+  "start_url": "/mazey-npm-template/",
+  "scope": "/mazey-npm-template/",
+  "display": "standalone",
+  "background_color": "#f7f8fc",
+  "theme_color": "#5b3fd6",
+  "icons": [
+    {
+      "src": "/mazey-npm-template/images/logo-dark-circle-transparent-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mazey-npm-template/images/logo-dark-circle-transparent-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/mazey-npm-template/images/logo-dark-circle-transparent-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

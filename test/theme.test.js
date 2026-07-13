@@ -5,6 +5,10 @@ const { THEME_STORAGE_KEY, initializeThemeControls } = require("../site/theme");
 
 test("theme selection follows the system and persists an explicit choice", () => {
   document.documentElement.removeAttribute("data-theme-controls-ready");
+  document.head.innerHTML = `
+    <meta name="theme-color" content="#f7f8fc" data-theme-color
+      data-theme-color-light="#f7f8fc" data-theme-color-dark="#0d1220">
+  `;
   document.body.innerHTML = `
     <label>Theme
       <select data-theme-select>
@@ -29,10 +33,16 @@ test("theme selection follows the system and persists an explicit choice", () =>
   const select = document.querySelector("[data-theme-select]");
 
   expect(document.documentElement.dataset.bsTheme).toBe("dark");
+  expect(document.querySelector('meta[name="theme-color"]').content).toBe(
+    "#0d1220",
+  );
   expect(select.value).toBe("system");
   select.value = "light";
   select.dispatchEvent(new Event("change", { bubbles: true }));
   expect(document.documentElement.dataset.bsTheme).toBe("light");
+  expect(document.querySelector('meta[name="theme-color"]').content).toBe(
+    "#f7f8fc",
+  );
   expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
   expect(localStorage.getItem("tsd-theme")).toBe("light");
   expect(mediaListeners).toHaveLength(1);

@@ -1,21 +1,21 @@
 :root[data-bs-theme="light"] {
-  --light-color-background: #f7f9fa;
-  --light-color-background-secondary: #edf3f2;
-  --light-color-background-active: #dff1ef;
-  --light-color-text: #172322;
-  --light-color-text-aside: #536260;
-  --light-color-link: #0b6b66;
-  --light-color-focus-outline: #a54628;
+  --light-color-background: #f7f8fc;
+  --light-color-background-secondary: #eef1f8;
+  --light-color-background-active: #ece8ff;
+  --light-color-text: #152033;
+  --light-color-text-aside: #536078;
+  --light-color-link: #5b3fd6;
+  --light-color-focus-outline: #dc7217;
 }
 
 :root[data-bs-theme="dark"] {
-  --dark-color-background: #101716;
-  --dark-color-background-secondary: #21302d;
-  --dark-color-background-active: #173f3b;
-  --dark-color-text: #edf5f3;
-  --dark-color-text-aside: #b2c1be;
-  --dark-color-link: #62c8bf;
-  --dark-color-focus-outline: #f0a083;
+  --dark-color-background: #0d1220;
+  --dark-color-background-secondary: #1d263a;
+  --dark-color-background-active: #29234c;
+  --dark-color-text: #edf1fb;
+  --dark-color-text-aside: #b0bad0;
+  --dark-color-link: #a997ff;
+  --dark-color-focus-outline: #ffb45f;
 }
 
 .mazey-project-links {
@@ -49,6 +49,10 @@
   border-radius: 0.35rem;
   color: inherit;
   background: var(--color-background);
+}
+
+.tsd-typography a {
+  text-decoration: underline;
 }
 
 .tsd-typography table {

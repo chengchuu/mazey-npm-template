@@ -8,7 +8,9 @@
     <link rel="canonical" href="<%= SITE_URL %>" />
     <link rel="sitemap" type="application/xml" href="<%= SITEMAP_URL %>" />
     <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
+    <% if (MANIFEST_URL) { %>
     <link rel="manifest" href="<%= MANIFEST_URL %>" />
+    <% } %>
     <meta
       name="theme-color"
       content="<%= THEME_COLOR_LIGHT %>"
@@ -16,8 +18,27 @@
       data-theme-color-light="<%= THEME_COLOR_LIGHT %>"
       data-theme-color-dark="<%= THEME_COLOR_DARK %>"
     />
+    <style>
+      :root {
+        --project-theme-primary: <%= THEME_COLOR_PRIMARY %>;
+        --project-theme-primary-hover: <%= THEME_PRIMARY_HOVER %>;
+        --project-theme-primary-active: <%= THEME_PRIMARY_ACTIVE %>;
+        --project-theme-primary-soft: <%= THEME_PRIMARY_SOFT %>;
+        --project-theme-primary-rgb: <%= THEME_PRIMARY_RGB %>;
+        --project-theme-primary-hover-rgb: <%= THEME_PRIMARY_HOVER_RGB %>;
+        --project-theme-primary-dark: <%= THEME_PRIMARY_DARK %>;
+        --project-theme-primary-dark-hover: <%= THEME_PRIMARY_DARK_HOVER %>;
+        --project-theme-primary-dark-active: <%= THEME_PRIMARY_DARK_ACTIVE %>;
+        --project-theme-primary-dark-soft: <%= THEME_PRIMARY_DARK_SOFT %>;
+        --project-theme-primary-dark-rgb: <%= THEME_PRIMARY_DARK_RGB %>;
+        --project-theme-primary-dark-hover-rgb: <%= THEME_PRIMARY_DARK_HOVER_RGB
+          %>;
+        --project-theme-light: <%= THEME_COLOR_LIGHT %>;
+        --project-theme-dark: <%= THEME_COLOR_DARK %>;
+      }
+    </style>
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="mazey-npm-template" />
+    <meta property="og:site_name" content="<%= DISPLAY_NAME %>" />
     <meta property="og:title" content="<%= ROOT_TITLE %>" />
     <meta property="og:description" content="<%= ROOT_DESCRIPTION %>" />
     <meta property="og:url" content="<%= SITE_URL %>" />
@@ -30,7 +51,7 @@
     <script>
       (() => {
         try {
-          const key = "mazey-npm-template-theme";
+          const key = <%= THEME_STORAGE_KEY_JSON %>;
           const value = localStorage.getItem(key) || "system";
           const theme =
             value === "system"
@@ -73,7 +94,7 @@
               height="32"
               alt=""
             />
-            <span>mazey-npm-template</span>
+            <span><%= DISPLAY_NAME %></span>
           </a>
           <button
             class="navbar-toggler"
@@ -134,9 +155,9 @@
             src="<%= LOGO_URL %>"
             width="72"
             height="72"
-            alt="mazey-npm-template logo"
+            alt="<%= DISPLAY_NAME %> logo"
           />
-          <h1 id="hero-title">mazey-npm-template</h1>
+          <h1 id="hero-title"><%= DISPLAY_NAME %></h1>
           <p class="lead">
             A TypeScript npm library template that builds CommonJS, ES modules,
             a browser IIFE bundle, source maps, and declarations from one public
@@ -165,7 +186,7 @@
             </button>
           </div>
           <div class="install-command" aria-label="npm installation command">
-            <code>npm install mazey-npm-template</code>
+            <code><%= INSTALL_COMMAND %></code>
             <button class="btn" type="button" data-copy-install>
               Copy command
             </button>
@@ -253,9 +274,7 @@
                 TypeScript discovers the published declarations automatically;
                 no separate <code>@types</code> package is required.
               </p>
-              <pre
-                class="code-sample"
-              ><code>npm install mazey-npm-template</code></pre>
+              <pre class="code-sample"><code><%= INSTALL_COMMAND %></code></pre>
             </article>
             <article class="col-lg-6">
               <h3 class="h5">Browser CDN</h3>
@@ -265,9 +284,9 @@
               </p>
               <pre
                 class="code-sample"
-              ><code>&lt;script src="https://cdn.jsdelivr.net/npm/mazey-npm-template/lib/mazey-npm-template.min.js"&gt;&lt;/script&gt;
+              ><code>&lt;script src="https://cdn.jsdelivr.net/npm/<%= PACKAGE_NAME %>/lib/<%= BUNDLE_FILENAME %>"&gt;&lt;/script&gt;
 &lt;script&gt;
-  const message = MAZEY_NPM_TEMPLATE.createGreeting("browser");
+  const message = <%= IIFE_GLOBAL %>.createGreeting("browser");
 &lt;/script&gt;</code></pre>
             </article>
           </div>
@@ -289,7 +308,7 @@
             <div class="col-lg-7">
               <pre
                 class="code-sample"
-              ><code>import { createGreeting } from "mazey-npm-template";
+              ><code>import { createGreeting } from "<%= PACKAGE_NAME %>";
 
 createGreeting("Cheng");
 // "Hello, Cheng!"
@@ -339,7 +358,7 @@ createGreeting("community", { punctuation: "." });
             <dt class="col-sm-3">CommonJS</dt>
             <dd class="col-sm-9"><code>lib/index.cjs.js</code></dd>
             <dt class="col-sm-3">Browser IIFE</dt>
-            <dd class="col-sm-9"><code>lib/mazey-npm-template.min.js</code></dd>
+            <dd class="col-sm-9"><code>lib/<%= BUNDLE_FILENAME %></code></dd>
             <dt class="col-sm-3">Type declarations</dt>
             <dd class="col-sm-9"><code>lib/index.d.ts</code></dd>
           </dl>
@@ -379,7 +398,9 @@ createGreeting("community", { punctuation: "." });
       data-pwa-update
       hidden
     >
-      <span>A new version of the mazey-npm-template website is available.</span>
+      <span
+        >A new version of the <%= DISPLAY_NAME %> website is available.</span
+      >
       <button class="btn btn-primary btn-sm" type="button" data-pwa-update-now>
         Update now
       </button>
@@ -388,7 +409,7 @@ createGreeting("community", { punctuation: "." });
     <footer class="site-footer">
       <div class="container d-lg-flex justify-content-between gap-4">
         <p class="mb-3 mb-lg-0">
-          <strong>mazey-npm-template</strong><br />MIT-licensed TypeScript npm
+          <strong><%= DISPLAY_NAME %></strong><br />MIT-licensed TypeScript npm
           library template.
         </p>
         <nav aria-label="Footer navigation">

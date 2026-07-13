@@ -27,7 +27,7 @@
     "seo:validate": "node scripts/validate-seo.js",
     "pwa:validate": "node scripts/validate-pwa.js",
     "pwa:preview": "npm run docs && node scripts/preview-pages.js",
-    "lint": "eslint ./examples ./scripts ./site ./src ./test ./types",
+    "lint": "eslint ./examples ./scripts ./site ./src ./test ./types ./project.config.js",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

@@ -1,15 +1,15 @@
 :root,
 [data-bs-theme="light"] {
-  --mn-background: #f7f8fc;
+  --mn-background: var(--project-theme-light);
   --mn-surface: #ffffff;
   --mn-surface-muted: #eef1f8;
   --mn-text: #152033;
   --mn-muted: #536078;
   --mn-border: #d4daea;
-  --mn-primary: #5b3fd6;
-  --mn-primary-hover: #4229b5;
-  --mn-primary-active: #362097;
-  --mn-primary-soft: #ece8ff;
+  --mn-primary: var(--project-theme-primary);
+  --mn-primary-hover: var(--project-theme-primary-hover);
+  --mn-primary-active: var(--project-theme-primary-active);
+  --mn-primary-soft: var(--project-theme-primary-soft);
   --mn-accent: #dc7217;
   --mn-code-background: #111827;
   --mn-code-text: #eef2ff;
@@ -18,22 +18,22 @@
   --bs-body-bg: var(--mn-background);
   --bs-body-color: var(--mn-text);
   --bs-border-color: var(--mn-border);
-  --bs-primary-rgb: 91, 63, 214;
-  --bs-link-color-rgb: 91, 63, 214;
-  --bs-link-hover-color-rgb: 66, 41, 181;
+  --bs-primary-rgb: var(--project-theme-primary-rgb);
+  --bs-link-color-rgb: var(--project-theme-primary-rgb);
+  --bs-link-hover-color-rgb: var(--project-theme-primary-hover-rgb);
 }
 
 [data-bs-theme="dark"] {
-  --mn-background: #0d1220;
+  --mn-background: var(--project-theme-dark);
   --mn-surface: #151c2d;
   --mn-surface-muted: #1d263a;
   --mn-text: #edf1fb;
   --mn-muted: #b0bad0;
   --mn-border: #34405a;
-  --mn-primary: #a997ff;
-  --mn-primary-hover: #c3b7ff;
-  --mn-primary-active: #d9d2ff;
-  --mn-primary-soft: #29234c;
+  --mn-primary: var(--project-theme-primary-dark);
+  --mn-primary-hover: var(--project-theme-primary-dark-hover);
+  --mn-primary-active: var(--project-theme-primary-dark-active);
+  --mn-primary-soft: var(--project-theme-primary-dark-soft);
   --mn-accent: #ffb45f;
   --mn-code-background: #080c15;
   --mn-code-text: #f0f3ff;
@@ -42,9 +42,9 @@
   --bs-body-bg: var(--mn-background);
   --bs-body-color: var(--mn-text);
   --bs-border-color: var(--mn-border);
-  --bs-primary-rgb: 169, 151, 255;
-  --bs-link-color-rgb: 169, 151, 255;
-  --bs-link-hover-color-rgb: 195, 183, 255;
+  --bs-primary-rgb: var(--project-theme-primary-dark-rgb);
+  --bs-link-color-rgb: var(--project-theme-primary-dark-rgb);
+  --bs-link-hover-color-rgb: var(--project-theme-primary-dark-hover-rgb);
 }
 
 html {

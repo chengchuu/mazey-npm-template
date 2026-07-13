@@ -125,6 +125,12 @@ npm run dev
 The project website is served at <http://localhost:8080/>. The playground is available at
 <http://localhost:8080/playground/> and imports the public API directly from `src`.
 
+Package metadata remains in `package.json`. A package-safe helper derives bundle names without
+loading website settings, while shared repository, website, theme, SEO, and PWA settings flow through
+`project.config.js`. See
+[Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/CUSTOMIZE.md) for
+the post-fork checklist.
+
 Generate the complete GitHub Pages artifact, including the website, playground, API documentation,
 `robots.txt`, and `sitemap.xml`:
 

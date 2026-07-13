@@ -10,25 +10,16 @@ const {
 } = require("node:fs");
 const { createHash } = require("node:crypto");
 const path = require("node:path");
-const {
-  API_DESCRIPTION,
-  API_TITLE,
-  API_URL,
-  FAVICON_URL,
-  GITHUB_URL,
-  MANIFEST_URL,
-  NPM_URL,
-  SITE_URL,
-  THEME_COLOR_DARK,
-  THEME_COLOR_LIGHT,
-} = require("./site-config");
+const projectConfig = require("../project.config");
 
 const defaultRoot = path.resolve(__dirname, "..");
-const pwaIconFiles = [
-  "logo-dark-circle-transparent-192x192.png",
-  "logo-dark-circle-transparent-512x512.png",
-  "logo-dark-circle-transparent-maskable-512x512.png",
-];
+const { displayName } = projectConfig.brand;
+const { pages, theme } = projectConfig.site;
+const markerPrefix = projectConfig.site.markerPrefix;
+const seoStart = `<!-- ${markerPrefix}-seo:start -->`;
+const seoEnd = `<!-- ${markerPrefix}-seo:end -->`;
+const pwaUiStart = `<!-- ${markerPrefix}-pwa-ui:start -->`;
+const pwaUiEnd = `<!-- ${markerPrefix}-pwa-ui:end -->`;
 
 function escapeAttribute(value) {
   return value
@@ -38,11 +29,22 @@ function escapeAttribute(value) {
     .replaceAll(">", "&gt;");
 }
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function markerExpression(start, end) {
+  return new RegExp(
+    `${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`,
+    "g",
+  );
+}
+
 function apiPageUrl(relativeFile) {
   const route = relativeFile
     .replaceAll(path.sep, "/")
     .replace(/index\.html$/, "");
-  return new URL(route, API_URL).href;
+  return new URL(route, pages.api.url).href;
 }
 
 function normalizeHeadingOrder(html) {
@@ -62,15 +64,9 @@ function normalizeHeadingOrder(html) {
 
 function transformApiHtml(html, relativeFile) {
   const cleanHtml = html
-    .replace(
-      /<!-- mazey-npm-template-seo:start -->[\s\S]*?<!-- mazey-npm-template-seo:end -->/g,
-      "",
-    )
-    .replace(/<nav class="mazey-project-links"[\s\S]*?<\/nav>/g, "")
-    .replace(
-      /<!-- mazey-npm-template-pwa-ui:start -->[\s\S]*?<!-- mazey-npm-template-pwa-ui:end -->/g,
-      "",
-    );
+    .replace(markerExpression(seoStart, seoEnd), "")
+    .replace(/<nav class="site-project-links"[\s\S]*?<\/nav>/g, "")
+    .replace(markerExpression(pwaUiStart, pwaUiEnd), "");
   const isIndex = relativeFile === "index.html";
   const routeName = path.basename(relativeFile, ".html");
   const existingTitle = cleanHtml
@@ -82,19 +78,18 @@ function transformApiHtml(html, relativeFile) {
 
   const isGenericPage = ["hierarchy", "modules"].includes(routeName);
   const title = isIndex
-    ? API_TITLE
+    ? pages.api.title
     : isGenericPage
-      ? `mazey-npm-template ${routeName.replace(/^./, (value) => value.toUpperCase())} API Reference`
+      ? `${displayName} ${routeName.replace(/^./, (value) => value.toUpperCase())} API Reference`
       : `${existingTitle} API Reference`;
   const description = isIndex
-    ? API_DESCRIPTION
-    : `TypeScript API reference for ${title.replace(/ API Reference$/, "")} in mazey-npm-template.`;
+    ? pages.api.description
+    : `TypeScript API reference for ${title.replace(/ API Reference$/, "")} in ${displayName}.`;
   const url = apiPageUrl(relativeFile);
   const assetPrefix = "../".repeat(
     relativeFile.replaceAll(path.sep, "/").split("/").length,
   );
-  const themeInitializer =
-    '(()=>{try{const k="mazey-npm-template-theme",v=localStorage.getItem(k)||"system",t=v==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):v,r=t==="dark"?"dark":"light",m=document.querySelector(\'meta[name="theme-color"][data-theme-color]\');document.documentElement.dataset.bsTheme=r;document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r;if(m)m.content=r==="dark"?m.dataset.themeColorDark:m.dataset.themeColorLight;localStorage.setItem("tsd-theme",v==="system"?"os":v)}catch{}})();';
+  const themeInitializer = `(()=>{try{const k=${JSON.stringify(theme.storageKey)},v=localStorage.getItem(k)||"system",t=v==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):v,r=t==="dark"?"dark":"light",m=document.querySelector('meta[name="theme-color"][data-theme-color]');document.documentElement.dataset.bsTheme=r;document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r;if(m)m.content=r==="dark"?m.dataset.themeColorDark:m.dataset.themeColorLight;localStorage.setItem("tsd-theme",v==="system"?"os":v)}catch{}})();`;
   const structuredData = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "TechArticle",
@@ -103,27 +98,22 @@ function transformApiHtml(html, relativeFile) {
     url,
     isPartOf: {
       "@type": "WebSite",
-      name: "mazey-npm-template",
-      url: SITE_URL,
+      name: displayName,
+      url: pages.home.url,
     },
-    about: {
-      "@type": "SoftwareSourceCode",
-      name: "mazey-npm-template",
-      codeRepository: GITHUB_URL,
-      downloadUrl: NPM_URL,
-      programmingLanguage: "TypeScript",
-    },
+    about: projectConfig.seo.software,
   });
   const metadata = `<title>${escapeAttribute(title)}</title>${[
-    "<!-- mazey-npm-template-seo:start -->",
+    seoStart,
     `<meta name="description" content="${escapeAttribute(description)}"/>`,
     `<link rel="canonical" href="${url}"/>`,
-    `<link rel="icon" href="${FAVICON_URL}" type="image/png"/>`,
-    `<link rel="manifest" href="${MANIFEST_URL}"/>`,
-    `<meta name="theme-color" content="${THEME_COLOR_LIGHT}" data-theme-color data-theme-color-light="${THEME_COLOR_LIGHT}" data-theme-color-dark="${THEME_COLOR_DARK}"/>`,
+    `<link rel="icon" href="${projectConfig.assets.faviconUrl}" type="image/png"/>`,
+    `<link rel="manifest" href="${projectConfig.pwa.manifestUrl}"/>`,
+    `<meta name="theme-color" content="${theme.colorLight}" data-theme-color data-theme-color-light="${theme.colorLight}" data-theme-color-dark="${theme.colorDark}"/>`,
+    `<style>:root{--project-theme-primary:${theme.colorPrimary};--project-theme-primary-hover:${theme.primary.light.hover};--project-theme-primary-active:${theme.primary.light.active};--project-theme-primary-soft:${theme.primary.light.soft};--project-theme-primary-rgb:${theme.primary.light.rgb};--project-theme-primary-hover-rgb:${theme.primary.light.hoverRgb};--project-theme-primary-dark:${theme.primary.dark.base};--project-theme-primary-dark-hover:${theme.primary.dark.hover};--project-theme-primary-dark-active:${theme.primary.dark.active};--project-theme-primary-dark-soft:${theme.primary.dark.soft};--project-theme-primary-dark-rgb:${theme.primary.dark.rgb};--project-theme-primary-dark-hover-rgb:${theme.primary.dark.hoverRgb};--project-theme-light:${theme.colorLight};--project-theme-dark:${theme.colorDark}}</style>`,
     `<link rel="stylesheet" href="${assetPrefix}assets/api.css"/>`,
     '<meta property="og:type" content="website"/>',
-    '<meta property="og:site_name" content="mazey-npm-template"/>',
+    `<meta property="og:site_name" content="${escapeAttribute(displayName)}"/>`,
     `<meta property="og:title" content="${escapeAttribute(title)}"/>`,
     `<meta property="og:description" content="${escapeAttribute(description)}"/>`,
     `<meta property="og:url" content="${url}"/>`,
@@ -133,7 +123,7 @@ function transformApiHtml(html, relativeFile) {
     `<script type="application/ld+json">${structuredData}</script>`,
     `<script>${themeInitializer}</script>`,
     `<script src="${assetPrefix}assets/api.js" defer></script>`,
-    "<!-- mazey-npm-template-seo:end -->",
+    seoEnd,
   ].join("")}`;
 
   let output = cleanHtml
@@ -150,7 +140,7 @@ function transformApiHtml(html, relativeFile) {
     throw new Error(`Missing TypeDoc toolbar in ${relativeFile}`);
   output = output.replace(
     toolbar,
-    `${toolbar}<nav class="mazey-project-links" aria-label="Project links"><a href="${SITE_URL}">Project home</a><a href="${API_URL}">API overview</a><a href="${NPM_URL}">npm package</a><a href="${SITE_URL}#install-project-website" data-pwa-install-help>Website app help</a><span class="mazey-pwa-status" role="status" aria-live="polite" data-pwa-status></span><label class="theme-control"><span>Theme</span><select data-theme-select aria-label="Choose API documentation theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></nav>`,
+    `${toolbar}<nav class="site-project-links" aria-label="Project links"><a href="${pages.home.url}">Project home</a><a href="${pages.api.url}">API overview</a><a href="${projectConfig.urls.npm}">npm package</a><a href="${pages.home.url}#install-project-website" data-pwa-install-help>Website app help</a><span class="site-pwa-status" role="status" aria-live="polite" data-pwa-status></span><label class="theme-control"><span>Theme</span><select data-theme-select aria-label="Choose API documentation theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></nav>`,
   );
 
   output = output.replace(
@@ -160,17 +150,20 @@ function transformApiHtml(html, relativeFile) {
 
   if (isIndex) {
     output = output.replace(
-      /<div class="tsd-page-title">\s*<h1>mazey-npm-template<\/h1><\/div>/i,
+      new RegExp(
+        `<div class="tsd-page-title">\\s*<h1>${escapeRegExp(displayName)}<\\/h1><\\/div>`,
+        "i",
+      ),
       "",
     );
   }
   const pwaUi = [
-    "<!-- mazey-npm-template-pwa-ui:start -->",
-    '<aside class="mazey-pwa-update" aria-label="Website update" data-pwa-update hidden>',
-    "<span>A new version of the mazey-npm-template website is available.</span>",
+    pwaUiStart,
+    '<aside class="site-pwa-update" aria-label="Website update" data-pwa-update hidden>',
+    `<span>A new version of the ${escapeAttribute(displayName)} website is available.</span>`,
     '<button type="button" data-pwa-update-now>Update now</button>',
     "</aside>",
-    "<!-- mazey-npm-template-pwa-ui:end -->",
+    pwaUiEnd,
   ].join("");
   return normalizeHeadingOrder(output.replace("</body>", `${pwaUi}</body>`));
 }
@@ -214,28 +207,77 @@ function htmlAndAssetFiles(directory) {
   });
 }
 
+function createManifest() {
+  return {
+    name: projectConfig.pwa.name,
+    short_name: projectConfig.pwa.shortName,
+    description: projectConfig.pwa.description,
+    id: projectConfig.site.basePath,
+    start_url: projectConfig.site.basePath,
+    scope: projectConfig.site.basePath,
+    display: projectConfig.pwa.display,
+    background_color: projectConfig.pwa.backgroundColor,
+    theme_color: projectConfig.pwa.themeColor,
+    icons: projectConfig.pwa.icons.map(({ purpose, sizes, src, type }) => ({
+      src,
+      sizes,
+      type,
+      purpose,
+    })),
+  };
+}
+
+function replaceWorkerToken(source, token, value) {
+  if (!source.includes(token))
+    throw new Error(`Service worker token is missing: ${token}`);
+  const escaped = JSON.stringify(value).slice(1, -1);
+  return source.replaceAll(token, escaped);
+}
+
+function renderServiceWorker(source, cacheVersion) {
+  return [
+    ["__PWA_PROJECT_BASE__", projectConfig.site.basePath],
+    ["__PWA_CACHE_PREFIX__", projectConfig.pwa.cachePrefix],
+    ["__PWA_CACHE_VERSION__", cacheVersion],
+  ].reduce(
+    (rendered, [token, value]) => replaceWorkerToken(rendered, token, value),
+    source,
+  );
+}
+
+function writeSeoAssets(docs) {
+  writeFileSync(
+    path.join(docs, "robots.txt"),
+    `User-agent: *\nAllow: /\n\nSitemap: ${projectConfig.urls.sitemap}\n`,
+  );
+  const locations = [pages.home.url, pages.api.url, pages.playground.url]
+    .map((url) => `  <url>\n    <loc>${escapeAttribute(url)}</loc>\n  </url>`)
+    .join("\n");
+  writeFileSync(
+    path.join(docs, "sitemap.xml"),
+    `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${locations}\n</urlset>\n`,
+  );
+}
+
 function writePwaAssets(rootDir, docs) {
   const site = path.join(rootDir, "site");
   const images = path.join(rootDir, "images");
-  cpSync(
-    path.join(site, "manifest.webmanifest"),
+  writeFileSync(
     path.join(docs, "manifest.webmanifest"),
+    `${JSON.stringify(createManifest(), null, 2)}\n`,
   );
   mkdirSync(path.join(docs, "images"), { recursive: true });
-  for (const icon of pwaIconFiles) {
-    cpSync(path.join(images, icon), path.join(docs, "images", icon));
+  for (const icon of projectConfig.pwa.icons) {
+    cpSync(path.join(images, icon.file), path.join(docs, "images", icon.file));
   }
 
   const workerSource = readFileSync(
     path.join(site, "service-worker.js"),
     "utf8",
   );
-  const token = "__MAZEY_PWA_CACHE_VERSION__";
-  if (!workerSource.includes(token))
-    throw new Error(`Service worker cache token is missing: ${token}`);
   writeFileSync(
     path.join(docs, "service-worker.js"),
-    workerSource.replaceAll(token, fingerprintPages(docs)),
+    renderServiceWorker(workerSource, fingerprintPages(docs)),
   );
 }
 
@@ -250,11 +292,10 @@ function buildPages({ rootDir = defaultRoot } = {}) {
     path.join(dist, "playground", "index.html"),
     path.join(dist, "assets", "api.css"),
     path.join(dist, "assets", "api.js"),
-    path.join(site, "robots.txt"),
-    path.join(site, "sitemap.xml"),
-    path.join(site, "manifest.webmanifest"),
     path.join(site, "service-worker.js"),
-    ...pwaIconFiles.map((name) => path.join(rootDir, "images", name)),
+    ...projectConfig.pwa.icons.map((icon) =>
+      path.join(rootDir, "images", icon.file),
+    ),
   ];
   required.forEach(requirePath);
 
@@ -266,9 +307,7 @@ function buildPages({ rootDir = defaultRoot } = {}) {
   for (const name of readdirSync(dist)) {
     cpSync(path.join(dist, name), path.join(docs, name), { recursive: true });
   }
-  for (const name of ["robots.txt", "sitemap.xml"]) {
-    cpSync(path.join(site, name), path.join(docs, name));
-  }
+  writeSeoAssets(docs);
 
   for (const file of htmlFiles(api)) {
     const relative = path.relative(api, file);
@@ -282,7 +321,9 @@ if (require.main === module) buildPages();
 module.exports = {
   apiPageUrl,
   buildPages,
+  createManifest,
   fingerprintPages,
   normalizeHeadingOrder,
+  renderServiceWorker,
   transformApiHtml,
 };

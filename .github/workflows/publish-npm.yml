@@ -2,7 +2,6 @@ name: Publish npm Packages
 
 env:
   NODE_VERSION: "22"
-  PROJECT_NAME: "mazey-npm-template"
 
 permissions:
   contents: write
@@ -77,7 +76,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node scripts/change-package-name.js "@${{ github.repository_owner }}/${{ env.PROJECT_NAME }}"
+          PROJECT_NAME=$(node -p 'require("./scripts/project-config-utils").packageDetails(require("./package.json")).bundleBaseName')
+          node scripts/change-package-name.js "@${{ github.repository_owner }}/${PROJECT_NAME}"
           npm publish --registry=https://npm.pkg.github.com/
 
       - name: Restore modified files

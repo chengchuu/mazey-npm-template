@@ -1,7 +1,9 @@
 const { createReadStream, existsSync, statSync } = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
-const { PWA_BASE_PATH } = require("./site-config");
+const projectConfig = require("../project.config");
+
+const { basePath } = projectConfig.site;
 
 const docs = path.resolve(__dirname, "..", "docs");
 const host = "127.0.0.1";
@@ -27,10 +29,8 @@ function send(response, status, message) {
 function resolveRequest(requestUrl) {
   try {
     const url = new URL(requestUrl, `http://${host}:${port}`);
-    if (!url.pathname.startsWith(PWA_BASE_PATH)) return null;
-    const relative = decodeURIComponent(
-      url.pathname.slice(PWA_BASE_PATH.length),
-    );
+    if (!url.pathname.startsWith(basePath)) return null;
+    const relative = decodeURIComponent(url.pathname.slice(basePath.length));
     const candidate = path.resolve(docs, relative);
     if (candidate !== docs && !candidate.startsWith(`${docs}${path.sep}`))
       return null;
@@ -64,6 +64,6 @@ const server = http.createServer((request, response) => {
 
 server.listen(port, host, () => {
   console.log(
-    `PWA preview: http://${host}:${port}${PWA_BASE_PATH}\nPress Ctrl+C to stop.`,
+    `PWA preview: http://${host}:${port}${basePath}\nPress Ctrl+C to stop.`,
   );
 });

@@ -3,9 +3,20 @@
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const { pngDimensions } = require("../scripts/validate-pwa");
+const projectConfig = require("../project.config");
+const {
+  createManifest,
+  renderServiceWorker,
+} = require("../scripts/build-pages");
+const {
+  manifestMetadataFailures,
+  pngDimensions,
+} = require("../scripts/validate-pwa");
 
 const root = path.resolve(__dirname, "..");
+const siteOrigin = new URL(projectConfig.site.url).origin;
+const projectUrl = (relative = "") =>
+  new URL(relative, projectConfig.site.url).href;
 
 function evaluateWorker() {
   const listeners = {};
@@ -22,8 +33,8 @@ function evaluateWorker() {
       return true;
     }),
     keys: jest.fn(async () => [
-      "mazey-npm-template-site-old",
-      "mazey-npm-template-site-test-version",
+      `${projectConfig.pwa.cachePrefix}old`,
+      `${projectConfig.pwa.cachePrefix}test-version`,
       "unrelated-cache",
     ]),
     match: jest.fn(),
@@ -32,13 +43,13 @@ function evaluateWorker() {
   const self = {
     addEventListener: (name, listener) => (listeners[name] = listener),
     clients: { claim: jest.fn(async () => undefined) },
-    location: { origin: "https://chengchuu.github.io" },
+    location: { origin: siteOrigin },
     skipWaiting: jest.fn(),
   };
-  const source = readFileSync(
-    path.join(root, "site", "service-worker.js"),
-    "utf8",
-  ).replaceAll("__MAZEY_PWA_CACHE_VERSION__", "test-version");
+  const source = renderServiceWorker(
+    readFileSync(path.join(root, "site", "service-worker.js"), "utf8"),
+    "test-version",
+  );
   vm.runInNewContext(source, {
     URL,
     caches,
@@ -50,18 +61,35 @@ function evaluateWorker() {
 }
 
 test("manifest icon dimensions match their declarations", () => {
-  const manifest = JSON.parse(
-    readFileSync(path.join(root, "site", "manifest.webmanifest"), "utf8"),
-  );
-  expect(manifest.id).toBe("/mazey-npm-template/");
-  expect(manifest.start_url).toBe("/mazey-npm-template/");
-  expect(manifest.scope).toBe("/mazey-npm-template/");
+  const manifest = createManifest();
+  expect(manifest.id).toBe(projectConfig.site.basePath);
+  expect(manifest.start_url).toBe(projectConfig.site.basePath);
+  expect(manifest.scope).toBe(projectConfig.site.basePath);
   expect(manifest.display).toBe("standalone");
-  for (const icon of manifest.icons) {
-    const file = path.join(root, icon.src.replace("/mazey-npm-template/", ""));
+  for (const configuredIcon of projectConfig.pwa.icons) {
+    const icon = manifest.icons.find((item) => item.src === configuredIcon.src);
+    const file = path.join(root, "images", configuredIcon.file);
     const dimensions = pngDimensions(file);
     expect(`${dimensions.width}x${dimensions.height}`).toBe(icon.sizes);
   }
+});
+
+test("manifest validation rejects invalid metadata independently of configuration", () => {
+  const manifest = {
+    ...createManifest(),
+    short_name: " ",
+    display: "native-window",
+    theme_color: "purple-ish",
+    background_color: "#fff",
+  };
+  expect(manifestMetadataFailures(manifest)).toEqual(
+    expect.arrayContaining([
+      "Manifest short_name must be a non-empty string",
+      "Manifest display mode is invalid: native-window",
+      "Manifest theme_color must be a six-digit hex color",
+      "Manifest background_color must be a six-digit hex color",
+    ]),
+  );
 });
 
 test("activation removes only obsolete project caches", async () => {
@@ -70,7 +98,9 @@ test("activation removes only obsolete project caches", async () => {
   listeners.activate({ waitUntil: (promise) => (activation = promise) });
   await activation;
   expect(caches.delete).toHaveBeenCalledTimes(1);
-  expect(caches.delete).toHaveBeenCalledWith("mazey-npm-template-site-old");
+  expect(caches.delete).toHaveBeenCalledWith(
+    `${projectConfig.pwa.cachePrefix}old`,
+  );
   expect(self.clients.claim).toHaveBeenCalledTimes(1);
 });
 
@@ -85,15 +115,15 @@ test("fetch handling ignores non-GET, cross-origin, and out-of-scope requests", 
   });
 
   listeners.fetch({
-    request: request("https://chengchuu.github.io/mazey-npm-template/", "POST"),
+    request: request(projectConfig.site.url, "POST"),
     respondWith,
   });
   listeners.fetch({
-    request: request("https://cdn.example.com/mazey-npm-template/"),
+    request: request(`https://cdn.example.com${projectConfig.site.basePath}`),
     respondWith,
   });
   listeners.fetch({
-    request: request("https://chengchuu.github.io/another-project/"),
+    request: request(`${siteOrigin}/another-project/`),
     respondWith,
   });
   expect(respondWith).not.toHaveBeenCalled();
@@ -122,7 +152,9 @@ test.each([
         destination,
         method: "GET",
         mode,
-        url: `https://chengchuu.github.io/mazey-npm-template/assets/example.${destination === "script" ? "js" : "html"}`,
+        url: projectUrl(
+          `assets/example.${destination === "script" ? "js" : "html"}`,
+        ),
       },
       respondWith: (promise) => (responsePromise = promise),
     });
@@ -155,7 +187,7 @@ test.each([
         destination,
         method: "GET",
         mode: "no-cors",
-        url: `https://chengchuu.github.io/mazey-npm-template/assets/shared.${extension}`,
+        url: projectUrl(`assets/shared.${extension}`),
       },
       respondWith: (promise) => (responsePromise = promise),
     });
@@ -176,7 +208,9 @@ test("local images remain cache-first", async () => {
       destination: "image",
       method: "GET",
       mode: "no-cors",
-      url: "https://chengchuu.github.io/mazey-npm-template/images/logo-dark-circle-transparent-192x192.png",
+      url: projectConfig.pwa.icons[0].src.startsWith("/")
+        ? `${siteOrigin}${projectConfig.pwa.icons[0].src}`
+        : projectConfig.pwa.icons[0].src,
     },
     respondWith: (promise) => (responsePromise = promise),
   });

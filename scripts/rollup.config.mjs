@@ -7,12 +7,15 @@ import { rmSync } from "node:fs";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import pkg from "../package.json" with { type: "json" };
+import configUtils from "./project-config-utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const _resolve = (_path) => path.resolve(__dirname, _path);
-const pkgName = pkg.name;
-const iifeName = pkgName.replace(/-/g, "_").toUpperCase();
+const packageConfig = configUtils.packageDetails(pkg);
+const pkgName = packageConfig.name;
+const bundleBaseName = packageConfig.bundleBaseName;
+const iifeName = packageConfig.iifeGlobal;
 const pkgVersion =
   process.env.SCRIPTS_NPM_PACKAGE_VERSION || process.env.VERSION || "unknown";
 const debugMode = process.env.SCRIPTS_NPM_PACKAGE_DEBUG;
@@ -20,8 +23,8 @@ const inputResolve = _resolve("../src/index.ts");
 const banner =
   "/*!\n" +
   ` * ${pkgName} v${pkgVersion}\n` +
-  ` * (c) 2018-${new Date().getFullYear()} Cheng https://www.npmjs.com/package/mazey-npm-template\n` +
-  " * Released under the MIT License.\n" +
+  ` * (c) 2018-${new Date().getFullYear()} ${packageConfig.author.name || pkgName} https://www.npmjs.com/package/${pkgName}\n` +
+  ` * Released under the ${packageConfig.license || "MIT"} License.\n` +
   " */";
 const external = [];
 
@@ -91,7 +94,7 @@ if (debugMode !== "open") {
     terser({
       format: {
         // https://github.com/terser/terser#format-options
-        comments: /^!\n\s\*\smazey-npm-template/, // `'some'`/`false` to omit comments in the output
+        comments: /^!\n\s\*\s/, // `'some'`/`false` to omit comments in the output
       },
     }),
   );
@@ -125,7 +128,7 @@ export default [
     input: inputResolve,
     output: [
       {
-        file: _resolve(`../lib/${pkgName}.min.js`),
+        file: _resolve(`../lib/${bundleBaseName}.min.js`),
         format: "iife",
         name: iifeName,
         banner,

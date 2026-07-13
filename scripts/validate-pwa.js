@@ -1,12 +1,29 @@
 const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
 const path = require("node:path");
-const {
-  MANIFEST_URL,
-  PWA_BASE_PATH,
-  SERVICE_WORKER_URL,
-} = require("./site-config");
+const projectConfig = require("../project.config");
 
 const defaultRoot = path.resolve(__dirname, "..");
+const manifestDisplayModes = new Set([
+  "browser",
+  "fullscreen",
+  "minimal-ui",
+  "standalone",
+]);
+
+function manifestMetadataFailures(manifest) {
+  const failures = [];
+  for (const field of ["name", "short_name", "description"]) {
+    if (typeof manifest[field] !== "string" || !manifest[field].trim())
+      failures.push(`Manifest ${field} must be a non-empty string`);
+  }
+  if (!manifestDisplayModes.has(manifest.display))
+    failures.push(`Manifest display mode is invalid: ${manifest.display}`);
+  for (const field of ["theme_color", "background_color"]) {
+    if (!/^#[0-9a-f]{6}$/i.test(manifest[field] ?? ""))
+      failures.push(`Manifest ${field} must be a six-digit hex color`);
+  }
+  return failures;
+}
 
 function pngDimensions(file) {
   const contents = readFileSync(file);
@@ -61,31 +78,41 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
   }
 
   if (manifest) {
-    for (const field of ["name", "short_name"]) {
-      if (typeof manifest[field] !== "string" || !manifest[field].trim())
-        fail(`Manifest ${field} must be a non-empty string`);
-    }
+    manifestMetadataFailures(manifest).forEach(fail);
+    if (manifest.name !== projectConfig.pwa.name)
+      fail(`Manifest name must be ${projectConfig.pwa.name}`);
+    if (manifest.short_name !== projectConfig.pwa.shortName)
+      fail(`Manifest short_name must be ${projectConfig.pwa.shortName}`);
+    if (manifest.description !== projectConfig.pwa.description)
+      fail("Manifest description must match project configuration");
     for (const field of ["id", "start_url", "scope"]) {
-      if (manifest[field] !== PWA_BASE_PATH)
-        fail(`Manifest ${field} must be ${PWA_BASE_PATH}`);
+      if (manifest[field] !== projectConfig.site.basePath)
+        fail(`Manifest ${field} must be ${projectConfig.site.basePath}`);
     }
-    if (manifest.display !== "standalone")
-      fail('Manifest display must be "standalone"');
-    for (const field of ["theme_color", "background_color"]) {
-      if (!/^#[0-9a-f]{6}$/i.test(manifest[field] ?? ""))
-        fail(`Manifest ${field} must be a six-digit hex color`);
-    }
+    if (manifest.display !== projectConfig.pwa.display)
+      fail(`Manifest display must be ${projectConfig.pwa.display}`);
+    if (manifest.theme_color !== projectConfig.pwa.themeColor)
+      fail(`Manifest theme_color must be ${projectConfig.pwa.themeColor}`);
+    if (manifest.background_color !== projectConfig.pwa.backgroundColor)
+      fail(
+        `Manifest background_color must be ${projectConfig.pwa.backgroundColor}`,
+      );
 
     const requiredSizes = new Set(["192x192", "512x512"]);
     let hasMaskable = false;
     for (const icon of manifest.icons ?? []) {
-      if (!icon.src?.startsWith(PWA_BASE_PATH)) {
-        fail(`Manifest icon URL must start with ${PWA_BASE_PATH}: ${icon.src}`);
+      if (!icon.src?.startsWith(projectConfig.site.basePath)) {
+        fail(
+          `Manifest icon URL must start with ${projectConfig.site.basePath}: ${icon.src}`,
+        );
         continue;
       }
       if (icon.type !== "image/png")
         fail(`Manifest icon must use image/png: ${icon.src}`);
-      const iconFile = path.join(docs, icon.src.slice(PWA_BASE_PATH.length));
+      const iconFile = path.join(
+        docs,
+        icon.src.slice(projectConfig.site.basePath.length),
+      );
       if (!existsSync(iconFile)) {
         fail(`Manifest icon is missing: ${icon.src}`);
         continue;
@@ -119,8 +146,11 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       continue;
     }
     const html = readFileSync(file, "utf8");
-    if (findTag(html, "link", "rel", "manifest")?.href !== MANIFEST_URL)
-      fail(`${label} must link ${MANIFEST_URL}`);
+    if (
+      findTag(html, "link", "rel", "manifest")?.href !==
+      projectConfig.pwa.manifestUrl
+    )
+      fail(`${label} must link ${projectConfig.pwa.manifestUrl}`);
     const themeColor = findTag(html, "meta", "name", "theme-color");
     if (!themeColor?.content || !("data-theme-color" in themeColor))
       fail(`${label} is missing dynamic theme-color metadata`);
@@ -155,10 +185,22 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
   if (!existsSync(workerFile)) fail("Service worker is missing from docs");
   else {
     const worker = readFileSync(workerFile, "utf8");
-    if (worker.includes("__MAZEY_PWA_CACHE_VERSION__"))
-      fail("Service worker contains an unresolved cache version token");
-    if (!worker.includes(`const PROJECT_BASE = "${PWA_BASE_PATH}"`))
-      fail(`Service worker project base must be ${PWA_BASE_PATH}`);
+    if (/__PWA_[A-Z_]+__/.test(worker))
+      fail("Service worker contains an unresolved configuration token");
+    if (
+      !worker.includes(`const PROJECT_BASE = "${projectConfig.site.basePath}"`)
+    )
+      fail(
+        `Service worker project base must be ${projectConfig.site.basePath}`,
+      );
+    if (
+      !worker.includes(
+        `const CACHE_PREFIX = "${projectConfig.pwa.cachePrefix}"`,
+      )
+    )
+      fail(
+        `Service worker cache prefix must be ${projectConfig.pwa.cachePrefix}`,
+      );
     if (!worker.includes('request.method === "GET"'))
       fail("Service worker must ignore non-GET requests");
     if (!worker.includes("url.origin === self.location.origin"))
@@ -173,10 +215,14 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       .filter((file) => file.endsWith(".js") && !file.endsWith(".map"))
       .map((file) => readFileSync(file, "utf8"))
       .join("\n");
-    if (!browserCode.includes(SERVICE_WORKER_URL))
-      fail(`Compiled registration must use ${SERVICE_WORKER_URL}`);
-    if (!browserCode.includes(PWA_BASE_PATH))
-      fail(`Compiled registration must use scope ${PWA_BASE_PATH}`);
+    if (!browserCode.includes(projectConfig.pwa.serviceWorkerUrl))
+      fail(
+        `Compiled registration must use ${projectConfig.pwa.serviceWorkerUrl}`,
+      );
+    if (!browserCode.includes(projectConfig.site.basePath))
+      fail(
+        `Compiled registration must use scope ${projectConfig.site.basePath}`,
+      );
   }
 
   const sourceDirectory = path.join(rootDir, "src");
@@ -207,4 +253,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { pngDimensions, validatePwa };
+module.exports = { manifestMetadataFailures, pngDimensions, validatePwa };

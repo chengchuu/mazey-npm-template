@@ -1,12 +1,10 @@
-export const THEME_STORAGE_KEY = "mazey-npm-template-theme";
-
 export type ThemePreference = "system" | "light" | "dark";
 
 const preferences = new Set<ThemePreference>(["system", "light", "dark"]);
 
-function readPreference(storage: Storage): ThemePreference {
+function readPreference(storage: Storage, storageKey: string): ThemePreference {
   try {
-    const value = storage.getItem(THEME_STORAGE_KEY) as ThemePreference | null;
+    const value = storage.getItem(storageKey) as ThemePreference | null;
     return value && preferences.has(value) ? value : "system";
   } catch {
     return "system";
@@ -14,6 +12,7 @@ function readPreference(storage: Storage): ThemePreference {
 }
 
 export function initializeThemeControls(
+  storageKey: string,
   documentRef: Document = document,
   windowRef: Window = window,
 ): () => void {
@@ -41,7 +40,7 @@ export function initializeThemeControls(
     }
 
     try {
-      if (persist) windowRef.localStorage.setItem(THEME_STORAGE_KEY, selected);
+      if (persist) windowRef.localStorage.setItem(storageKey, selected);
       windowRef.localStorage.setItem(
         "tsd-theme",
         selected === "system" ? "os" : selected,
@@ -64,12 +63,12 @@ export function initializeThemeControls(
     apply(control.value as ThemePreference, true);
   };
   const handleSystemTheme = () => {
-    if (readPreference(windowRef.localStorage) === "system")
+    if (readPreference(windowRef.localStorage, storageKey) === "system")
       apply("system", false);
   };
 
   root.dataset.themeControlsReady = "true";
-  apply(readPreference(windowRef.localStorage), false);
+  apply(readPreference(windowRef.localStorage, storageKey), false);
   documentRef.addEventListener("change", handleChange);
   media.addEventListener?.("change", handleSystemTheme);
 

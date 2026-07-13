@@ -5,10 +5,10 @@ import "../images/logo-dark-circle-transparent-32x32.png";
 import "../images/logo-dark-circle-transparent-200x200.png";
 import "./site.css";
 import { initializeNavigation } from "./navigation";
-import { SITE_PWA_CONFIG } from "./pwa-config";
 import { initializeSitePwa } from "./pwa";
+import { SITE_RUNTIME_CONFIG } from "./runtime-config";
 import { initializeThemeControls } from "./theme";
 
-initializeThemeControls();
+initializeThemeControls(SITE_RUNTIME_CONFIG.themeStorageKey);
 initializeNavigation(Collapse);
-initializeSitePwa(SITE_PWA_CONFIG);
+initializeSitePwa(SITE_RUNTIME_CONFIG.pwa);

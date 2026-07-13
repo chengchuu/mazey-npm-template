@@ -1,4 +1,5 @@
 export interface SitePwaConfig {
+  appName: string;
   enabled: boolean;
   scope: string;
   serviceWorkerUrl: string;
@@ -66,6 +67,7 @@ export function initializeInstallExperience(
   documentRef: Document,
   windowRef: Window,
   navigatorRef: NavigatorWithStandalone,
+  appName: string,
 ): () => void {
   const installButtons = Array.from(
     documentRef.querySelectorAll<HTMLButtonElement>("[data-pwa-install]"),
@@ -131,7 +133,7 @@ export function initializeInstallExperience(
 
   const handleInstalled = () => {
     showInstalledState();
-    announce("mazey-npm-template was installed.");
+    announce(`${appName} was installed.`);
   };
   const handleDisplayMode = () => {
     if (isStandaloneMode(windowRef, navigatorRef)) showInstalledState();
@@ -160,6 +162,7 @@ export function monitorServiceWorkerUpdates(
   documentRef: Document,
   navigatorRef: Navigator,
   windowRef: Window,
+  appName: string,
 ): () => void {
   const notice = documentRef.querySelector<HTMLElement>("[data-pwa-update]");
   const updateButton = documentRef.querySelector<HTMLButtonElement>(
@@ -173,7 +176,7 @@ export function monitorServiceWorkerUpdates(
   const showUpdate = (worker: ServiceWorker) => {
     waitingWorker = worker;
     if (notice) notice.hidden = false;
-    announce("A new version of the mazey-npm-template website is available.");
+    announce(`A new version of the ${appName} website is available.`);
   };
 
   const handleStateChange = () => {
@@ -246,11 +249,12 @@ export async function registerSiteServiceWorker(
       documentRef,
       navigatorRef,
       windowRef,
+      config.appName,
     );
     return registration;
   } catch (error) {
     console.error(
-      "Failed to register the mazey-npm-template service worker.",
+      `Failed to register the ${config.appName} service worker.`,
       error,
     );
     return null;
@@ -269,7 +273,7 @@ export function initializeSitePwa(config: SitePwaConfig): void {
   if (root.dataset.pwaReady === "true") return;
   root.dataset.pwaReady = "true";
 
-  initializeInstallExperience(document, window, navigator);
+  initializeInstallExperience(document, window, navigator, config.appName);
   if (!shouldRegisterSiteServiceWorker(config, window.location, navigator))
     return;
 

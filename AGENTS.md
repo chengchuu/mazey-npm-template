@@ -16,20 +16,23 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `types/global.d.ts`: ambient browser type augmentations.
 - `test`: Jest tests for public behavior.
 - `examples`: source-controlled playground HTML and TypeScript that exercise the package root API.
+- `project.config.js`: central package-derived repository, site, theme, SEO, browser bundle, and PWA
+  configuration used by build tooling.
+- `scripts/project-config-utils.js`: pure package identity and GitHub repository normalization
+  helpers; it contains no editable project settings.
 - `site/index.html` and `site/index.ts`: landing-page template and page-specific behavior.
 - `site/shared.ts`, `site/navigation.ts`, and `site/theme.ts`: shared Bootstrap, navigation, and theme
   behavior for the website and playground.
-- `site/pwa.ts` and `site/pwa-config.ts`: website-only install, registration, installed-state, and
-  service-worker update behavior.
-- `site/manifest.webmanifest` and `site/service-worker.js`: source PWA manifest and worker.
+- `site/pwa.ts` and `site/runtime-config.ts`: website-only install, registration, installed-state,
+  service-worker update behavior, and Webpack-injected runtime configuration.
+- `site/service-worker.js`: source caching policy with build-time project, cache-prefix, and version
+  tokens.
 - `site/api.ts` and `site/api.css`: behavior and styling added to generated TypeDoc pages.
 - `images`: source logo, favicon, and PWA icon assets copied or emitted by the site build.
 - `scripts/rollup.config.mjs`: production JavaScript and declaration builds.
 - `scripts/webpack.config.dev.js`: website/playground build and development server.
 - `scripts/build-pages.js`: combines Webpack and TypeDoc output, transforms API HTML, and emits PWA
   files into the final Pages artifact.
-- `scripts/site-config.js`: canonical public URLs, the GitHub Pages base path, local asset paths,
-  theme colors, PWA URLs, and shared SEO metadata.
 - `scripts/preview-pages.js`: project-subpath-aware static server for the generated `docs` artifact.
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
@@ -103,9 +106,18 @@ up the global augmentations. Do not publish an unreferenced ambient declaration 
 - Prefer `node:` specifiers for Node built-ins when touching scripts.
 - Do not introduce module-load browser side effects that fail in Node-based tests or bundlers.
 
+`package.json` is authoritative for npm name, version, description, repository, homepage, author, and
+license. `scripts/project-config-utils.js` provides package-safe identity derivation without loading
+website settings. `project.config.js` derives repository identity, Pages paths, npm/GitHub URLs,
+install commands, storage/cache keys, and asset URLs while explicitly owning the complete theme
+palette, page metadata, and icon filenames. Keep this configuration build-only and never import it
+from `src`.
+
 Rollup owns production output. Preserve CJS, ESM, IIFE, source maps, declaration generation, the
 license banner, and minification controlled by `SCRIPTS_NPM_PACKAGE_DEBUG`. Babel helpers are
 bundled, and generated JavaScript must not acquire undeclared runtime helper imports.
+Rollup may use the pure package helper, but it must not import `project.config.js` or require valid
+website/PWA metadata to build the npm package.
 
 Webpack owns the public landing page, local development server, and interactive playground.
 `npm run dev` serves the website on port 8080 and the playground at `/playground/`. Keep
@@ -123,6 +135,10 @@ Webpack has two intentional URL modes:
 Keep `site/shared.ts` limited to behavior shared by the homepage and playground. API documentation
 loads its own `site/api.ts` entry after TypeDoc generation. None of these website entries may be
 imported by `src/index.ts` or emitted into the npm package.
+
+Webpack serializes the browser-safe subset of `project.config.js` as `__SITE_RUNTIME_CONFIG__`.
+Browser modules consume it through `site/runtime-config.ts`; do not reintroduce separate hard-coded
+package names, install commands, theme keys, PWA paths, or update labels in browser TypeScript.
 
 Never edit generated files under `lib`, `dist-dev`, `docs`, or `coverage` as source changes. Rebuild
 them through the owning command when verification needs them.
@@ -201,36 +217,38 @@ bundle filename, and IIFE global can be different values.
 TypeDoc configuration lives in `tsconfig.json`. `npm run docs` generates TypeDoc at `./docs/api`,
 builds the Webpack website and playground into `dist-dev`, runs `scripts/build-pages.js`, and
 validates the final artifact. The Pages assembly copies Webpack output, preserves the TypeDoc API
-tree, deterministically transforms every API HTML page, copies SEO/PWA static files, and replaces the
-service-worker cache token with a content fingerprint. Stable public routes are `/`,
+tree, deterministically transforms every API HTML page, generates the manifest and crawler files,
+and replaces service-worker configuration tokens plus the content fingerprint. Stable public routes are `/`,
 `/playground/`, and `/api/` below the project Pages base path. Keep the TypeDoc hosted URL at
 `https://chengchuu.github.io/mazey-npm-template/api/`, preserve the favicon, and keep all canonical
-URLs synchronized through `scripts/site-config.js`.
+URLs synchronized through `project.config.js`.
 
-SEO source files live under `site`. Do not edit generated output under `docs`; update source
-templates, the deterministic API transformation, or build scripts instead. The final artifact must
+SEO metadata comes from `project.config.js`, while page content lives under `site` and `examples`.
+Do not edit generated output under `docs`; update source templates, central configuration, the
+deterministic API transformation, or build scripts instead. The final artifact must
 include `robots.txt`, `sitemap.xml`, unique page metadata, one primary heading per page, crawlable
 content, and working project-subpath links. Keep theme values `system`, `light`, and `dark` stored
 under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap's
 `data-bs-theme` attribute. `site/theme.ts` also keeps the browser's theme-color metadata and
 TypeDoc's `tsd-theme` preference synchronized.
 
-Canonical URLs, Open Graph URLs, and structured data should use the production `SITE_URL`. Assets
+Canonical URLs, Open Graph URLs, and structured data should use the production site URL. Assets
 that the browser must load from the current deployment, including the favicon, manifest, worker,
 and PWA icons, must use the project-root `/mazey-npm-template/` base path instead of a hard-coded
 `https://chengchuu.github.io` origin. This keeps both GitHub Pages and
 `http://127.0.0.1:4173/mazey-npm-template/` working. Webpack may override image URLs with its current
 `pagesBase` for ordinary port-8080 development.
 
-PWA sources live under `site`: `manifest.webmanifest`, `service-worker.js`, and browser-only
-registration/install logic. `scripts/build-pages.js` versions and emits the worker at the project
-root. Keep the PWA identity, start URL, worker registration, and scope at `/mazey-npm-template/`.
+PWA source behavior lives under `site`: `service-worker.js` and browser-only registration/install
+logic. `scripts/build-pages.js` generates the manifest, injects worker configuration, versions the
+cache, and emits both at the project root. Keep the PWA identity, start URL, worker registration, and
+scope at `/mazey-npm-template/`.
 Normal `npm run dev` must not register the production worker; use `npm run pwa:preview` for local
 production-like testing. Never move PWA registration into `src` or package output.
 
 Preserve the current PWA behavior:
 
-- The manifest provides 192x192 and 512x512 PNG icons plus a padded maskable 512x512 icon.
+- The generated manifest provides 192x192 and 512x512 PNG icons plus a padded maskable 512x512 icon.
 - The homepage and playground may expose an accessible `Install app` button only after the browser
   fires `beforeinstallprompt`; TypeDoc API pages intentionally do not show an install button.
 - All three entry experiences keep an update notice, explicit `Update now` action, and live status
@@ -262,14 +280,15 @@ small, reversible changes over broad cleanup unrelated to the request.
 ## Publishing And CI
 
 The npm publishing workflow is `.github/workflows/publish-npm.yml`. It tests before publishing to
-npm and GitHub Packages, temporarily scopes the package to
-`@${{ github.repository_owner }}/mazey-npm-template`, restores modified files, and creates a version
-tag.
+npm and GitHub Packages, derives the filename-safe package base from `package.json` through the pure
+configuration helper, temporarily scopes the package to the repository owner, restores modified
+files, and creates a version tag.
 
 - Keep `contents: write` for pushing release tags.
 - Keep `packages: write` for GitHub Packages publishing.
 - Use `github.repository_owner` for the package scope; `github.actor` may be a bot or contributor.
-- Keep `PROJECT_NAME` synchronized with the normal package name.
+- Keep the GitHub Packages name derived through `scripts/project-config-utils.js`; do not add a
+  duplicate workflow constant or load website configuration during package publishing.
 - Do not expose registry tokens in logs or committed configuration.
 - Do not publish, push tags, or trigger releases unless the user explicitly requests it.
 
@@ -296,7 +315,8 @@ PWA output, uploads `docs`, and deploys through the `github-pages` environment.
 
 Do not copy package-specific source code, repository URLs, or API names into this project during a
 rename. A broader rename requires checking `package.json`, Rollup output naming, source metadata,
-README links, workflows, and tests together.
+README links, workflows, and tests together. Follow `CUSTOMIZE.md`; most identity and deployment
+values should flow from `package.json` and `project.config.js` rather than manual replacements.
 
 ## Change Discipline
 

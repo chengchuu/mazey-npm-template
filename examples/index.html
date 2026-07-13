@@ -7,7 +7,9 @@
     <meta name="description" content="<%= PLAYGROUND_DESCRIPTION %>" />
     <link rel="canonical" href="<%= PLAYGROUND_URL %>" />
     <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
+    <% if (MANIFEST_URL) { %>
     <link rel="manifest" href="<%= MANIFEST_URL %>" />
+    <% } %>
     <meta
       name="theme-color"
       content="<%= THEME_COLOR_LIGHT %>"
@@ -15,8 +17,27 @@
       data-theme-color-light="<%= THEME_COLOR_LIGHT %>"
       data-theme-color-dark="<%= THEME_COLOR_DARK %>"
     />
+    <style>
+      :root {
+        --project-theme-primary: <%= THEME_COLOR_PRIMARY %>;
+        --project-theme-primary-hover: <%= THEME_PRIMARY_HOVER %>;
+        --project-theme-primary-active: <%= THEME_PRIMARY_ACTIVE %>;
+        --project-theme-primary-soft: <%= THEME_PRIMARY_SOFT %>;
+        --project-theme-primary-rgb: <%= THEME_PRIMARY_RGB %>;
+        --project-theme-primary-hover-rgb: <%= THEME_PRIMARY_HOVER_RGB %>;
+        --project-theme-primary-dark: <%= THEME_PRIMARY_DARK %>;
+        --project-theme-primary-dark-hover: <%= THEME_PRIMARY_DARK_HOVER %>;
+        --project-theme-primary-dark-active: <%= THEME_PRIMARY_DARK_ACTIVE %>;
+        --project-theme-primary-dark-soft: <%= THEME_PRIMARY_DARK_SOFT %>;
+        --project-theme-primary-dark-rgb: <%= THEME_PRIMARY_DARK_RGB %>;
+        --project-theme-primary-dark-hover-rgb: <%= THEME_PRIMARY_DARK_HOVER_RGB
+          %>;
+        --project-theme-light: <%= THEME_COLOR_LIGHT %>;
+        --project-theme-dark: <%= THEME_COLOR_DARK %>;
+      }
+    </style>
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="mazey-npm-template" />
+    <meta property="og:site_name" content="<%= DISPLAY_NAME %>" />
     <meta property="og:title" content="<%= PLAYGROUND_TITLE %>" />
     <meta property="og:description" content="<%= PLAYGROUND_DESCRIPTION %>" />
     <meta property="og:url" content="<%= PLAYGROUND_URL %>" />
@@ -29,7 +50,7 @@
     <script>
       (() => {
         try {
-          const key = "mazey-npm-template-theme";
+          const key = <%= THEME_STORAGE_KEY_JSON %>;
           const value = localStorage.getItem(key) || "system";
           const theme =
             value === "system"
@@ -72,7 +93,7 @@
               height="32"
               alt=""
             />
-            <span>mazey-npm-template</span>
+            <span><%= DISPLAY_NAME %></span>
           </a>
           <button
             class="navbar-toggler"
@@ -255,7 +276,9 @@
       data-pwa-update
       hidden
     >
-      <span>A new version of the mazey-npm-template website is available.</span>
+      <span
+        >A new version of the <%= DISPLAY_NAME %> website is available.</span
+      >
       <button class="btn btn-primary btn-sm" type="button" data-pwa-update-now>
         Update now
       </button>
@@ -275,7 +298,7 @@
     <footer class="site-footer">
       <div class="container d-lg-flex justify-content-between gap-4">
         <p class="mb-3 mb-lg-0">
-          <strong>mazey-npm-template playground</strong><br />Runs the public
+          <strong><%= DISPLAY_NAME %> playground</strong><br />Runs the public
           greeting API in your browser.
         </p>
         <nav aria-label="Footer navigation">

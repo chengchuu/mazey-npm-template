@@ -1,13 +1,16 @@
 /** @jest-environment jsdom */
 
 const { initializeNavigation } = require("../site/navigation");
-const { THEME_STORAGE_KEY, initializeThemeControls } = require("../site/theme");
+const { initializeThemeControls } = require("../site/theme");
+const projectConfig = require("../project.config");
+
+const { colorDark, colorLight, storageKey } = projectConfig.site.theme;
 
 test("theme selection follows the system and persists an explicit choice", () => {
   document.documentElement.removeAttribute("data-theme-controls-ready");
   document.head.innerHTML = `
-    <meta name="theme-color" content="#f7f8fc" data-theme-color
-      data-theme-color-light="#f7f8fc" data-theme-color-dark="#0d1220">
+    <meta name="theme-color" content="${colorLight}" data-theme-color
+      data-theme-color-light="${colorLight}" data-theme-color-dark="${colorDark}">
   `;
   document.body.innerHTML = `
     <label>Theme
@@ -28,22 +31,22 @@ test("theme selection follows the system and persists an explicit choice", () =>
     }),
   });
   localStorage.clear();
-  localStorage.setItem(THEME_STORAGE_KEY, "system");
-  const cleanup = initializeThemeControls();
+  localStorage.setItem(storageKey, "system");
+  const cleanup = initializeThemeControls(storageKey);
   const select = document.querySelector("[data-theme-select]");
 
   expect(document.documentElement.dataset.bsTheme).toBe("dark");
   expect(document.querySelector('meta[name="theme-color"]').content).toBe(
-    "#0d1220",
+    colorDark,
   );
   expect(select.value).toBe("system");
   select.value = "light";
   select.dispatchEvent(new Event("change", { bubbles: true }));
   expect(document.documentElement.dataset.bsTheme).toBe("light");
   expect(document.querySelector('meta[name="theme-color"]').content).toBe(
-    "#f7f8fc",
+    colorLight,
   );
-  expect(localStorage.getItem(THEME_STORAGE_KEY)).toBe("light");
+  expect(localStorage.getItem(storageKey)).toBe("light");
   expect(localStorage.getItem("tsd-theme")).toBe("light");
   expect(mediaListeners).toHaveLength(1);
   cleanup();

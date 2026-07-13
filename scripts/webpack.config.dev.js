@@ -2,17 +2,62 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const path = require("node:path");
 const webpack = require("webpack");
-const siteConfig = require("./site-config");
+const projectConfig = require("../project.config");
 
 const _resolve = (_path) => path.resolve(__dirname, _path);
 const pagesBase =
-  process.env.GITHUB_PAGES === "true" ? "/mazey-npm-template/" : "/";
+  process.env.GITHUB_PAGES === "true" ? projectConfig.site.basePath : "/";
 const pwaEnabled =
   process.env.GITHUB_PAGES === "true" || process.env.PWA_ENABLED === "true";
 const templateParameters = {
-  ...siteConfig,
-  FAVICON_URL: `${pagesBase}images/logo-dark-circle-transparent-32x32.png`,
-  LOGO_URL: `${pagesBase}images/logo-dark-circle-transparent-200x200.png`,
+  API_URL: projectConfig.site.pages.api.url,
+  BUNDLE_FILENAME: `${projectConfig.package.bundleBaseName}.min.js`,
+  DISPLAY_NAME: projectConfig.brand.displayName,
+  FAVICON_URL: `${pagesBase}images/${projectConfig.assets.faviconFile}`,
+  GITHUB_URL: projectConfig.urls.github,
+  IIFE_GLOBAL: projectConfig.package.iifeGlobal,
+  INSTALL_COMMAND: projectConfig.package.installCommand,
+  LICENSE_URL: projectConfig.urls.license,
+  LOGO_URL: `${pagesBase}images/${projectConfig.assets.logoFile}`,
+  MANIFEST_URL: pwaEnabled ? projectConfig.pwa.manifestUrl : null,
+  NPM_URL: projectConfig.urls.npm,
+  PACKAGE_NAME: projectConfig.package.name,
+  PLAYGROUND_DESCRIPTION: projectConfig.site.pages.playground.description,
+  PLAYGROUND_JSON_LD: JSON.stringify(projectConfig.seo.playgroundJsonLd),
+  PLAYGROUND_TITLE: projectConfig.site.pages.playground.title,
+  PLAYGROUND_URL: projectConfig.site.pages.playground.url,
+  ROOT_DESCRIPTION: projectConfig.site.pages.home.description,
+  ROOT_JSON_LD: JSON.stringify(projectConfig.seo.rootJsonLd),
+  ROOT_TITLE: projectConfig.site.pages.home.title,
+  SITEMAP_URL: projectConfig.urls.sitemap,
+  SITE_URL: projectConfig.site.url,
+  THEME_COLOR_DARK: projectConfig.site.theme.colorDark,
+  THEME_COLOR_LIGHT: projectConfig.site.theme.colorLight,
+  THEME_COLOR_PRIMARY: projectConfig.site.theme.colorPrimary,
+  THEME_PRIMARY_ACTIVE: projectConfig.site.theme.primary.light.active,
+  THEME_PRIMARY_DARK: projectConfig.site.theme.primary.dark.base,
+  THEME_PRIMARY_DARK_ACTIVE: projectConfig.site.theme.primary.dark.active,
+  THEME_PRIMARY_DARK_HOVER: projectConfig.site.theme.primary.dark.hover,
+  THEME_PRIMARY_DARK_HOVER_RGB: projectConfig.site.theme.primary.dark.hoverRgb,
+  THEME_PRIMARY_DARK_RGB: projectConfig.site.theme.primary.dark.rgb,
+  THEME_PRIMARY_DARK_SOFT: projectConfig.site.theme.primary.dark.soft,
+  THEME_PRIMARY_HOVER: projectConfig.site.theme.primary.light.hover,
+  THEME_PRIMARY_HOVER_RGB: projectConfig.site.theme.primary.light.hoverRgb,
+  THEME_PRIMARY_RGB: projectConfig.site.theme.primary.light.rgb,
+  THEME_PRIMARY_SOFT: projectConfig.site.theme.primary.light.soft,
+  THEME_STORAGE_KEY_JSON: JSON.stringify(projectConfig.site.theme.storageKey),
+};
+const runtimeConfig = {
+  packageName: projectConfig.package.name,
+  displayName: projectConfig.brand.displayName,
+  installCommand: projectConfig.package.installCommand,
+  themeStorageKey: projectConfig.site.theme.storageKey,
+  pwa: {
+    appName: projectConfig.brand.displayName,
+    enabled: pwaEnabled,
+    scope: projectConfig.site.basePath,
+    serviceWorkerUrl: projectConfig.pwa.serviceWorkerUrl,
+  },
 };
 
 module.exports = {
@@ -66,9 +111,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      __PWA_ENABLED__: JSON.stringify(pwaEnabled),
-      __PWA_SCOPE__: JSON.stringify(siteConfig.PWA_BASE_PATH),
-      __PWA_SERVICE_WORKER_URL__: JSON.stringify(siteConfig.SERVICE_WORKER_URL),
+      __SITE_RUNTIME_CONFIG__: JSON.stringify(runtimeConfig),
     }),
     new MiniCssExtractPlugin({
       filename: "assets/[name].css",

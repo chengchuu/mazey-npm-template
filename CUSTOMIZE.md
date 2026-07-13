@@ -26,6 +26,11 @@ The Pages base path comes from the **repository name**, not necessarily the npm 
 scoped npm package such as `@my-scope/my-library` should still use a filesystem-safe bundle filename,
 a valid JavaScript IIFE global, and normally `/my-library/` as its project Pages path.
 
+Most of this table is now derived rather than repeated. `package.json` owns npm metadata, repository,
+and homepage fields. The pure `scripts/project-config-utils.js` helper derives package-safe names and
+normalizes common GitHub repository forms, while `project.config.js` derives Pages paths, npm/GitHub
+URLs, install commands, theme keys, cache prefixes, and generated asset URLs.
+
 ## 2. Update Package Metadata
 
 Edit `package.json`:
@@ -45,6 +50,18 @@ node scripts/change-package-name.js my-library
 After changing metadata, reinstall with the package manager selected for the project and review any
 lockfile changes. Do not expose the package name or version as a hard-coded runtime export from
 `src/index.ts`.
+
+Then edit `project.config.js` for values that cannot be derived safely:
+
+- PWA short name.
+- Light and dark backgrounds plus the coordinated light/dark primary interaction palette. Review
+  base, hover, active, soft, and RGB values together and preserve readable contrast.
+- Page titles and descriptions when the new library is not a greeting API.
+- Favicon, logo, or PWA icon filenames when the replacement assets use different names.
+
+Keep `project.config.js` in CommonJS format. Node scripts import it directly, Webpack injects a
+browser-safe subset through `site/runtime-config.ts`, and the Pages build generates static files from
+it. Do not import this configuration from the published `src` entrypoint.
 
 ## 3. Replace The Sample API
 
@@ -68,22 +85,15 @@ source paths.
 
 Review `scripts/rollup.config.mjs`:
 
-- Update the copyright owner, package URL, and license text in the banner.
 - Keep the CJS, ESM, IIFE, source-map, and declaration outputs that the new package supports.
 - Keep `package.json#main`, `module`, `types`, `unpkg`, and `jsdelivr` synchronized with those files.
-- Update the Terser banner-comment matcher if the package name changes.
 - Add real external dependencies to `external`; do not accidentally bundle peer dependencies.
 
-For an unscoped package, the current code derives the IIFE filename and global from `pkg.name`. For a
-scoped package, define filesystem-safe values explicitly because `@scope/name` is not a valid output
-filename stem or JavaScript global:
-
-```js
-const bundleBaseName = "my-library";
-const iifeName = "MY_LIBRARY";
-```
-
-Use `bundleBaseName` for `lib/my-library.min.js` and `iifeName` for Rollup's IIFE `output.name`.
+`scripts/project-config-utils.js` derives a filesystem-safe bundle name from the final segment of
+`pkg.name` and a valid uppercase IIFE global from that bundle name. This also handles scoped packages
+without making Rollup evaluate website configuration. The banner derives its owner, package URL, and
+license from `package.json`. Update `package.json#unpkg` and `package.json#jsdelivr` to the derived
+filename; the configuration tests fail when those fields drift.
 
 ## 5. Update Documentation And Branding
 
@@ -97,8 +107,8 @@ Replace the template-facing content in these source files:
 - `site/index.html`: navigation, headings, install snippets, API examples, package formats, and
   footer.
 - `examples/index.html`: playground title, descriptions, labels, fallback content, and footer.
-- `site/index.ts`: clipboard installation command and other homepage-specific strings.
-- `site/pwa.ts`: install, update, and error messages shown to users.
+- `site/index.ts` and `site/pwa.ts`: page behavior or generic user-facing messages when the new
+  project needs different interactions. Package identity and the install command are injected.
 
 Replace the files under `images` with the new branding. Either retain the existing filenames or
 update every reference. PWA images must remain real square PNG files with declared dimensions of
@@ -108,21 +118,18 @@ update every reference. PWA images must remain real square PNG files with declar
 
 The public website is a GitHub Pages project site. Update all of these together:
 
-- `scripts/site-config.js`: `SITE_URL`, `PWA_BASE_PATH`, GitHub/npm URLs, titles, descriptions,
-  favicon path, logo URL, and structured data.
-- `scripts/webpack.config.dev.js`: the production `pagesBase` used when `GITHUB_PAGES=true`.
-- `tsconfig.json`: `typedocOptions.hostedBaseUrl` and favicon when its path changes.
-- `site/manifest.webmanifest`: name, short name, description, `id`, `start_url`, `scope`, colors, and
-  all icon paths.
-- `site/service-worker.js`: `PROJECT_BASE`, cache prefix, and app-shell paths.
-- `site/theme.ts`, `site/index.html`, and `examples/index.html`: theme storage key.
-- `site/robots.txt` and `site/sitemap.xml`: production sitemap and canonical page URLs.
-- `scripts/build-pages.js`: package-specific TypeDoc titles, descriptions, structured data, UI text,
-  transform markers, and heading matching.
-- `scripts/validate-seo.js` and `scripts/validate-pwa.js`: expected base paths and generated asset
-  invariants.
-- `test/seo.test.js`, `test/pwa.test.js`, `test/service-worker.test.js`, and `test/theme.test.js`:
-  package identity, origin, base path, UI messages, and storage/cache keys.
+- `package.json#repository` supplies the GitHub owner and repository.
+- `package.json#homepage` supplies the production site URL and its Pages base path.
+- `project.config.js` supplies branding, page metadata, theme colors, icon filenames, manifest
+  settings, and all derived website/PWA URLs.
+- `site/index.html` and `examples/index.html` contain page-specific prose and API examples; identity,
+  install commands, bundle names, theme values, and update messages are injected automatically.
+- `site/service-worker.js` contains caching policy and build tokens. The Pages build replaces its
+  project base, cache prefix, and cache version from central configuration.
+- `scripts/build-pages.js` generates `manifest.webmanifest`, `robots.txt`, and `sitemap.xml`, then
+  transforms TypeDoc pages using central metadata.
+- Validators and tests consume `project.config.js`; update their behavior only when changing a
+  contract rather than merely renaming the project.
 
 Canonical and social URLs should use the production Pages URL. Browser-loaded project assets such as
 the favicon, manifest, worker, and PWA icons should use the current origin with the project base path,
@@ -137,7 +144,8 @@ tests, preview server, and all internal links together.
 
 Update `.github/workflows/publish-npm.yml`:
 
-- Set `PROJECT_NAME` to the unscoped filename-safe package base used for GitHub Packages.
+- Keep the GitHub Packages name derived from `package.json` through
+  `scripts/project-config-utils.js#packageDetails`.
 - Review branch triggers before enabling publishing. The current workflow publishes only for push
   events after tests pass.
 - Add the new repository's `NPM_TOKEN` secret before npm publishing.
@@ -145,8 +153,9 @@ Update `.github/workflows/publish-npm.yml`:
 - Keep `packages: write` for GitHub Packages.
 - Keep `github.repository_owner` for the GitHub Packages scope.
 
-If the npm package itself is scoped, adapt the normal npm publication and GitHub Packages rename step
-instead of producing a second invalid scope such as `@owner/@scope/name`.
+If the npm package itself is scoped, review whether publishing a second package under the GitHub
+repository owner is still desired. The workflow uses the derived unscoped bundle base for the GitHub
+Packages name and does not nest the original npm scope.
 
 Review `.github/workflows/pages.yml`:
 

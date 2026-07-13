@@ -1,19 +1,8 @@
 const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
 const path = require("node:path");
-const {
-  API_DESCRIPTION,
-  API_TITLE,
-  API_URL,
-  GITHUB_URL,
-  NPM_URL,
-  PLAYGROUND_DESCRIPTION,
-  PLAYGROUND_TITLE,
-  PLAYGROUND_URL,
-  ROOT_DESCRIPTION,
-  ROOT_TITLE,
-  SITEMAP_URL,
-  SITE_URL,
-} = require("./site-config");
+const projectConfig = require("../project.config");
+
+const sitePages = projectConfig.site.pages;
 
 const root = path.resolve(__dirname, "..");
 const docs = path.join(root, "docs");
@@ -198,7 +187,10 @@ function validateApiPages() {
       .replaceAll(path.sep, "/");
     const assetPrefix = "../".repeat(relative.split("/").length);
     const canonical = attribute(html, "link", "rel", "canonical")?.href;
-    if (!canonical?.startsWith(API_URL) || !canonical.startsWith("https://"))
+    if (
+      !canonical?.startsWith(sitePages.api.url) ||
+      !canonical.startsWith("https://")
+    )
       fail(`API ${relative}: invalid canonical ${canonical ?? "(missing)"}`);
     if (canonicals.has(canonical))
       fail(`API ${relative}: duplicate canonical ${canonical}`);
@@ -237,8 +229,8 @@ function validateStaticFiles() {
     "assets/playground.js",
     "assets/api.css",
     "assets/api.js",
-    "images/logo-dark-circle-transparent-32x32.png",
-    "images/logo-dark-circle-transparent-200x200.png",
+    `images/${projectConfig.assets.faviconFile}`,
+    `images/${projectConfig.assets.logoFile}`,
   ]) {
     if (!existsSync(path.join(docs, asset)))
       fail(`${asset}: missing from Pages artifact`);
@@ -257,7 +249,7 @@ function validateStaticFiles() {
     const robots = readFileSync(robotsPath, "utf8");
     if (!robots.includes("User-agent: *") || !robots.includes("Allow: /"))
       fail("robots.txt: crawler policy is incomplete");
-    if (!robots.includes(`${SITE_URL}sitemap.xml`))
+    if (!robots.includes(projectConfig.urls.sitemap))
       fail("robots.txt: canonical sitemap URL is missing");
   }
   if (!existsSync(sitemapPath)) {
@@ -270,7 +262,11 @@ function validateStaticFiles() {
   const locations = matches(sitemap, /<loc>([^<]+)<\/loc>/g).map(
     (match) => match[1],
   );
-  for (const url of [SITE_URL, API_URL, PLAYGROUND_URL]) {
+  for (const url of [
+    sitePages.home.url,
+    sitePages.api.url,
+    sitePages.playground.url,
+  ]) {
     if (!locations.includes(url)) fail(`sitemap.xml: missing ${url}`);
   }
   if (new Set(locations).size !== locations.length)
@@ -282,71 +278,71 @@ function validateStaticFiles() {
 
 function validateSite() {
   failures.length = 0;
-  const pages = [
+  const validatedPages = [
     validatePage({
       label: "Root page",
       file: path.join(docs, "index.html"),
-      canonical: SITE_URL,
+      canonical: sitePages.home.url,
       requiredLinks: [
         "#installation",
         "#usage",
         "./api/",
         "./playground/",
         "./sitemap.xml",
-        GITHUB_URL,
-        NPM_URL,
+        projectConfig.urls.github,
+        projectConfig.urls.npm,
       ],
-      expectedTitle: ROOT_TITLE,
-      expectedDescription: ROOT_DESCRIPTION,
-      expectedCss: "/mazey-npm-template/assets/shared.css",
+      expectedTitle: sitePages.home.title,
+      expectedDescription: sitePages.home.description,
+      expectedCss: `${projectConfig.site.basePath}assets/shared.css`,
       expectedScripts: [
-        "/mazey-npm-template/assets/shared.js",
-        "/mazey-npm-template/assets/home.js",
+        `${projectConfig.site.basePath}assets/shared.js`,
+        `${projectConfig.site.basePath}assets/home.js`,
       ],
-      expectedSitemap: SITEMAP_URL,
+      expectedSitemap: projectConfig.urls.sitemap,
       requireNavigationToggle: true,
     }),
     validatePage({
       label: "Playground",
       file: path.join(docs, "playground", "index.html"),
-      canonical: PLAYGROUND_URL,
+      canonical: sitePages.playground.url,
       requiredLinks: [
         "../",
         "../#installation",
         "../#usage",
         "../api/",
-        GITHUB_URL,
-        NPM_URL,
+        projectConfig.urls.github,
+        projectConfig.urls.npm,
       ],
-      expectedTitle: PLAYGROUND_TITLE,
-      expectedDescription: PLAYGROUND_DESCRIPTION,
-      expectedCss: "/mazey-npm-template/assets/shared.css",
+      expectedTitle: sitePages.playground.title,
+      expectedDescription: sitePages.playground.description,
+      expectedCss: `${projectConfig.site.basePath}assets/shared.css`,
       expectedScripts: [
-        "/mazey-npm-template/assets/shared.js",
-        "/mazey-npm-template/assets/playground.js",
+        `${projectConfig.site.basePath}assets/shared.js`,
+        `${projectConfig.site.basePath}assets/playground.js`,
       ],
       requireNavigationToggle: true,
     }),
     validatePage({
       label: "API documentation",
       file: path.join(docs, "api", "index.html"),
-      canonical: API_URL,
-      requiredLinks: [SITE_URL],
-      expectedTitle: API_TITLE,
-      expectedDescription: API_DESCRIPTION,
+      canonical: sitePages.api.url,
+      requiredLinks: [sitePages.home.url],
+      expectedTitle: sitePages.api.title,
+      expectedDescription: sitePages.api.description,
       expectedCss: "../assets/api.css",
       expectedScripts: ["../assets/api.js"],
     }),
   ].filter(Boolean);
-  const titles = pages.map((page) => page.title);
-  const descriptions = pages.map((page) => page.description);
+  const titles = validatedPages.map((page) => page.title);
+  const descriptions = validatedPages.map((page) => page.description);
   if (new Set(titles).size !== titles.length)
     fail("Primary page titles must be unique");
   if (new Set(descriptions).size !== descriptions.length)
     fail("Primary page descriptions must be unique");
   const apiTitles = validateApiPages();
   for (const title of titles) {
-    if (title !== API_TITLE && apiTitles.has(title))
+    if (title !== sitePages.api.title && apiTitles.has(title))
       fail(`Primary title duplicates an API page title: ${title}`);
   }
   validateStaticFiles();
@@ -354,7 +350,7 @@ function validateSite() {
     throw new Error(`SEO validation failed:\n- ${failures.join("\n- ")}`);
   return {
     apiPages: findHtml(path.join(docs, "api")).length,
-    pages: pages.length,
+    pages: validatedPages.length,
   };
 }
 

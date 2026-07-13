@@ -7,6 +7,15 @@ const {
   registerSiteServiceWorker,
   shouldRegisterSiteServiceWorker,
 } = require("../site/pwa");
+const projectConfig = require("../project.config");
+
+const appName = projectConfig.brand.displayName;
+const pwaConfig = {
+  appName,
+  enabled: true,
+  scope: projectConfig.site.basePath,
+  serviceWorkerUrl: projectConfig.pwa.serviceWorkerUrl,
+};
 
 function installMatchMedia(matches = false) {
   const media = new EventTarget();
@@ -50,7 +59,12 @@ test.each([
   async (outcome, message) => {
     renderInstallControls();
     installMatchMedia(false);
-    const cleanup = initializeInstallExperience(document, window, navigator);
+    const cleanup = initializeInstallExperience(
+      document,
+      window,
+      navigator,
+      appName,
+    );
     const event = installPrompt(outcome);
 
     window.dispatchEvent(event);
@@ -79,7 +93,12 @@ test.each([
 test("fallback help remains when no custom install event is available", () => {
   renderInstallControls();
   installMatchMedia(false);
-  const cleanup = initializeInstallExperience(document, window, navigator);
+  const cleanup = initializeInstallExperience(
+    document,
+    window,
+    navigator,
+    appName,
+  );
   expect(document.querySelector("[data-pwa-install]").hidden).toBe(true);
   expect(document.querySelector("[data-pwa-install-help]").hidden).toBe(false);
   cleanup();
@@ -88,7 +107,12 @@ test("fallback help remains when no custom install event is available", () => {
 test("standalone mode and appinstalled hide installation controls", () => {
   renderInstallControls();
   installMatchMedia(true);
-  const cleanup = initializeInstallExperience(document, window, navigator);
+  const cleanup = initializeInstallExperience(
+    document,
+    window,
+    navigator,
+    appName,
+  );
   expect(isStandaloneMode(window, navigator)).toBe(true);
   expect(document.querySelector("[data-pwa-install-help]").hidden).toBe(true);
   cleanup();
@@ -99,11 +123,12 @@ test("standalone mode and appinstalled hide installation controls", () => {
     document,
     window,
     navigator,
+    appName,
   );
   window.dispatchEvent(new Event("appinstalled"));
   expect(document.querySelector("[data-pwa-install-help]").hidden).toBe(true);
   expect(document.querySelector("[data-pwa-status]").textContent).toBe(
-    "mazey-npm-template was installed.",
+    `${appName} was installed.`,
   );
   secondCleanup();
 });
@@ -118,15 +143,12 @@ test("service-worker registration is production-scoped and uses exact paths", as
     register: jest.fn().mockResolvedValue(registration),
   });
   const navigatorRef = { serviceWorker };
-  const config = {
-    enabled: true,
-    scope: "/mazey-npm-template/",
-    serviceWorkerUrl: "/mazey-npm-template/service-worker.js",
-  };
+  const config = pwaConfig;
+  const siteUrl = new URL(projectConfig.site.url);
   const productionLocation = {
-    hostname: "chengchuu.github.io",
-    pathname: "/mazey-npm-template/",
-    protocol: "https:",
+    hostname: siteUrl.hostname,
+    pathname: projectConfig.site.basePath,
+    protocol: siteUrl.protocol,
   };
   const windowRef = { location: productionLocation };
 
@@ -150,8 +172,8 @@ test("service-worker registration is production-scoped and uses exact paths", as
 
   await registerSiteServiceWorker(config, document, windowRef, navigatorRef);
   expect(serviceWorker.register).toHaveBeenCalledWith(
-    "/mazey-npm-template/service-worker.js",
-    { scope: "/mazey-npm-template/" },
+    projectConfig.pwa.serviceWorkerUrl,
+    { scope: projectConfig.site.basePath },
   );
 });
 
@@ -179,6 +201,7 @@ test("waiting updates activate only after confirmation and reload once", () => {
     document,
     navigatorRef,
     windowRef,
+    appName,
   );
   expect(document.querySelector("[data-pwa-update]").hidden).toBe(false);
   serviceWorker.dispatchEvent(new Event("controllerchange"));
@@ -208,13 +231,14 @@ test("an update already installing at registration is announced", () => {
     document,
     { serviceWorker },
     { location: { reload: jest.fn() } },
+    appName,
   );
 
   installing.state = "installed";
   installing.dispatchEvent(new Event("statechange"));
   expect(document.querySelector("[data-pwa-update]").hidden).toBe(false);
   expect(document.querySelector("[data-pwa-status]").textContent).toBe(
-    "A new version of the mazey-npm-template website is available.",
+    `A new version of the ${appName} website is available.`,
   );
   cleanup();
 });

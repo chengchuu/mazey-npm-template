@@ -1,8 +1,8 @@
 /* global self, caches, fetch, URL */
 
-const PROJECT_BASE = "/mazey-npm-template/";
-const CACHE_PREFIX = "mazey-npm-template-site-";
-const CACHE_NAME = `${CACHE_PREFIX}__MAZEY_PWA_CACHE_VERSION__`;
+const PROJECT_BASE = "__PWA_PROJECT_BASE__";
+const CACHE_PREFIX = "__PWA_CACHE_PREFIX__";
+const CACHE_NAME = `${CACHE_PREFIX}__PWA_CACHE_VERSION__`;
 const MAX_CACHE_ENTRIES = 96;
 const APP_SHELL = [
   PROJECT_BASE,

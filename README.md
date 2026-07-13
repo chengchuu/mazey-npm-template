@@ -1,5 +1,7 @@
 > **Note:** This package is a working npm library template. Use it as a starting point and replace
-> the sample package identity and API before publishing your own library.
+> the sample package identity and API before publishing your own library. Follow
+> [Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/CUSTOMIZE.md)
+> after forking or copying the project.
 
 # mazey-npm-template
 

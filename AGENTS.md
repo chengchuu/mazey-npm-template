@@ -34,6 +34,8 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
+- `CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
+  identity before using the template for another library.
 - `lib`: generated publish output; do not edit it by hand.
 - `dist-dev`, `docs`, and `coverage`: generated development, documentation, and test output.
 
@@ -191,6 +193,10 @@ Update `README.md` when changing:
 - package output paths or supported module formats;
 - Node.js or TypeScript requirements;
 - release or documentation workflows visible to maintainers.
+
+Update `CUSTOMIZE.md` when identity-bearing files, generated outputs, Pages/PWA paths, or release
+steps change. Keep it explicit that the npm package name, repository name, Pages base path, browser
+bundle filename, and IIFE global can be different values.
 
 TypeDoc configuration lives in `tsconfig.json`. `npm run docs` generates TypeDoc at `./docs/api`,
 builds the Webpack website and playground into `dist-dev`, runs `scripts/build-pages.js`, and

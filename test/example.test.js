@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { createGreeting, packageInfo } from "../src/index";
+import { createGreeting } from "../src/index";
 
 test("creates a default greeting", () => {
   expect(createGreeting("Cheng")).toBe("Hello, Cheng!");
@@ -15,11 +15,4 @@ test("creates a greeting with custom punctuation", () => {
 
 test("falls back to a friendly name when input is blank", () => {
   expect(createGreeting("   ")).toBe("Hello, friend!");
-});
-
-test("exposes package metadata", () => {
-  expect(packageInfo).toEqual({
-    name: "mazey-npm-template",
-    version: "2.1.6",
-  });
 });

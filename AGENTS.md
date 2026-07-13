@@ -56,8 +56,8 @@ When changing a public function, value, or type, check all of these together:
 - usage in `examples` and `README.md`;
 - generated declarations and bundles from `npm run build`.
 
-`packageInfo.version` is currently a literal value in `src/index.ts`. Keep it synchronized with
-`package.json` when changing the version unless the version source is deliberately redesigned.
+Do not expose package metadata or a hard-coded package version from `src/index.ts`. Package identity
+and version metadata belong in `package.json` and release tooling.
 
 ## TypeScript
 

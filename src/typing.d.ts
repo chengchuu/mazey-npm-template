@@ -13,11 +13,3 @@ export interface CreateGreetingOptions {
    */
   punctuation?: string;
 }
-
-/**
- * Basic package metadata exposed by the library.
- */
-export interface PackageInfo {
-  name: string;
-  version: string;
-}

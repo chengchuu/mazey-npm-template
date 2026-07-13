@@ -1,4 +1,4 @@
-import { createGreeting, packageInfo } from "../src";
+import { createGreeting } from "../src";
 
 const form = document.querySelector<HTMLFormElement>("[data-greeting-form]");
 const nameInput = document.querySelector<HTMLInputElement>(
@@ -12,14 +12,6 @@ const error = document.querySelector<HTMLElement>("[data-greeting-error]");
 const blankNameButton = document.querySelector<HTMLButtonElement>(
   "[data-use-blank-name]",
 );
-const packageName = document.querySelector<HTMLElement>("[data-package-name]");
-const packageVersion = document.querySelector<HTMLElement>(
-  "[data-package-version]",
-);
-
-if (packageName) packageName.textContent = packageInfo.name;
-if (packageVersion) packageVersion.textContent = packageInfo.version;
-
 function renderGreeting(): void {
   if (!nameInput || !punctuationInput || !output || !error) return;
 

@@ -7,10 +7,10 @@ const ROOT_DESCRIPTION =
   "A TypeScript npm library template with Rollup builds for ESM, CommonJS, browser IIFE, source maps, declarations, tests, and release workflows.";
 const PLAYGROUND_TITLE = "mazey-npm-template Playground - Try the Greeting API";
 const PLAYGROUND_DESCRIPTION =
-  "Try the mazey-npm-template greeting API, optional punctuation, blank-name fallback, and exported package information in a live browser playground.";
+  "Try the mazey-npm-template greeting API, optional punctuation, and blank-name fallback in a live browser playground.";
 const API_TITLE = "mazey-npm-template API Documentation";
 const API_DESCRIPTION =
-  "TypeScript API documentation for mazey-npm-template, including createGreeting, packageInfo, options, and public package types.";
+  "TypeScript API documentation for mazey-npm-template, including createGreeting, its options, and public package types.";
 
 const software = {
   "@type": "SoftwareSourceCode",

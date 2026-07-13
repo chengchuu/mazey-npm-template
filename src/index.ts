@@ -2,17 +2,9 @@
  * @author Cheng
  */
 
-import type { CreateGreetingOptions, PackageInfo } from "./typing";
+import type { CreateGreetingOptions } from "./typing";
 
-export type { CreateGreetingOptions, PackageInfo } from "./typing";
-
-/**
- * Basic package metadata.
- */
-export const packageInfo: PackageInfo = {
-  name: "mazey-npm-template",
-  version: "2.1.6",
-};
+export type { CreateGreetingOptions } from "./typing";
 
 /**
  * Create a friendly greeting message.

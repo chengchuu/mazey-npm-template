@@ -44,27 +44,21 @@ console.log(message); // "Hello, Cheng!"
 Import runtime values and public types from the package root:
 
 ```ts
-import {
-  createGreeting,
-  packageInfo,
-  type CreateGreetingOptions,
-} from "mazey-npm-template";
+import { createGreeting, type CreateGreetingOptions } from "mazey-npm-template";
 
 const options: CreateGreetingOptions = {
   punctuation: ".",
 };
 
 console.log(createGreeting("community", options)); // "Hello, community."
-console.log(packageInfo.name); // "mazey-npm-template"
 ```
 
 ### CommonJS
 
 ```js
-const { createGreeting, packageInfo } = require("mazey-npm-template");
+const { createGreeting } = require("mazey-npm-template");
 
 console.log(createGreeting("CommonJS")); // "Hello, CommonJS!"
-console.log(packageInfo.version);
 ```
 
 ### Browser Script
@@ -100,17 +94,6 @@ Whitespace is trimmed from `name`. A blank name falls back to `"friend"`.
 createGreeting("Cheng"); // "Hello, Cheng!"
 createGreeting("  team  ", { punctuation: "." }); // "Hello, team."
 createGreeting("   "); // "Hello, friend!"
-```
-
-### `packageInfo`
-
-Exposes the package name and version:
-
-```ts
-interface PackageInfo {
-  name: string;
-  version: string;
-}
 ```
 
 The generated [API documentation](https://chengchuu.github.io/mazey-npm-template/api/)

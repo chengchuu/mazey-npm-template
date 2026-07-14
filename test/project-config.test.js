@@ -14,6 +14,16 @@ test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.package.installCommand).toBe(`npm install ${pkg.name}`);
   expect(projectConfig.site.url).toBe(new URL(pkg.homepage).href);
   expect(projectConfig.site.basePath).toBe(new URL(pkg.homepage).pathname);
+  expect(projectConfig.seo.openGraphImage).toMatchObject({
+    file: "logo-dark-circle-open-graph-1200x630.png",
+    width: 1200,
+    height: 630,
+    type: "image/png",
+  });
+  expect(projectConfig.seo.openGraphImage.url).toBe(
+    new URL(`images/${projectConfig.seo.openGraphImage.file}`, pkg.homepage)
+      .href,
+  );
   expect(projectConfig.pwa.serviceWorkerUrl).toBe(
     `${projectConfig.site.basePath}service-worker.js`,
   );
@@ -71,6 +81,7 @@ test("generated manifest is driven by project configuration", () => {
 test("project configuration is immutable", () => {
   expect(Object.isFrozen(projectConfig)).toBe(true);
   expect(Object.isFrozen(projectConfig.site.theme)).toBe(true);
+  expect(Object.isFrozen(projectConfig.seo.openGraphImage)).toBe(true);
   expect(Object.isFrozen(projectConfig.pwa.icons)).toBe(true);
   expect(projectConfig.site.theme.colorPrimary).toBe(
     projectConfig.site.theme.primary.light.base,

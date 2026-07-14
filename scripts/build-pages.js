@@ -15,6 +15,7 @@ const projectConfig = require("../project.config");
 const defaultRoot = path.resolve(__dirname, "..");
 const { displayName } = projectConfig.brand;
 const { pages, theme } = projectConfig.site;
+const socialImage = projectConfig.seo.openGraphImage;
 const markerPrefix = projectConfig.site.markerPrefix;
 const seoStart = `<!-- ${markerPrefix}-seo:start -->`;
 const seoEnd = `<!-- ${markerPrefix}-seo:end -->`;
@@ -117,9 +118,16 @@ function transformApiHtml(html, relativeFile) {
     `<meta property="og:title" content="${escapeAttribute(title)}"/>`,
     `<meta property="og:description" content="${escapeAttribute(description)}"/>`,
     `<meta property="og:url" content="${url}"/>`,
-    '<meta name="twitter:card" content="summary"/>',
+    `<meta property="og:image" content="${socialImage.url}"/>`,
+    `<meta property="og:image:type" content="${socialImage.type}"/>`,
+    `<meta property="og:image:width" content="${socialImage.width}"/>`,
+    `<meta property="og:image:height" content="${socialImage.height}"/>`,
+    `<meta property="og:image:alt" content="${escapeAttribute(socialImage.alt)}"/>`,
+    '<meta name="twitter:card" content="summary_large_image"/>',
     `<meta name="twitter:title" content="${escapeAttribute(title)}"/>`,
     `<meta name="twitter:description" content="${escapeAttribute(description)}"/>`,
+    `<meta name="twitter:image" content="${socialImage.url}"/>`,
+    `<meta name="twitter:image:alt" content="${escapeAttribute(socialImage.alt)}"/>`,
     `<script type="application/ld+json">${structuredData}</script>`,
     `<script>${themeInitializer}</script>`,
     `<script src="${assetPrefix}assets/api.js" defer></script>`,
@@ -292,6 +300,7 @@ function buildPages({ rootDir = defaultRoot } = {}) {
     path.join(dist, "playground", "index.html"),
     path.join(dist, "assets", "api.css"),
     path.join(dist, "assets", "api.js"),
+    path.join(dist, "images", socialImage.file),
     path.join(site, "service-worker.js"),
     ...projectConfig.pwa.icons.map((icon) =>
       path.join(rootDir, "images", icon.file),

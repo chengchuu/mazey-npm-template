@@ -20,6 +20,7 @@ const githubUrl = repository.url;
 const npmUrl = `https://www.npmjs.com/package/${pkg.name}`;
 const faviconFile = "logo-dark-circle-transparent-32x32.png";
 const logoFile = "logo-dark-circle-transparent-200x200.png";
+const openGraphImageFile = "logo-dark-circle-open-graph-1200x630.png";
 const primaryPalette = {
   light: {
     base: "#5b3fd6",
@@ -93,6 +94,14 @@ const software = {
   license: `${githubUrl}/blob/main/LICENSE`,
   programmingLanguage: "TypeScript",
 };
+const openGraphImage = {
+  file: openGraphImageFile,
+  url: new URL(`images/${openGraphImageFile}`, siteUrl).href,
+  width: 1200,
+  height: 630,
+  type: "image/png",
+  alt: `The ${displayName} logo over purple and teal abstract technology graphics.`,
+};
 
 module.exports = deepFreeze({
   package: packageConfig,
@@ -121,6 +130,7 @@ module.exports = deepFreeze({
     theme,
   },
   seo: {
+    openGraphImage,
     software,
     rootJsonLd: {
       "@context": "https://schema.org",

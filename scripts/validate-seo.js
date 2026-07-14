@@ -1,6 +1,7 @@
 const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
 const path = require("node:path");
 const projectConfig = require("../project.config");
+const { pngDimensions } = require("./validate-pwa");
 
 const sitePages = projectConfig.site.pages;
 
@@ -38,6 +39,32 @@ function visibleText(html) {
     .replace(/&(?:nbsp|amp|lt|gt|quot|#39);/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function validateSocialImage(label, html) {
+  const image = projectConfig.seo.openGraphImage;
+  const openGraphValues = {
+    "og:image": image.url,
+    "og:image:type": image.type,
+    "og:image:width": String(image.width),
+    "og:image:height": String(image.height),
+    "og:image:alt": image.alt,
+  };
+  for (const [property, expected] of Object.entries(openGraphValues)) {
+    if (attribute(html, "meta", "property", property)?.content !== expected)
+      fail(`${label}: ${property} must be ${expected}`);
+  }
+  if (
+    attribute(html, "meta", "name", "twitter:card")?.content !==
+    "summary_large_image"
+  )
+    fail(`${label}: twitter:card must be summary_large_image`);
+  if (attribute(html, "meta", "name", "twitter:image")?.content !== image.url)
+    fail(`${label}: twitter:image must be ${image.url}`);
+  if (
+    attribute(html, "meta", "name", "twitter:image:alt")?.content !== image.alt
+  )
+    fail(`${label}: twitter:image:alt must match the Open Graph image alt`);
 }
 
 function validateHeadingOrder(label, html) {
@@ -123,6 +150,7 @@ function validatePage({
   }
   if (attribute(html, "meta", "property", "og:url")?.content !== canonical)
     fail(`${label}: og:url must match canonical`);
+  validateSocialImage(label, html);
   if (
     attribute(html, "meta", "property", "og:title")?.content !==
     titles[0]?.[1]?.trim()
@@ -199,6 +227,7 @@ function validateApiPages() {
       fail(`API ${relative}: missing description`);
     if (attribute(html, "meta", "property", "og:url")?.content !== canonical)
       fail(`API ${relative}: Open Graph URL does not match canonical`);
+    validateSocialImage(`API ${relative}`, html);
     if (!attribute(html, "link", "rel", "icon"))
       fail(`API ${relative}: missing favicon`);
     if (!attribute(html, "link", "href", `${assetPrefix}assets/api.css`))
@@ -231,9 +260,25 @@ function validateStaticFiles() {
     "assets/api.js",
     `images/${projectConfig.assets.faviconFile}`,
     `images/${projectConfig.assets.logoFile}`,
+    `images/${projectConfig.seo.openGraphImage.file}`,
   ]) {
     if (!existsSync(path.join(docs, asset)))
       fail(`${asset}: missing from Pages artifact`);
+  }
+  const openGraphImagePath = path.join(
+    docs,
+    "images",
+    projectConfig.seo.openGraphImage.file,
+  );
+  if (existsSync(openGraphImagePath)) {
+    const dimensions = pngDimensions(openGraphImagePath);
+    if (
+      dimensions.width !== projectConfig.seo.openGraphImage.width ||
+      dimensions.height !== projectConfig.seo.openGraphImage.height
+    )
+      fail(
+        `Open Graph image dimensions must be ${projectConfig.seo.openGraphImage.width}x${projectConfig.seo.openGraphImage.height}, found ${dimensions.width}x${dimensions.height}`,
+      );
   }
   const homeCss = path.join(docs, "assets", "shared.css");
   if (

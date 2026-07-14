@@ -30,6 +30,12 @@ test("API metadata transformation is complete and idempotent", () => {
     `<link rel="icon" href="${projectConfig.assets.faviconUrl}" type="image/png"/>`,
   );
   expect(transformed).toContain(`<a href="${pages.home.url}">Project home</a>`);
+  expect(transformed).toContain(
+    `<meta property="og:image" content="${projectConfig.seo.openGraphImage.url}"/>`,
+  );
+  expect(transformed).toContain(
+    '<meta name="twitter:card" content="summary_large_image"/>',
+  );
   expect(transformed).toContain('href="../assets/api.css"');
   expect(transformed).toContain('src="../assets/api.js"');
   expect(transformed).not.toMatch(/<button\b[^>]*data-pwa-install\b/);
@@ -86,6 +92,8 @@ test("Pages assembly is repeatable without duplicating API metadata", () => {
       "<html><body><h1>Playground</h1></body></html>",
     "dist-dev/assets/api.css": "body {}",
     "dist-dev/assets/api.js": "void 0;",
+    [`dist-dev/images/${projectConfig.seo.openGraphImage.file}`]:
+      "open graph image",
     "site/service-worker.js":
       'const base = "__PWA_PROJECT_BASE__"; const prefix = "__PWA_CACHE_PREFIX__"; const version = "__PWA_CACHE_VERSION__";\n',
     ...Object.fromEntries(

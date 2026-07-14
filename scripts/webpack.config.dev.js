@@ -5,21 +5,16 @@ const webpack = require("webpack");
 const projectConfig = require("../project.config");
 
 const _resolve = (_path) => path.resolve(__dirname, _path);
-const pagesBase =
-  process.env.GITHUB_PAGES === "true" ? projectConfig.site.basePath : "/";
 const pwaEnabled =
   process.env.GITHUB_PAGES === "true" || process.env.PWA_ENABLED === "true";
-const templateParameters = {
+const sharedTemplateParameters = {
   API_URL: projectConfig.site.pages.api.url,
   BUNDLE_FILENAME: `${projectConfig.package.bundleBaseName}.min.js`,
   DISPLAY_NAME: projectConfig.brand.displayName,
-  FAVICON_URL: `${pagesBase}images/${projectConfig.assets.faviconFile}`,
   GITHUB_URL: projectConfig.urls.github,
   IIFE_GLOBAL: projectConfig.package.iifeGlobal,
   INSTALL_COMMAND: projectConfig.package.installCommand,
   LICENSE_URL: projectConfig.urls.license,
-  LOGO_URL: `${pagesBase}images/${projectConfig.assets.logoFile}`,
-  MANIFEST_URL: pwaEnabled ? projectConfig.pwa.manifestUrl : null,
   NPM_URL: projectConfig.urls.npm,
   PACKAGE_NAME: projectConfig.package.name,
   PLAYGROUND_DESCRIPTION: projectConfig.site.pages.playground.description,
@@ -47,6 +42,14 @@ const templateParameters = {
   THEME_PRIMARY_SOFT: projectConfig.site.theme.primary.light.soft,
   THEME_STORAGE_KEY_JSON: JSON.stringify(projectConfig.site.theme.storageKey),
 };
+const templateParameters = (siteRoot) => ({
+  ...sharedTemplateParameters,
+  FAVICON_URL: `${siteRoot}images/${projectConfig.assets.faviconFile}`,
+  LOGO_URL: `${siteRoot}images/${projectConfig.assets.logoFile}`,
+  MANIFEST_URL: pwaEnabled
+    ? `${siteRoot}${projectConfig.pwa.manifestFile}`
+    : null,
+});
 const runtimeConfig = {
   packageName: projectConfig.package.name,
   displayName: projectConfig.brand.displayName,
@@ -55,8 +58,7 @@ const runtimeConfig = {
   pwa: {
     appName: projectConfig.brand.displayName,
     enabled: pwaEnabled,
-    scope: projectConfig.site.basePath,
-    serviceWorkerUrl: projectConfig.pwa.serviceWorkerUrl,
+    serviceWorkerFile: projectConfig.pwa.serviceWorkerFile,
   },
 };
 
@@ -78,7 +80,7 @@ module.exports = {
     clean: true,
     filename: "assets/[name].js",
     path: _resolve("../dist-dev"),
-    publicPath: pagesBase,
+    publicPath: "auto",
   },
   devServer: {
     port: 8080,
@@ -121,14 +123,14 @@ module.exports = {
       template: _resolve("../site/index.html"),
       chunks: ["shared", "home"],
       inject: "body",
-      templateParameters,
+      templateParameters: templateParameters("./"),
     }),
     new HtmlWebpackPlugin({
       filename: "playground/index.html",
       template: _resolve("../examples/index.html"),
       chunks: ["shared", "playground"],
       inject: "body",
-      templateParameters,
+      templateParameters: templateParameters("../"),
     }),
   ],
   resolve: {

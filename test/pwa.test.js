@@ -5,6 +5,7 @@ const {
   isStandaloneMode,
   monitorServiceWorkerUpdates,
   registerSiteServiceWorker,
+  resolveSitePwaUrls,
   shouldRegisterSiteServiceWorker,
 } = require("../site/pwa");
 const projectConfig = require("../project.config");
@@ -13,9 +14,12 @@ const appName = projectConfig.brand.displayName;
 const pwaConfig = {
   appName,
   enabled: true,
-  scope: projectConfig.site.basePath,
-  serviceWorkerUrl: projectConfig.pwa.serviceWorkerUrl,
+  serviceWorkerFile: projectConfig.pwa.serviceWorkerFile,
 };
+
+function setManifest(href) {
+  document.head.innerHTML = `<link rel="manifest" href="${href}">`;
+}
 
 function installMatchMedia(matches = false) {
   const media = new EventTarget();
@@ -133,7 +137,34 @@ test("standalone mode and appinstalled hide installation controls", () => {
   secondCleanup();
 });
 
-test("service-worker registration is production-scoped and uses exact paths", async () => {
+test.each([
+  ["https://example.test/npm-template/", "./manifest.webmanifest"],
+  ["https://example.test/npm-template/playground/", "../manifest.webmanifest"],
+  [
+    "https://example.test/npm-template/api/functions/create.html",
+    "../../manifest.webmanifest",
+  ],
+  [
+    "https://example.test/nested/npm%20template/api/",
+    "../manifest.webmanifest",
+  ],
+])("PWA URLs resolve from the manifest at %s", (href, manifestHref) => {
+  setManifest(manifestHref);
+  const locationRef = new URL(href);
+  const expectedRoot = new URL(
+    href.includes("npm%20template")
+      ? "/nested/npm%20template/"
+      : "/npm-template/",
+    href,
+  ).href;
+  expect(resolveSitePwaUrls(document, locationRef)).toEqual({
+    manifestUrl: new URL("manifest.webmanifest", expectedRoot).href,
+    scope: expectedRoot,
+    serviceWorkerUrl: new URL("service-worker.js", expectedRoot).href,
+  });
+});
+
+test("service-worker registration is scope-derived and uses exact paths", async () => {
   const registration = Object.assign(new EventTarget(), {
     installing: null,
     waiting: null,
@@ -144,37 +175,51 @@ test("service-worker registration is production-scoped and uses exact paths", as
   });
   const navigatorRef = { serviceWorker };
   const config = pwaConfig;
-  const siteUrl = new URL(projectConfig.site.url);
-  const productionLocation = {
-    hostname: siteUrl.hostname,
-    pathname: projectConfig.site.basePath,
-    protocol: siteUrl.protocol,
-  };
+  const productionLocation = new URL(projectConfig.site.url);
+  setManifest("./manifest.webmanifest");
   const windowRef = { location: productionLocation };
 
   expect(
     shouldRegisterSiteServiceWorker(
       { ...config, enabled: false },
+      document,
       productionLocation,
       navigatorRef,
     ),
   ).toBe(false);
   expect(
-    shouldRegisterSiteServiceWorker(config, productionLocation, navigatorRef),
+    shouldRegisterSiteServiceWorker(
+      config,
+      document,
+      productionLocation,
+      navigatorRef,
+    ),
   ).toBe(true);
   expect(
     shouldRegisterSiteServiceWorker(
       config,
-      { ...productionLocation, pathname: "/another-project/" },
+      document,
+      new URL("http://example.test/npm-template/"),
       navigatorRef,
     ),
   ).toBe(false);
 
   await registerSiteServiceWorker(config, document, windowRef, navigatorRef);
   expect(serviceWorker.register).toHaveBeenCalledWith(
-    projectConfig.pwa.serviceWorkerUrl,
-    { scope: projectConfig.site.basePath },
+    new URL("service-worker.js", projectConfig.site.url).href,
+    { scope: projectConfig.site.url },
   );
+});
+
+test("service-worker registration rejects a cross-origin manifest", () => {
+  setManifest("https://cdn.example.test/manifest.webmanifest");
+  const locationRef = new URL(projectConfig.site.url);
+  expect(resolveSitePwaUrls(document, locationRef)).toBeNull();
+  expect(
+    shouldRegisterSiteServiceWorker(pwaConfig, document, locationRef, {
+      serviceWorker: {},
+    }),
+  ).toBe(false);
 });
 
 test("waiting updates activate only after confirmation and reload once", () => {

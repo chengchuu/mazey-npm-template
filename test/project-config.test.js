@@ -14,9 +14,7 @@ test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.package.installCommand).toBe(`npm install ${pkg.name}`);
   expect(projectConfig.site.url).toBe(new URL(pkg.homepage).href);
   expect(projectConfig.site.basePath).toBe(new URL(pkg.homepage).pathname);
-  expect(projectConfig.pwa.serviceWorkerUrl).toBe(
-    `${projectConfig.site.basePath}service-worker.js`,
-  );
+  expect(projectConfig.pwa.serviceWorkerFile).toBe("service-worker.js");
   expect(pkg.unpkg).toBe(`lib/${projectConfig.package.bundleBaseName}.min.js`);
   expect(pkg.jsdelivr).toBe(pkg.unpkg);
 });
@@ -56,11 +54,13 @@ test("generated manifest is driven by project configuration", () => {
   const manifest = createManifest();
   expect(manifest.name).toBe(projectConfig.pwa.name);
   expect(manifest.short_name).toBe(projectConfig.pwa.shortName);
-  expect(manifest.id).toBe(projectConfig.site.basePath);
+  expect(manifest).not.toHaveProperty("id");
+  expect(manifest.start_url).toBe("./");
+  expect(manifest.scope).toBe("./");
   expect(manifest.theme_color).toBe(projectConfig.site.theme.colorPrimary);
   expect(manifest.icons).toEqual(
-    projectConfig.pwa.icons.map(({ purpose, sizes, src, type }) => ({
-      src,
+    projectConfig.pwa.icons.map(({ file, purpose, sizes, type }) => ({
+      src: `./images/${file}`,
       sizes,
       type,
       purpose,

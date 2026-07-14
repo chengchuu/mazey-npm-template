@@ -11,6 +11,10 @@ const {
 const { createHash } = require("node:crypto");
 const path = require("node:path");
 const projectConfig = require("../project.config");
+const {
+  normalizeArtifactFile,
+  relativeRootFromFile,
+} = require("./site-url-utils");
 
 const defaultRoot = path.resolve(__dirname, "..");
 const { displayName } = projectConfig.brand;
@@ -41,9 +45,7 @@ function markerExpression(start, end) {
 }
 
 function apiPageUrl(relativeFile) {
-  const route = relativeFile
-    .replaceAll(path.sep, "/")
-    .replace(/index\.html$/, "");
+  const route = normalizeArtifactFile(relativeFile).replace(/index\.html$/, "");
   return new URL(route, pages.api.url).href;
 }
 
@@ -62,13 +64,37 @@ function normalizeHeadingOrder(html) {
   );
 }
 
+function rewriteProjectUrls(html, siteRoot) {
+  const productionRoot = new URL(projectConfig.site.url);
+  return html.replace(
+    /\b(href|src)=(['"])(https?:\/\/[^'"]+)\2/gi,
+    (attribute, name, quote, value) => {
+      let url;
+      try {
+        url = new URL(value);
+      } catch {
+        return attribute;
+      }
+      if (
+        url.origin !== productionRoot.origin ||
+        !url.pathname.startsWith(productionRoot.pathname)
+      )
+        return attribute;
+      const projectPath = url.pathname.slice(productionRoot.pathname.length);
+      return `${name}=${quote}${siteRoot}${projectPath}${url.search}${url.hash}${quote}`;
+    },
+  );
+}
+
 function transformApiHtml(html, relativeFile) {
-  const cleanHtml = html
+  const normalizedRelativeFile = normalizeArtifactFile(relativeFile);
+  const siteRoot = relativeRootFromFile(`api/${normalizedRelativeFile}`);
+  const cleanHtml = rewriteProjectUrls(html, siteRoot)
     .replace(markerExpression(seoStart, seoEnd), "")
     .replace(/<nav class="site-project-links"[\s\S]*?<\/nav>/g, "")
     .replace(markerExpression(pwaUiStart, pwaUiEnd), "");
-  const isIndex = relativeFile === "index.html";
-  const routeName = path.basename(relativeFile, ".html");
+  const isIndex = normalizedRelativeFile === "index.html";
+  const routeName = path.posix.basename(normalizedRelativeFile, ".html");
   const existingTitle = cleanHtml
     .match(/<title>([^<]+)<\/title>/i)?.[1]
     ?.replace(/ API Reference$/, "")
@@ -85,10 +111,7 @@ function transformApiHtml(html, relativeFile) {
   const description = isIndex
     ? pages.api.description
     : `TypeScript API reference for ${title.replace(/ API Reference$/, "")} in ${displayName}.`;
-  const url = apiPageUrl(relativeFile);
-  const assetPrefix = "../".repeat(
-    relativeFile.replaceAll(path.sep, "/").split("/").length,
-  );
+  const url = apiPageUrl(normalizedRelativeFile);
   const themeInitializer = `(()=>{try{const k=${JSON.stringify(theme.storageKey)},v=localStorage.getItem(k)||"system",t=v==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):v,r=t==="dark"?"dark":"light",m=document.querySelector('meta[name="theme-color"][data-theme-color]');document.documentElement.dataset.bsTheme=r;document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r;if(m)m.content=r==="dark"?m.dataset.themeColorDark:m.dataset.themeColorLight;localStorage.setItem("tsd-theme",v==="system"?"os":v)}catch{}})();`;
   const structuredData = JSON.stringify({
     "@context": "https://schema.org",
@@ -107,11 +130,11 @@ function transformApiHtml(html, relativeFile) {
     seoStart,
     `<meta name="description" content="${escapeAttribute(description)}"/>`,
     `<link rel="canonical" href="${url}"/>`,
-    `<link rel="icon" href="${projectConfig.assets.faviconUrl}" type="image/png"/>`,
-    `<link rel="manifest" href="${projectConfig.pwa.manifestUrl}"/>`,
+    `<link rel="icon" href="${siteRoot}images/${projectConfig.assets.faviconFile}" type="image/png"/>`,
+    `<link rel="manifest" href="${siteRoot}${projectConfig.pwa.manifestFile}"/>`,
     `<meta name="theme-color" content="${theme.colorLight}" data-theme-color data-theme-color-light="${theme.colorLight}" data-theme-color-dark="${theme.colorDark}"/>`,
     `<style>:root{--project-theme-primary:${theme.colorPrimary};--project-theme-primary-hover:${theme.primary.light.hover};--project-theme-primary-active:${theme.primary.light.active};--project-theme-primary-soft:${theme.primary.light.soft};--project-theme-primary-rgb:${theme.primary.light.rgb};--project-theme-primary-hover-rgb:${theme.primary.light.hoverRgb};--project-theme-primary-dark:${theme.primary.dark.base};--project-theme-primary-dark-hover:${theme.primary.dark.hover};--project-theme-primary-dark-active:${theme.primary.dark.active};--project-theme-primary-dark-soft:${theme.primary.dark.soft};--project-theme-primary-dark-rgb:${theme.primary.dark.rgb};--project-theme-primary-dark-hover-rgb:${theme.primary.dark.hoverRgb};--project-theme-light:${theme.colorLight};--project-theme-dark:${theme.colorDark}}</style>`,
-    `<link rel="stylesheet" href="${assetPrefix}assets/api.css"/>`,
+    `<link rel="stylesheet" href="${siteRoot}assets/api.css"/>`,
     '<meta property="og:type" content="website"/>',
     `<meta property="og:site_name" content="${escapeAttribute(displayName)}"/>`,
     `<meta property="og:title" content="${escapeAttribute(title)}"/>`,
@@ -122,7 +145,7 @@ function transformApiHtml(html, relativeFile) {
     `<meta name="twitter:description" content="${escapeAttribute(description)}"/>`,
     `<script type="application/ld+json">${structuredData}</script>`,
     `<script>${themeInitializer}</script>`,
-    `<script src="${assetPrefix}assets/api.js" defer></script>`,
+    `<script src="${siteRoot}assets/api.js" defer></script>`,
     seoEnd,
   ].join("")}`;
 
@@ -140,7 +163,7 @@ function transformApiHtml(html, relativeFile) {
     throw new Error(`Missing TypeDoc toolbar in ${relativeFile}`);
   output = output.replace(
     toolbar,
-    `${toolbar}<nav class="site-project-links" aria-label="Project links"><a href="${pages.home.url}">Project home</a><a href="${pages.api.url}">API overview</a><a href="${projectConfig.urls.npm}">npm package</a><a href="${pages.home.url}#install-project-website" data-pwa-install-help>Website app help</a><span class="site-pwa-status" role="status" aria-live="polite" data-pwa-status></span><label class="theme-control"><span>Theme</span><select data-theme-select aria-label="Choose API documentation theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></nav>`,
+    `${toolbar}<nav class="site-project-links" aria-label="Project links"><a href="${siteRoot}">Project home</a><a href="${siteRoot}api/">API overview</a><a href="${projectConfig.urls.npm}">npm package</a><a href="${siteRoot}#install-project-website" data-pwa-install-help>Website app help</a><span class="site-pwa-status" role="status" aria-live="polite" data-pwa-status></span><label class="theme-control"><span>Theme</span><select data-theme-select aria-label="Choose API documentation theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></label></nav>`,
   );
 
   output = output.replace(
@@ -212,14 +235,13 @@ function createManifest() {
     name: projectConfig.pwa.name,
     short_name: projectConfig.pwa.shortName,
     description: projectConfig.pwa.description,
-    id: projectConfig.site.basePath,
-    start_url: projectConfig.site.basePath,
-    scope: projectConfig.site.basePath,
+    start_url: "./",
+    scope: "./",
     display: projectConfig.pwa.display,
     background_color: projectConfig.pwa.backgroundColor,
     theme_color: projectConfig.pwa.themeColor,
-    icons: projectConfig.pwa.icons.map(({ purpose, sizes, src, type }) => ({
-      src,
+    icons: projectConfig.pwa.icons.map(({ file, purpose, sizes, type }) => ({
+      src: `./images/${file}`,
       sizes,
       type,
       purpose,
@@ -236,9 +258,9 @@ function replaceWorkerToken(source, token, value) {
 
 function renderServiceWorker(source, cacheVersion) {
   return [
-    ["__PWA_PROJECT_BASE__", projectConfig.site.basePath],
     ["__PWA_CACHE_PREFIX__", projectConfig.pwa.cachePrefix],
     ["__PWA_CACHE_VERSION__", cacheVersion],
+    ["__PWA_MANIFEST_FILE__", projectConfig.pwa.manifestFile],
   ].reduce(
     (rendered, [token, value]) => replaceWorkerToken(rendered, token, value),
     source,
@@ -263,7 +285,7 @@ function writePwaAssets(rootDir, docs) {
   const site = path.join(rootDir, "site");
   const images = path.join(rootDir, "images");
   writeFileSync(
-    path.join(docs, "manifest.webmanifest"),
+    path.join(docs, projectConfig.pwa.manifestFile),
     `${JSON.stringify(createManifest(), null, 2)}\n`,
   );
   mkdirSync(path.join(docs, "images"), { recursive: true });
@@ -276,7 +298,7 @@ function writePwaAssets(rootDir, docs) {
     "utf8",
   );
   writeFileSync(
-    path.join(docs, "service-worker.js"),
+    path.join(docs, projectConfig.pwa.serviceWorkerFile),
     renderServiceWorker(workerSource, fingerprintPages(docs)),
   );
 }
@@ -292,7 +314,7 @@ function buildPages({ rootDir = defaultRoot } = {}) {
     path.join(dist, "playground", "index.html"),
     path.join(dist, "assets", "api.css"),
     path.join(dist, "assets", "api.js"),
-    path.join(site, "service-worker.js"),
+    path.join(site, projectConfig.pwa.serviceWorkerFile),
     ...projectConfig.pwa.icons.map((icon) =>
       path.join(rootDir, "images", icon.file),
     ),

@@ -125,20 +125,20 @@ The public website is a GitHub Pages project site. Update all of these together:
 - `site/index.html` and `examples/index.html` contain page-specific prose and API examples; identity,
   install commands, bundle names, theme values, and update messages are injected automatically.
 - `site/service-worker.js` contains caching policy and build tokens. The Pages build replaces its
-  project base, cache prefix, and cache version from central configuration.
+  cache prefix and cache version; the worker derives the deployment root from its own URL.
 - `scripts/build-pages.js` generates `manifest.webmanifest`, `robots.txt`, and `sitemap.xml`, then
   transforms TypeDoc pages using central metadata.
 - Validators and tests consume `project.config.js`; update their behavior only when changing a
   contract rather than merely renaming the project.
 
-Canonical and social URLs should use the production Pages URL. Browser-loaded project assets such as
-the favicon, manifest, worker, and PWA icons should use the current origin with the project base path,
-for example `/my-library/images/favicon.png`. Do not hard-code the production origin for those local
-assets, because that breaks the local Pages preview.
+Canonical and social URLs should use the production Pages URL. Browser-loaded project assets and
+internal links use document-relative paths generated for each page depth. Manifest resources are
+relative to the manifest, and service-worker registration derives the deployment root from the
+page's manifest link. Do not replace these with a hard-coded production origin or project-root path.
 
-If the site is hosted at a user or organization root instead of a project path, changing the scope to
-`/` is a deliberate architecture change. Review the manifest, worker, Webpack public path, validators,
-tests, preview server, and all internal links together.
+The manifest omits `id` and uses `./` for its start URL and scope. Its resolved start URL therefore
+becomes the installation identity: hosting the artifact at another host or path creates a separate
+app installation. Review that tradeoff before changing manifest identity behavior.
 
 ## 7. Review Development And Release Automation
 

@@ -1,6 +1,11 @@
 export interface SitePwaConfig {
   appName: string;
   enabled: boolean;
+  serviceWorkerFile: string;
+}
+
+export interface SitePwaUrls {
+  manifestUrl: string;
   scope: string;
   serviceWorkerUrl: string;
 }
@@ -47,19 +52,53 @@ export function isStandaloneMode(
   );
 }
 
+export function resolveSitePwaUrls(
+  documentRef: Document,
+  locationRef: Location,
+  serviceWorkerFile = "service-worker.js",
+): SitePwaUrls | null {
+  const manifestHref = documentRef
+    .querySelector<HTMLLinkElement>('link[rel="manifest"]')
+    ?.getAttribute("href");
+  if (!manifestHref) return null;
+
+  try {
+    const pageUrl = new URL(locationRef.href);
+    const manifestUrl = new URL(manifestHref, pageUrl);
+    if (manifestUrl.origin !== pageUrl.origin) return null;
+    const siteRoot = new URL("./", manifestUrl);
+    return {
+      manifestUrl: manifestUrl.href,
+      scope: siteRoot.href,
+      serviceWorkerUrl: new URL(serviceWorkerFile, siteRoot).href,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function shouldRegisterSiteServiceWorker(
   config: SitePwaConfig,
+  documentRef: Document,
   locationRef: Location,
   navigatorRef: Navigator,
 ): boolean {
   const isLocalhost = new Set(["localhost", "127.0.0.1", "[::1]"]).has(
     locationRef.hostname,
   );
+  const urls = resolveSitePwaUrls(
+    documentRef,
+    locationRef,
+    config.serviceWorkerFile,
+  );
+  if (!urls) return false;
+  const scope = new URL(urls.scope);
   return (
     config.enabled &&
     "serviceWorker" in navigatorRef &&
     (locationRef.protocol === "https:" || isLocalhost) &&
-    locationRef.pathname.startsWith(config.scope)
+    scope.origin === new URL(locationRef.href).origin &&
+    locationRef.pathname.startsWith(scope.pathname)
   );
 }
 
@@ -233,16 +272,27 @@ export async function registerSiteServiceWorker(
   windowRef: Window,
   navigatorRef: Navigator,
 ): Promise<ServiceWorkerRegistration | null> {
+  const urls = resolveSitePwaUrls(
+    documentRef,
+    windowRef.location,
+    config.serviceWorkerFile,
+  );
   if (
-    !shouldRegisterSiteServiceWorker(config, windowRef.location, navigatorRef)
+    !urls ||
+    !shouldRegisterSiteServiceWorker(
+      config,
+      documentRef,
+      windowRef.location,
+      navigatorRef,
+    )
   ) {
     return null;
   }
 
   try {
     const registration = await navigatorRef.serviceWorker.register(
-      config.serviceWorkerUrl,
-      { scope: config.scope },
+      urls.serviceWorkerUrl,
+      { scope: urls.scope },
     );
     monitorServiceWorkerUpdates(
       registration,
@@ -274,7 +324,14 @@ export function initializeSitePwa(config: SitePwaConfig): void {
   root.dataset.pwaReady = "true";
 
   initializeInstallExperience(document, window, navigator, config.appName);
-  if (!shouldRegisterSiteServiceWorker(config, window.location, navigator))
+  if (
+    !shouldRegisterSiteServiceWorker(
+      config,
+      document,
+      window.location,
+      navigator,
+    )
+  )
     return;
 
   const scheduleRegistration = () => {

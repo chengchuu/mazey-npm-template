@@ -1,6 +1,11 @@
 const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
 const path = require("node:path");
 const projectConfig = require("../project.config");
+const {
+  artifactPathToFile,
+  resolveArtifactReference,
+} = require("./site-url-utils");
+const { portableDeploymentUrls } = require("./validate-seo");
 
 const defaultRoot = path.resolve(__dirname, "..");
 const manifestDisplayModes = new Set([
@@ -64,8 +69,8 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
   const failures = [];
   const fail = (message) => failures.push(message);
   const docs = path.join(rootDir, "docs");
-  const manifestFile = path.join(docs, "manifest.webmanifest");
-  const workerFile = path.join(docs, "service-worker.js");
+  const manifestFile = path.join(docs, projectConfig.pwa.manifestFile);
+  const workerFile = path.join(docs, projectConfig.pwa.serviceWorkerFile);
 
   if (!existsSync(manifestFile)) fail("Manifest is missing from docs");
   let manifest;
@@ -85,10 +90,12 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       fail(`Manifest short_name must be ${projectConfig.pwa.shortName}`);
     if (manifest.description !== projectConfig.pwa.description)
       fail("Manifest description must match project configuration");
-    for (const field of ["id", "start_url", "scope"]) {
-      if (manifest[field] !== projectConfig.site.basePath)
-        fail(`Manifest ${field} must be ${projectConfig.site.basePath}`);
-    }
+    if ("id" in manifest)
+      fail(
+        "Manifest must omit id so its start URL supplies path-local identity",
+      );
+    for (const field of ["start_url", "scope"])
+      if (manifest[field] !== "./") fail(`Manifest ${field} must be ./`);
     if (manifest.display !== projectConfig.pwa.display)
       fail(`Manifest display must be ${projectConfig.pwa.display}`);
     if (manifest.theme_color !== projectConfig.pwa.themeColor)
@@ -101,18 +108,18 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
     const requiredSizes = new Set(["192x192", "512x512"]);
     let hasMaskable = false;
     for (const icon of manifest.icons ?? []) {
-      if (!icon.src?.startsWith(projectConfig.site.basePath)) {
-        fail(
-          `Manifest icon URL must start with ${projectConfig.site.basePath}: ${icon.src}`,
-        );
+      if (!icon.src?.startsWith("./images/")) {
+        fail(`Manifest icon URL must be manifest-relative: ${icon.src}`);
         continue;
       }
       if (icon.type !== "image/png")
         fail(`Manifest icon must use image/png: ${icon.src}`);
-      const iconFile = path.join(
-        docs,
-        icon.src.slice(projectConfig.site.basePath.length),
+      const resolved = resolveArtifactReference(
+        icon.src,
+        projectConfig.pwa.manifestFile,
+        projectConfig.site.url,
       );
+      const iconFile = artifactPathToFile(docs, resolved.artifactPath);
       if (!existsSync(iconFile)) {
         fail(`Manifest icon is missing: ${icon.src}`);
         continue;
@@ -133,24 +140,50 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
     for (const size of requiredSizes)
       fail(`Manifest is missing a ${size} icon`);
     if (!hasMaskable) fail("Manifest is missing a maskable icon");
+
+    for (const deploymentUrl of portableDeploymentUrls) {
+      const manifestUrl = new URL(
+        projectConfig.pwa.manifestFile,
+        deploymentUrl,
+      );
+      const startUrl = new URL(manifest.start_url, manifestUrl);
+      const scopeUrl = new URL(manifest.scope, manifestUrl);
+      if (startUrl.href !== deploymentUrl)
+        fail(`Manifest start_url does not resolve to ${deploymentUrl}`);
+      if (scopeUrl.href !== deploymentUrl)
+        fail(`Manifest scope does not resolve to ${deploymentUrl}`);
+      for (const icon of manifest.icons ?? []) {
+        const iconUrl = new URL(icon.src, manifestUrl);
+        if (!iconUrl.pathname.startsWith(new URL(deploymentUrl).pathname))
+          fail(`Manifest icon escapes deployment scope: ${iconUrl.href}`);
+      }
+    }
   }
 
+  const manifestName = projectConfig.pwa.manifestFile;
   const pages = [
-    ["Homepage", path.join(docs, "index.html"), true],
-    ["Playground", path.join(docs, "playground", "index.html"), true],
-    ["API documentation", path.join(docs, "api", "index.html"), false],
+    ["Homepage", path.join(docs, "index.html"), `./${manifestName}`, true],
+    [
+      "Playground",
+      path.join(docs, "playground", "index.html"),
+      `../${manifestName}`,
+      true,
+    ],
+    [
+      "API documentation",
+      path.join(docs, "api", "index.html"),
+      `../${manifestName}`,
+      false,
+    ],
   ];
-  for (const [label, file, requiresInstallButton] of pages) {
+  for (const [label, file, manifestHref, requiresInstallButton] of pages) {
     if (!existsSync(file)) {
       fail(`${label} HTML is missing`);
       continue;
     }
     const html = readFileSync(file, "utf8");
-    if (
-      findTag(html, "link", "rel", "manifest")?.href !==
-      projectConfig.pwa.manifestUrl
-    )
-      fail(`${label} must link ${projectConfig.pwa.manifestUrl}`);
+    if (findTag(html, "link", "rel", "manifest")?.href !== manifestHref)
+      fail(`${label} must link ${manifestHref}`);
     const themeColor = findTag(html, "meta", "name", "theme-color");
     if (!themeColor?.content || !("data-theme-color" in themeColor))
       fail(`${label} is missing dynamic theme-color metadata`);
@@ -188,11 +221,13 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
     if (/__PWA_[A-Z_]+__/.test(worker))
       fail("Service worker contains an unresolved configuration token");
     if (
-      !worker.includes(`const PROJECT_BASE = "${projectConfig.site.basePath}"`)
+      !worker.includes('const PROJECT_ROOT = new URL("./", self.location.href)')
     )
-      fail(
-        `Service worker project base must be ${projectConfig.site.basePath}`,
-      );
+      fail("Service worker must derive its project root from its own URL");
+    if (!worker.includes("encodeURIComponent(PROJECT_PATH)"))
+      fail("Service-worker caches must be isolated by deployment path");
+    if (worker.includes(projectConfig.site.basePath))
+      fail("Service worker must not embed the configured deployment path");
     if (
       !worker.includes(
         `const CACHE_PREFIX = "${projectConfig.pwa.cachePrefix}"`,
@@ -203,7 +238,7 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       );
     if (!worker.includes('request.method === "GET"'))
       fail("Service worker must ignore non-GET requests");
-    if (!worker.includes("url.origin === self.location.origin"))
+    if (!worker.includes("url.origin === PROJECT_ROOT.origin"))
       fail("Service worker must ignore cross-origin requests");
     if (!worker.includes('event.data?.type === "SKIP_WAITING"'))
       fail("Service worker updates must require an explicit message");
@@ -215,13 +250,13 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       .filter((file) => file.endsWith(".js") && !file.endsWith(".map"))
       .map((file) => readFileSync(file, "utf8"))
       .join("\n");
-    if (!browserCode.includes(projectConfig.pwa.serviceWorkerUrl))
+    if (!browserCode.includes(projectConfig.pwa.serviceWorkerFile))
+      fail("Compiled registration must resolve the configured worker filename");
+    if (!browserCode.includes('link[rel="manifest"]'))
+      fail("Compiled registration must derive its root from the manifest link");
+    if (browserCode.includes(projectConfig.site.basePath))
       fail(
-        `Compiled registration must use ${projectConfig.pwa.serviceWorkerUrl}`,
-      );
-    if (!browserCode.includes(projectConfig.site.basePath))
-      fail(
-        `Compiled registration must use scope ${projectConfig.site.basePath}`,
+        "Compiled PWA runtime must not embed the configured deployment path",
       );
   }
 

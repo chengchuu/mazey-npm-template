@@ -109,9 +109,7 @@ module.exports = deepFreeze({
   },
   assets: {
     faviconFile,
-    faviconUrl: `${basePath}images/${faviconFile}`,
     logoFile,
-    logoUrl: `${basePath}images/${logoFile}`,
   },
   site: {
     url: siteUrl.href,
@@ -146,14 +144,10 @@ module.exports = deepFreeze({
     display: "standalone",
     backgroundColor: theme.colorLight,
     themeColor: theme.colorPrimary,
-    manifestUrl: `${basePath}manifest.webmanifest`,
-    serviceWorkerUrl: `${basePath}service-worker.js`,
+    manifestFile: "manifest.webmanifest",
+    serviceWorkerFile: "service-worker.js",
     cachePrefix: `${packageConfig.bundleBaseName}-site-`,
     description: `Project website, playground, and TypeScript API documentation for the ${displayName} npm library template.`,
-    icons: pwaIcons.map(({ file, ...icon }) => ({
-      ...icon,
-      file,
-      src: `${basePath}images/${file}`,
-    })),
+    icons: pwaIcons,
   },
 });

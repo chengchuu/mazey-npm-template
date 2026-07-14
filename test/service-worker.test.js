@@ -18,7 +18,7 @@ const siteOrigin = new URL(projectConfig.site.url).origin;
 const projectUrl = (relative = "") =>
   new URL(relative, projectConfig.site.url).href;
 
-function evaluateWorker() {
+function evaluateWorker(deploymentUrl = projectConfig.site.url) {
   const listeners = {};
   const deleted = [];
   const runtimeCache = {
@@ -26,24 +26,31 @@ function evaluateWorker() {
     keys: jest.fn(async () => []),
     put: jest.fn(),
   };
-  const fetch = jest.fn();
+  const fetch = jest.fn(async () => ({
+    clone: () => ({ cached: true }),
+    ok: true,
+    status: 200,
+    type: "basic",
+  }));
   const caches = {
     delete: jest.fn(async (name) => {
       deleted.push(name);
       return true;
     }),
     keys: jest.fn(async () => [
-      `${projectConfig.pwa.cachePrefix}old`,
-      `${projectConfig.pwa.cachePrefix}test-version`,
+      `${projectConfig.pwa.cachePrefix}0123456789abcdef`,
+      `${projectConfig.pwa.cachePrefix}${encodeURIComponent(new URL(deploymentUrl).pathname)}-old`,
+      `${projectConfig.pwa.cachePrefix}${encodeURIComponent(new URL(deploymentUrl).pathname)}-test-version`,
+      `${projectConfig.pwa.cachePrefix}${encodeURIComponent("/another/")}-old`,
       "unrelated-cache",
     ]),
-    match: jest.fn(),
+    match: jest.fn(async () => undefined),
     open: jest.fn(async () => runtimeCache),
   };
   const self = {
     addEventListener: (name, listener) => (listeners[name] = listener),
     clients: { claim: jest.fn(async () => undefined) },
-    location: { origin: siteOrigin },
+    location: new URL("service-worker.js", deploymentUrl),
     skipWaiting: jest.fn(),
   };
   const source = renderServiceWorker(
@@ -62,16 +69,31 @@ function evaluateWorker() {
 
 test("manifest icon dimensions match their declarations", () => {
   const manifest = createManifest();
-  expect(manifest.id).toBe(projectConfig.site.basePath);
-  expect(manifest.start_url).toBe(projectConfig.site.basePath);
-  expect(manifest.scope).toBe(projectConfig.site.basePath);
+  expect(manifest).not.toHaveProperty("id");
+  expect(manifest.start_url).toBe("./");
+  expect(manifest.scope).toBe("./");
   expect(manifest.display).toBe("standalone");
   for (const configuredIcon of projectConfig.pwa.icons) {
-    const icon = manifest.icons.find((item) => item.src === configuredIcon.src);
+    const icon = manifest.icons.find(
+      (item) => item.src === `./images/${configuredIcon.file}`,
+    );
     const file = path.join(root, "images", configuredIcon.file);
     const dimensions = pngDimensions(file);
     expect(`${dimensions.width}x${dimensions.height}`).toBe(icon.sizes);
   }
+});
+
+test.each([
+  projectConfig.site.url,
+  "https://portable.example/npm-template/",
+  "https://portable.example/nested/npm%20template/",
+])("manifest resources remain scoped when deployed at %s", (deploymentUrl) => {
+  const manifest = createManifest();
+  const manifestUrl = new URL("manifest.webmanifest", deploymentUrl);
+  expect(new URL(manifest.start_url, manifestUrl).href).toBe(deploymentUrl);
+  expect(new URL(manifest.scope, manifestUrl).href).toBe(deploymentUrl);
+  for (const icon of manifest.icons)
+    expect(new URL(icon.src, manifestUrl).pathname).toMatch(/\/images\//);
 });
 
 test("manifest validation rejects invalid metadata independently of configuration", () => {
@@ -97,9 +119,15 @@ test("activation removes only obsolete project caches", async () => {
   let activation;
   listeners.activate({ waitUntil: (promise) => (activation = promise) });
   await activation;
-  expect(caches.delete).toHaveBeenCalledTimes(1);
+  expect(caches.delete).toHaveBeenCalledTimes(2);
   expect(caches.delete).toHaveBeenCalledWith(
-    `${projectConfig.pwa.cachePrefix}old`,
+    `${projectConfig.pwa.cachePrefix}0123456789abcdef`,
+  );
+  expect(caches.delete).toHaveBeenCalledWith(
+    `${projectConfig.pwa.cachePrefix}${encodeURIComponent(projectConfig.site.basePath)}-old`,
+  );
+  expect(caches.delete).not.toHaveBeenCalledWith(
+    `${projectConfig.pwa.cachePrefix}${encodeURIComponent("/another/")}-old`,
   );
   expect(self.clients.claim).toHaveBeenCalledTimes(1);
 });
@@ -163,6 +191,30 @@ test.each([
   },
 );
 
+test("failed navigation falls back to the deployment homepage", async () => {
+  const deploymentUrl = "https://portable.example/nested/npm%20template/";
+  const { caches, fetch, listeners } = evaluateWorker(deploymentUrl);
+  const home = { source: "offline home" };
+  fetch.mockRejectedValue(new Error("Offline"));
+  caches.match.mockImplementation(async (request) =>
+    request === deploymentUrl ? home : undefined,
+  );
+  let responsePromise;
+
+  listeners.fetch({
+    request: {
+      destination: "document",
+      method: "GET",
+      mode: "navigate",
+      url: new URL("api/", deploymentUrl).href,
+    },
+    respondWith: (promise) => (responsePromise = promise),
+  });
+
+  await expect(responsePromise).resolves.toBe(home);
+  expect(caches.match).toHaveBeenCalledWith(deploymentUrl);
+});
+
 test.each([
   ["script", "js"],
   ["style", "css"],
@@ -208,13 +260,30 @@ test("local images remain cache-first", async () => {
       destination: "image",
       method: "GET",
       mode: "no-cors",
-      url: projectConfig.pwa.icons[0].src.startsWith("/")
-        ? `${siteOrigin}${projectConfig.pwa.icons[0].src}`
-        : projectConfig.pwa.icons[0].src,
+      url: projectUrl(`images/${projectConfig.pwa.icons[0].file}`),
     },
     respondWith: (promise) => (responsePromise = promise),
   });
 
   await expect(responsePromise).resolves.toBe(cachedResponse);
   expect(fetch).not.toHaveBeenCalled();
+});
+
+test("alternate deployments use their own scope and cache namespace", async () => {
+  const deploymentUrl = "https://portable.example/nested/npm%20template/";
+  const { caches, listeners } = evaluateWorker(deploymentUrl);
+  const respondWith = jest.fn();
+  listeners.fetch({
+    request: {
+      destination: "document",
+      method: "GET",
+      mode: "navigate",
+      url: new URL("playground/", deploymentUrl).href,
+    },
+    respondWith,
+  });
+  expect(respondWith).toHaveBeenCalledTimes(1);
+  await expect(caches.keys()).resolves.toContain(
+    `${projectConfig.pwa.cachePrefix}${encodeURIComponent("/nested/npm%20template/")}-old`,
+  );
 });

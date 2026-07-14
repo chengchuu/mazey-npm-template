@@ -232,17 +232,18 @@ under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap
 `data-bs-theme` attribute. `site/theme.ts` also keeps the browser's theme-color metadata and
 TypeDoc's `tsd-theme` preference synchronized.
 
-Canonical URLs, Open Graph URLs, and structured data should use the production site URL. Assets
-that the browser must load from the current deployment, including the favicon, manifest, worker,
-and PWA icons, must use the project-root `/mazey-npm-template/` base path instead of a hard-coded
-`https://chengchuu.github.io` origin. This keeps both GitHub Pages and
-`http://127.0.0.1:4173/mazey-npm-template/` working. Webpack may override image URLs with its current
-`pagesBase` for ordinary port-8080 development.
+Canonical URLs, Open Graph URLs, structured data, crawler files, and external links use absolute
+production URLs. Local assets and internal navigation use document-relative URLs generated for each
+page depth. Manifest resources are manifest-relative, service-worker registration derives the site
+root from the manifest link, and Webpack uses automatic public-path resolution for emitted chunks.
+Validators must prove the canonical Pages prefix plus alternate and nested deployment prefixes.
 
 PWA source behavior lives under `site`: `service-worker.js` and browser-only registration/install
-logic. `scripts/build-pages.js` generates the manifest, injects worker configuration, versions the
-cache, and emits both at the project root. Keep the PWA identity, start URL, worker registration, and
-scope at `/mazey-npm-template/`.
+logic. `scripts/build-pages.js` generates the manifest, injects worker cache configuration, versions
+the cache, and emits both at the artifact root. Keep manifest `start_url` and `scope` relative to the
+manifest, omit an explicit `id`, and derive worker registration from the manifest URL. At the
+production deployment these resolve to `/mazey-npm-template/`; another prefix creates a distinct app
+identity and cache namespace.
 Normal `npm run dev` must not register the production worker; use `npm run pwa:preview` for local
 production-like testing. Never move PWA registration into `src` or package output.
 

@@ -169,6 +169,21 @@ use the browser's Application tools to unregister older workers or clear site da
 install. Do not open generated HTML directly from the filesystem; service workers require HTTPS or
 a trusted local origin such as `localhost`.
 
+### Portable Website Paths
+
+The generated Pages artifact uses document-relative URLs for local assets and navigation, while
+canonical, Open Graph, JSON-LD, GitHub, npm, and sitemap URLs remain absolute. The manifest uses
+relative start, scope, and icon URLs; the service worker derives its root from its own URL. This lets
+one artifact run below another directory prefix without rebuilding:
+
+```bash
+PREVIEW_BASE_PATH="/nested/npm template/" npm run pwa:preview
+```
+
+The manifest intentionally omits an explicit `id`, so its resolved start URL supplies the app
+identity. Moving the artifact to another host or path therefore creates a separate installation;
+existing installations do not migrate automatically.
+
 ## License
 
 This project is released under the [MIT License][license-url].

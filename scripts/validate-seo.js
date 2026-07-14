@@ -1,12 +1,22 @@
 const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
 const path = require("node:path");
 const projectConfig = require("../project.config");
+const {
+  artifactPathToFile,
+  relativeRootFromFile,
+  resolveArtifactReference,
+} = require("./site-url-utils");
 
 const sitePages = projectConfig.site.pages;
 
 const root = path.resolve(__dirname, "..");
 const docs = path.join(root, "docs");
 const failures = [];
+const portableDeploymentUrls = [
+  projectConfig.site.url,
+  "https://portable.example/npm-template/",
+  "https://portable.example/nested/npm%20template/",
+];
 
 function fail(message) {
   failures.push(message);
@@ -16,18 +26,122 @@ function matches(html, expression) {
   return [...html.matchAll(expression)];
 }
 
+function tagAttributes(tag) {
+  return Object.fromEntries(
+    matches(tag, /([:\w-]+)=["']([^"']*)["']/g).map((item) => [
+      item[1].toLowerCase(),
+      item[2],
+    ]),
+  );
+}
+
 function attribute(html, tag, name, value) {
   const tags = matches(html, new RegExp(`<${tag}\\b[^>]*>`, "gi"));
   for (const match of tags) {
-    const attributes = Object.fromEntries(
-      matches(match[0], /([:\w-]+)=["']([^"']*)["']/g).map((item) => [
-        item[1].toLowerCase(),
-        item[2],
-      ]),
-    );
+    const attributes = tagAttributes(match[0]);
     if (attributes[name] === value) return attributes;
   }
   return null;
+}
+
+function filesWithExtension(directory, extension) {
+  return readdirSync(directory).flatMap((name) => {
+    const file = path.join(directory, name);
+    if (statSync(file).isDirectory())
+      return filesWithExtension(file, extension);
+    return file.endsWith(extension) ? [file] : [];
+  });
+}
+
+function portableHtmlReferences(html) {
+  return matches(html, /<(a|img|link|script)\b[^>]*>/gi).flatMap((match) => {
+    const tag = match[1].toLowerCase();
+    const attributes = tagAttributes(match[0]);
+    if (
+      tag === "link" &&
+      ["canonical", "sitemap"].includes(attributes.rel?.toLowerCase())
+    )
+      return [];
+    const reference =
+      tag === "script" || tag === "img" ? attributes.src : attributes.href;
+    if (!reference || reference.startsWith("#")) return [];
+    if (/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(reference)) {
+      try {
+        const url = new URL(reference, projectConfig.site.url);
+        const productionRoot = new URL(projectConfig.site.url);
+        if (
+          url.origin !== productionRoot.origin ||
+          !url.pathname.startsWith(productionRoot.pathname)
+        )
+          return [];
+      } catch {
+        return [];
+      }
+    }
+    return [{ reference, tag }];
+  });
+}
+
+function portableCssReferences(css) {
+  return matches(css, /url\(\s*(["']?)([^"')]+)\1\s*\)/gi)
+    .map((match) => match[2].trim())
+    .filter(
+      (reference) =>
+        reference &&
+        !reference.startsWith("#") &&
+        !/^(?:data:|[a-z][a-z\d+.-]*:|\/\/)/i.test(reference),
+    );
+}
+
+function validateArtifactReferences({
+  artifactRoot = docs,
+  deploymentUrls = portableDeploymentUrls,
+} = {}) {
+  const referenceFailures = [];
+  const validateReference = (reference, sourceFile, kind) => {
+    if (reference.startsWith("/")) {
+      referenceFailures.push(
+        `${sourceFile}: ${kind} must not use root-relative URL ${reference}`,
+      );
+      return;
+    }
+    for (const deploymentUrl of deploymentUrls) {
+      const resolved = resolveArtifactReference(
+        reference,
+        sourceFile,
+        deploymentUrl,
+      );
+      if (!resolved.isLocal) {
+        referenceFailures.push(
+          `${sourceFile}: ${reference} escapes deployment ${deploymentUrl}`,
+        );
+        continue;
+      }
+      const target = artifactPathToFile(artifactRoot, resolved.artifactPath);
+      if (!existsSync(target) || !statSync(target).isFile())
+        referenceFailures.push(
+          `${sourceFile}: ${reference} resolves to missing ${resolved.artifactPath}`,
+        );
+    }
+  };
+
+  for (const file of filesWithExtension(artifactRoot, ".html")) {
+    const relative = path
+      .relative(artifactRoot, file)
+      .replaceAll(path.sep, "/");
+    const html = readFileSync(file, "utf8");
+    for (const { reference, tag } of portableHtmlReferences(html))
+      validateReference(reference, relative, `<${tag}> URL`);
+  }
+  for (const file of filesWithExtension(artifactRoot, ".css")) {
+    const relative = path
+      .relative(artifactRoot, file)
+      .replaceAll(path.sep, "/");
+    const css = readFileSync(file, "utf8");
+    for (const reference of portableCssReferences(css))
+      validateReference(reference, relative, "CSS URL");
+  }
+  return [...new Set(referenceFailures)];
 }
 
 function visibleText(html) {
@@ -168,11 +282,7 @@ function validatePage({
 }
 
 function findHtml(directory) {
-  return readdirSync(directory).flatMap((name) => {
-    const file = path.join(directory, name);
-    if (statSync(file).isDirectory()) return findHtml(file);
-    return file.endsWith(".html") ? [file] : [];
-  });
+  return filesWithExtension(directory, ".html");
 }
 
 function validateApiPages() {
@@ -185,7 +295,7 @@ function validateApiPages() {
     const relative = path
       .relative(apiDirectory, file)
       .replaceAll(path.sep, "/");
-    const assetPrefix = "../".repeat(relative.split("/").length);
+    const siteRoot = relativeRootFromFile(`api/${relative}`);
     const canonical = attribute(html, "link", "rel", "canonical")?.href;
     if (
       !canonical?.startsWith(sitePages.api.url) ||
@@ -199,11 +309,21 @@ function validateApiPages() {
       fail(`API ${relative}: missing description`);
     if (attribute(html, "meta", "property", "og:url")?.content !== canonical)
       fail(`API ${relative}: Open Graph URL does not match canonical`);
-    if (!attribute(html, "link", "rel", "icon"))
-      fail(`API ${relative}: missing favicon`);
-    if (!attribute(html, "link", "href", `${assetPrefix}assets/api.css`))
+    if (
+      attribute(html, "link", "rel", "icon")?.href !==
+      `${siteRoot}images/${projectConfig.assets.faviconFile}`
+    )
+      fail(`API ${relative}: favicon is not site-root relative`);
+    if (
+      attribute(html, "link", "rel", "manifest")?.href !==
+      `${siteRoot}${projectConfig.pwa.manifestFile}`
+    )
+      fail(`API ${relative}: manifest link is not site-root relative`);
+    if (!attribute(html, "a", "href", siteRoot))
+      fail(`API ${relative}: project-home link is not depth-correct`);
+    if (!attribute(html, "link", "href", `${siteRoot}assets/api.css`))
       fail(`API ${relative}: missing API theme stylesheet`);
-    if (!attribute(html, "script", "src", `${assetPrefix}assets/api.js`))
+    if (!attribute(html, "script", "src", `${siteRoot}assets/api.js`))
       fail(`API ${relative}: missing API theme script`);
     const h1s = matches(html, /<h1\b[^>]*>([\s\S]*?)<\/h1>/gi);
     if (h1s.length !== 1 || !visibleText(h1s[0][1]))
@@ -294,11 +414,8 @@ function validateSite() {
       ],
       expectedTitle: sitePages.home.title,
       expectedDescription: sitePages.home.description,
-      expectedCss: `${projectConfig.site.basePath}assets/shared.css`,
-      expectedScripts: [
-        `${projectConfig.site.basePath}assets/shared.js`,
-        `${projectConfig.site.basePath}assets/home.js`,
-      ],
+      expectedCss: "assets/shared.css",
+      expectedScripts: ["assets/shared.js", "assets/home.js"],
       expectedSitemap: projectConfig.urls.sitemap,
       requireNavigationToggle: true,
     }),
@@ -316,18 +433,15 @@ function validateSite() {
       ],
       expectedTitle: sitePages.playground.title,
       expectedDescription: sitePages.playground.description,
-      expectedCss: `${projectConfig.site.basePath}assets/shared.css`,
-      expectedScripts: [
-        `${projectConfig.site.basePath}assets/shared.js`,
-        `${projectConfig.site.basePath}assets/playground.js`,
-      ],
+      expectedCss: "../assets/shared.css",
+      expectedScripts: ["../assets/shared.js", "../assets/playground.js"],
       requireNavigationToggle: true,
     }),
     validatePage({
       label: "API documentation",
       file: path.join(docs, "api", "index.html"),
       canonical: sitePages.api.url,
-      requiredLinks: [sitePages.home.url],
+      requiredLinks: ["../"],
       expectedTitle: sitePages.api.title,
       expectedDescription: sitePages.api.description,
       expectedCss: "../assets/api.css",
@@ -346,6 +460,7 @@ function validateSite() {
       fail(`Primary title duplicates an API page title: ${title}`);
   }
   validateStaticFiles();
+  validateArtifactReferences().forEach(fail);
   if (failures.length)
     throw new Error(`SEO validation failed:\n- ${failures.join("\n- ")}`);
   return {
@@ -366,4 +481,10 @@ if (require.main === module) {
   }
 }
 
-module.exports = { attribute, validateSite, visibleText };
+module.exports = {
+  attribute,
+  portableDeploymentUrls,
+  validateArtifactReferences,
+  validateSite,
+  visibleText,
+};

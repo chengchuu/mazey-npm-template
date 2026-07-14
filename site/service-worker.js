@@ -1,21 +1,30 @@
 /* global self, caches, fetch, URL */
 
-const PROJECT_BASE = "__PWA_PROJECT_BASE__";
 const CACHE_PREFIX = "__PWA_CACHE_PREFIX__";
-const CACHE_NAME = `${CACHE_PREFIX}__PWA_CACHE_VERSION__`;
+const PROJECT_ROOT = new URL("./", self.location.href);
+const PROJECT_PATH = PROJECT_ROOT.pathname;
+const CACHE_NAMESPACE = `${CACHE_PREFIX}${encodeURIComponent(PROJECT_PATH)}-`;
+const CACHE_NAME = `${CACHE_NAMESPACE}__PWA_CACHE_VERSION__`;
 const MAX_CACHE_ENTRIES = 96;
+const projectUrl = (relative = "") => new URL(relative, PROJECT_ROOT).href;
 const APP_SHELL = [
-  PROJECT_BASE,
-  `${PROJECT_BASE}playground/`,
-  `${PROJECT_BASE}api/`,
-  `${PROJECT_BASE}manifest.webmanifest`,
-  `${PROJECT_BASE}assets/shared.css`,
-  `${PROJECT_BASE}assets/shared.js`,
-  `${PROJECT_BASE}assets/home.js`,
-  `${PROJECT_BASE}assets/playground.js`,
-  `${PROJECT_BASE}assets/api.css`,
-  `${PROJECT_BASE}assets/api.js`,
-];
+  "",
+  "playground/",
+  "api/",
+  "__PWA_MANIFEST_FILE__",
+  "assets/shared.css",
+  "assets/shared.js",
+  "assets/home.js",
+  "assets/playground.js",
+  "assets/api.css",
+  "assets/api.js",
+  "api/assets/style.css",
+  "api/assets/highlight.css",
+  "api/assets/main.js",
+  "api/assets/icons.js",
+  "api/assets/search.js",
+  "api/assets/navigation.js",
+].map(projectUrl);
 
 function canCache(response) {
   return (
@@ -30,9 +39,16 @@ function isProjectRequest(request) {
   const url = new URL(request.url);
   return (
     request.method === "GET" &&
-    url.origin === self.location.origin &&
-    url.pathname.startsWith(PROJECT_BASE) &&
+    url.origin === PROJECT_ROOT.origin &&
+    url.pathname.startsWith(PROJECT_PATH) &&
     !url.pathname.endsWith(".map")
+  );
+}
+
+function isLegacyProjectCache(name) {
+  return (
+    name.startsWith(CACHE_PREFIX) &&
+    /^[a-f\d]{16}$/.test(name.slice(CACHE_PREFIX.length))
   );
 }
 
@@ -65,7 +81,7 @@ async function networkFirst(request) {
     const cached = await caches.match(request).catch(() => undefined);
     if (cached) return cached;
     if (request.mode === "navigate") {
-      const home = await caches.match(PROJECT_BASE);
+      const home = await caches.match(projectUrl());
       if (home) return home;
     }
     throw error;
@@ -106,7 +122,9 @@ self.addEventListener("activate", (event) => {
         Promise.all(
           names
             .filter(
-              (name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME,
+              (name) =>
+                (name.startsWith(CACHE_NAMESPACE) && name !== CACHE_NAME) ||
+                isLegacyProjectCache(name),
             )
             .map((name) => caches.delete(name)),
         ),

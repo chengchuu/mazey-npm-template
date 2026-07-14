@@ -1,8 +1,10 @@
 /** @jest-environment node */
 
+const path = require("node:path");
 const pkg = require("../package.json");
 const projectConfig = require("../project.config");
 const { createManifest } = require("../scripts/build-pages");
+const webpackConfig = require("../scripts/webpack.config.dev");
 const {
   packageDetails,
   repositoryDetails,
@@ -38,6 +40,19 @@ test("package identity derivation does not require website metadata", () => {
     iifeGlobal: "MY_LIBRARY",
     installCommand: "npm install @example/my-library",
   });
+});
+
+test("Webpack emits site images from central configuration", () => {
+  const configuredFiles = [
+    projectConfig.assets.faviconFile,
+    projectConfig.assets.logoFile,
+    projectConfig.seo.openGraphImage.file,
+  ];
+  for (const file of configuredFiles) {
+    expect(webpackConfig.entry.shared).toContain(
+      path.resolve(__dirname, "..", "images", file),
+    );
+  }
 });
 
 test.each([

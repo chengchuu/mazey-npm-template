@@ -9,6 +9,11 @@ const pagesBase =
   process.env.GITHUB_PAGES === "true" ? projectConfig.site.basePath : "/";
 const pwaEnabled =
   process.env.GITHUB_PAGES === "true" || process.env.PWA_ENABLED === "true";
+const siteImageEntries = [
+  projectConfig.assets.faviconFile,
+  projectConfig.assets.logoFile,
+  projectConfig.seo.openGraphImage.file,
+].map((file) => _resolve(`../images/${file}`));
 const templateParameters = {
   API_URL: projectConfig.site.pages.api.url,
   BUNDLE_FILENAME: `${projectConfig.package.bundleBaseName}.min.js`,
@@ -68,7 +73,7 @@ const runtimeConfig = {
 module.exports = {
   mode: "development",
   entry: {
-    shared: _resolve("../site/shared.ts"),
+    shared: [_resolve("../site/shared.ts"), ...siteImageEntries],
     home: {
       import: _resolve("../site/index.ts"),
       dependOn: "shared",

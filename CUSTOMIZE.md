@@ -53,7 +53,8 @@ lockfile changes. Do not expose the package name or version as a hard-coded runt
 
 Then edit `project.config.js` for values that cannot be derived safely:
 
-- PWA short name.
+- Replace the PWA short name in `const shortName = "mazey template";`. Keep it concise enough for
+  installed-app labels; it does not need to match the npm package name exactly.
 - Light and dark backgrounds plus the coordinated light/dark primary interaction palette. Review
   base, hover, active, soft, and RGB values together and preserve readable contrast.
 - Page titles and descriptions when the new library is not a greeting API.

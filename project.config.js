@@ -1,15 +1,9 @@
+const { deepFreeze } = require("mazey");
 const pkg = require("./package.json");
 const {
   packageDetails,
   repositoryDetails,
 } = require("./scripts/project-config-utils");
-
-function deepFreeze(value) {
-  if (!value || typeof value !== "object" || Object.isFrozen(value))
-    return value;
-  Object.values(value).forEach(deepFreeze);
-  return Object.freeze(value);
-}
 
 const packageConfig = packageDetails(pkg);
 const repository = repositoryDetails(pkg.repository);

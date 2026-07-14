@@ -6,8 +6,7 @@ Guidance for automated coding agents working in `mazey-npm-template`.
 
 This directory is the primary npm package. Improve maintainability, package quality, developer experience.
 
-Keep the package generic, browser-friendly, and easy to rename. Preserve the package identity
-`mazey-npm-template` unless the user explicitly requests a rename.
+Keep the package generic, browser-friendly, and easy to rename.
 
 ## Project Shape
 

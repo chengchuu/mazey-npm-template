@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { createGreeting } from "../src/index";
+import { createGreeting } from "../src/index.ts";
 
 test("creates a default greeting", () => {
   expect(createGreeting("Cheng")).toBe("Hello, Cheng!");

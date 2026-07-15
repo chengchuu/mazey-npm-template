@@ -1,4 +1,4 @@
-const {
+import {
   cpSync,
   existsSync,
   mkdirSync,
@@ -7,11 +7,13 @@ const {
   rmSync,
   statSync,
   writeFileSync,
-} = require("node:fs");
-const { createHash } = require("node:crypto");
-const path = require("node:path");
-const projectConfig = require("../project.config");
+} from "node:fs";
+import { createHash } from "node:crypto";
+import path, { dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import projectConfig from "../project.config.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(__dirname, "..");
 const { displayName } = projectConfig.brand;
 const { pages, theme } = projectConfig.site;
@@ -325,9 +327,13 @@ function buildPages({ rootDir = defaultRoot } = {}) {
   writePwaAssets(rootDir, docs);
 }
 
-if (require.main === module) buildPages();
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+)
+  buildPages();
 
-module.exports = {
+export {
   apiPageUrl,
   buildPages,
   createManifest,

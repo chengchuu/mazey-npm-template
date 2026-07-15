@@ -76,7 +76,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          PROJECT_NAME=$(node -p 'require("./scripts/project-config-utils").packageDetails(require("./package.json")).bundleBaseName')
+          PROJECT_NAME=$(node --input-type=module -e 'import pkg from "./package.json" with { type: "json" }; import { packageDetails } from "./scripts/project-config-utils.js"; process.stdout.write(packageDetails(pkg).bundleBaseName)')
           node scripts/change-package-name.js "@${{ github.repository_owner }}/${PROJECT_NAME}"
           npm publish --registry=https://npm.pkg.github.com/
 
@@ -87,7 +87,7 @@ jobs:
       - name: Create git tag for version
         if: success()
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(node --input-type=module -e 'import pkg from "./package.json" with { type: "json" }; process.stdout.write(pkg.version)')
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$VERSION" -m "Release v$VERSION"

@@ -19,6 +19,7 @@ same string.
 | GitHub Pages base path      | `/mazey-npm-template/`                            | `/my-library/`                             |
 | GitHub Pages URL            | `https://chengchuu.github.io/mazey-npm-template/` | `https://my-account.github.io/my-library/` |
 | Display name                | `mazey-npm-template`                              | `My Library`                               |
+| PWA short name              | `mazey template`                                  | `My Library`                               |
 | Theme storage key           | `mazey-npm-template-theme`                        | `my-library-theme`                         |
 | Service-worker cache prefix | `mazey-npm-template-site-`                        | `my-library-site-`                         |
 
@@ -37,7 +38,7 @@ Edit `package.json`:
 
 - Set `name`, `version`, and `description`.
 - Replace `keywords`, `author`, `repository`, `bugs`, and `homepage`.
-- Keep `main`, `module`, and `types` aligned with the Rollup outputs.
+- Keep `main`, `module`, `types`, and conditional `exports` aligned with the Rollup outputs.
 - Change `unpkg` and `jsdelivr` to the chosen browser bundle filename.
 - Review `license`, `files`, `engines`, dependencies, and peer dependencies for the new library.
 
@@ -63,7 +64,7 @@ Then edit `project.config.js` for values that cannot be derived safely:
   social preview. Keep that image at 1200x630 unless intentionally changing its configured width and
   height.
 
-Keep `project.config.js` in CommonJS format. Node scripts import it directly, Webpack injects a
+Keep `project.config.js` in ESM format. Node scripts import it directly, Webpack injects a
 browser-safe subset through `site/runtime-config.ts`, and the Pages build generates static files from
 it. Do not import this configuration from the published `src` entrypoint.
 
@@ -217,7 +218,7 @@ documentation, and validates SEO and PWA output.
 
 Inspect the generated package:
 
-- Confirm `lib/index.cjs.js`, `lib/index.esm.js`, declarations, and the IIFE bundle exist.
+- Confirm `lib/index.cjs`, `lib/index.esm.js`, declarations, and the IIFE bundle exist.
 - Confirm generated banners, declarations, source maps, and browser globals use the new identity.
 - Confirm `npm pack --dry-run` includes only intended consumer files and has a reasonable size.
 - Confirm no website or service-worker runtime is present in `src` or the npm package output.

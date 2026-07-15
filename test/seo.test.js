@@ -1,19 +1,19 @@
 /** @jest-environment node */
-const {
+import {
   mkdtempSync,
   mkdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
-} = require("node:fs");
-const os = require("node:os");
-const path = require("node:path");
-const {
+} from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {
   buildPages,
   normalizeHeadingOrder,
   transformApiHtml,
-} = require("../scripts/build-pages");
-const projectConfig = require("../project.config");
+} from "../scripts/build-pages.js";
+import projectConfig from "../project.config.js";
 
 const { displayName } = projectConfig.brand;
 const { pages } = projectConfig.site;

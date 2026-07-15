@@ -1,8 +1,10 @@
-const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
-const path = require("node:path");
-const projectConfig = require("../project.config");
-const { pngDimensions } = require("./validate-pwa");
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import path, { dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import projectConfig from "../project.config.js";
+import { pngDimensions } from "./validate-pwa.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const sitePages = projectConfig.site.pages;
 
 const root = path.resolve(__dirname, "..");
@@ -399,7 +401,10 @@ function validateSite() {
   };
 }
 
-if (require.main === module) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+) {
   try {
     const result = validateSite();
     console.log(
@@ -411,4 +416,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { attribute, validateSite, visibleText };
+export { attribute, validateSite, visibleText };

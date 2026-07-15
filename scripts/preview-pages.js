@@ -1,8 +1,10 @@
-const { createReadStream, existsSync, statSync } = require("node:fs");
-const http = require("node:http");
-const path = require("node:path");
-const projectConfig = require("../project.config");
+import { createReadStream, existsSync, statSync } from "node:fs";
+import http from "node:http";
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import projectConfig from "../project.config.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const { basePath } = projectConfig.site;
 
 const docs = path.resolve(__dirname, "..", "docs");

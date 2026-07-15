@@ -7,12 +7,12 @@ import { rmSync } from "node:fs";
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import pkg from "../package.json" with { type: "json" };
-import configUtils from "./project-config-utils.js";
+import { packageDetails } from "./project-config-utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const _resolve = (_path) => path.resolve(__dirname, _path);
-const packageConfig = configUtils.packageDetails(pkg);
+const packageConfig = packageDetails(pkg);
 const pkgName = packageConfig.name;
 const bundleBaseName = packageConfig.bundleBaseName;
 const iifeName = packageConfig.iifeGlobal;
@@ -107,7 +107,7 @@ export default [
     // https://rollupjs.org/guide/en/#outputformat
     output: [
       {
-        file: _resolve("../lib/index.cjs.js"),
+        file: _resolve("../lib/index.cjs"),
         format: "cjs",
         banner,
         sourcemap: true,

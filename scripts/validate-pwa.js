@@ -1,7 +1,9 @@
-const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
-const path = require("node:path");
-const projectConfig = require("../project.config");
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import path, { dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import projectConfig from "../project.config.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(__dirname, "..");
 const manifestDisplayModes = new Set([
   "browser",
@@ -241,7 +243,10 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
   return { icons: manifest.icons.length, pages: pages.length };
 }
 
-if (require.main === module) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+) {
   try {
     const result = validatePwa();
     console.log(
@@ -253,4 +258,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { manifestMetadataFailures, pngDimensions, validatePwa };
+export { manifestMetadataFailures, pngDimensions, validatePwa };

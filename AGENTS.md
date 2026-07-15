@@ -49,7 +49,7 @@ paths.
 
 The published package currently provides:
 
-- CommonJS: `lib/index.cjs.js`
+- CommonJS: `lib/index.cjs`
 - ES modules: `lib/index.esm.js`
 - Browser IIFE: `lib/mazey-npm-template.min.js`
 - Root declarations: `lib/index.d.ts`
@@ -98,10 +98,14 @@ up the global augmentations. Do not publish an unreferenced ambient declaration 
 
 ## Module And Build Rules
 
-`package.json` does not declare `"type": "module"`.
+`package.json` declares `"type": "module"` while conditional package exports preserve both ESM and
+CommonJS consumer entry points.
 
-- Keep ordinary `.js` scripts in CommonJS syntax.
-- Use `.mjs` for ESM configuration, as Rollup does.
+- Keep ordinary `.js` scripts in ESM syntax and include file extensions in relative Node.js imports.
+- Existing `.mjs` configuration files remain ESM; use `.cjs` only for an intentional CommonJS
+  compatibility boundary.
+- Keep the generated CommonJS package entry at `lib/index.cjs`; a `.js` CommonJS bundle would be
+  interpreted as ESM inside this package.
 - Prefer `node:` specifiers for Node built-ins when touching scripts.
 - Do not introduce module-load browser side effects that fail in Node-based tests or bundlers.
 
@@ -310,7 +314,7 @@ PWA output, uploads `docs`, and deploys through the `github-pages` environment.
 - require a new-name argument;
 - update only the `name` field in `package.json`;
 - preserve two-space JSON formatting and the trailing newline;
-- remain CommonJS-compatible.
+- remain ESM-compatible.
 
 Do not copy package-specific source code, repository URLs, or API names into this project during a
 rename. A broader rename requires checking `package.json`, Rollup output naming, source metadata,

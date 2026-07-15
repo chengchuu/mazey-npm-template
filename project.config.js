@@ -1,10 +1,11 @@
-const { deepFreeze } = require("mazey");
-const pkg = require("./package.json");
-const {
+import { deepFreeze } from "mazey";
+import pkg from "./package.json" with { type: "json" };
+import {
   packageDetails,
   repositoryDetails,
-} = require("./scripts/project-config-utils");
+} from "./scripts/project-config-utils.js";
 
+const shortName = "mazey template";
 const packageConfig = packageDetails(pkg);
 const repository = repositoryDetails(pkg.repository);
 const siteUrl = new URL(pkg.homepage);
@@ -15,7 +16,6 @@ siteUrl.pathname = basePath;
 siteUrl.search = "";
 siteUrl.hash = "";
 const displayName = pkg.name;
-const shortName = "mazey template";
 const githubUrl = repository.url;
 const npmUrl = `https://www.npmjs.com/package/${pkg.name}`;
 const faviconFile = "logo-dark-circle-transparent-32x32.png";
@@ -103,7 +103,7 @@ const openGraphImage = {
   alt: `The ${displayName} logo over purple and teal abstract technology graphics.`,
 };
 
-module.exports = deepFreeze({
+export default deepFreeze({
   package: packageConfig,
   repository,
   brand: {

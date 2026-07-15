@@ -1,13 +1,14 @@
 /** @jest-environment jsdom */
 
-const {
+import { jest } from "@jest/globals";
+import {
   initializeInstallExperience,
   isStandaloneMode,
   monitorServiceWorkerUpdates,
   registerSiteServiceWorker,
   shouldRegisterSiteServiceWorker,
-} = require("../site/pwa");
-const projectConfig = require("../project.config");
+} from "../site/pwa.ts";
+import projectConfig from "../project.config.js";
 
 const appName = projectConfig.brand.displayName;
 const pwaConfig = {

@@ -103,12 +103,12 @@ describes the complete public surface.
 
 ## Package Formats
 
-| Consumer           | Package field | Published file                  |
-| ------------------ | ------------- | ------------------------------- |
-| ESM and bundlers   | `module`      | `lib/index.esm.js`              |
-| Node.js CommonJS   | `main`        | `lib/index.cjs.js`              |
-| Browser/CDN        | `unpkg`       | `lib/mazey-npm-template.min.js` |
-| TypeScript tooling | `types`       | `lib/index.d.ts`                |
+| Consumer           | Package condition       | Published file                  |
+| ------------------ | ----------------------- | ------------------------------- |
+| ESM and bundlers   | `exports.import`        | `lib/index.esm.js`              |
+| Node.js CommonJS   | `exports.require`       | `lib/index.cjs`                 |
+| Browser/CDN        | `unpkg`                 | `lib/mazey-npm-template.min.js` |
+| TypeScript tooling | `exports.types`/`types` | `lib/index.d.ts`                |
 
 Source maps are generated for all JavaScript bundles. The root declarations also load the
 published browser type augmentations from `lib/global.d.ts`.

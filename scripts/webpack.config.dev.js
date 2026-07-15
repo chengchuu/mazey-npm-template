@@ -1,9 +1,11 @@
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const path = require("node:path");
-const webpack = require("webpack");
-const projectConfig = require("../project.config");
+import HtmlWebpackPlugin from "html-webpack-plugin";
+import MiniCssExtractPlugin from "mini-css-extract-plugin";
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import webpack from "webpack";
+import projectConfig from "../project.config.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const _resolve = (_path) => path.resolve(__dirname, _path);
 const pagesBase =
   process.env.GITHUB_PAGES === "true" ? projectConfig.site.basePath : "/";
@@ -70,7 +72,7 @@ const runtimeConfig = {
   },
 };
 
-module.exports = {
+export default {
   mode: "development",
   entry: {
     shared: [_resolve("../site/shared.ts"), ...siteImageEntries],

@@ -1,9 +1,9 @@
-function javaScriptGlobal(value) {
+export function javaScriptGlobal(value) {
   const identifier = value.replace(/[^A-Za-z0-9_$]/g, "_").toUpperCase();
   return /^[A-Za-z_$]/.test(identifier) ? identifier : `_${identifier}`;
 }
 
-function packageDetails(pkg) {
+export function packageDetails(pkg) {
   if (typeof pkg.name !== "string" || !pkg.name.trim())
     throw new Error("package.json must define a package name");
 
@@ -27,7 +27,7 @@ function packageDetails(pkg) {
   };
 }
 
-function repositoryDetails(repository) {
+export function repositoryDetails(repository) {
   const rawUrl = typeof repository === "string" ? repository : repository?.url;
   if (typeof rawUrl !== "string" || !rawUrl.trim())
     throw new Error("package.json must define a GitHub repository URL");
@@ -66,9 +66,3 @@ function repositoryDetails(repository) {
   const url = `https://github.com/${owner}/${name}`;
   return { name, owner, slug: `${owner}/${name}`, url };
 }
-
-module.exports = {
-  javaScriptGlobal,
-  packageDetails,
-  repositoryDetails,
-};

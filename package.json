@@ -1,10 +1,20 @@
 {
   "name": "mazey-npm-template",
   "version": "2.1.6",
+  "type": "module",
   "description": "A TypeScript template for publishing npm packages in CJS, ESM, and browser formats.",
-  "main": "lib/index.cjs.js",
-  "module": "lib/index.esm.js",
-  "types": "lib/index.d.ts",
+  "main": "./lib/index.cjs",
+  "module": "./lib/index.esm.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.esm.js",
+      "require": "./lib/index.cjs",
+      "default": "./lib/index.esm.js"
+    },
+    "./package.json": "./package.json"
+  },
   "unpkg": "lib/mazey-npm-template.min.js",
   "jsdelivr": "lib/mazey-npm-template.min.js",
   "files": [
@@ -14,16 +24,17 @@
   ],
   "scripts": {
     "dev": "webpack serve --config ./scripts/webpack.config.dev.js",
-    "build": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=close SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
-    "build:debug": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=open SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs",
+    "build": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=close SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs && npm run package:validate",
+    "build:debug": "cross-env SCRIPTS_NPM_PACKAGE_DEBUG=open SCRIPTS_NPM_PACKAGE_VERSION=$npm_package_version rollup --config ./scripts/rollup.config.mjs && npm run package:validate",
     "build:dev": "webpack --config ./scripts/webpack.config.dev.js",
     "build:site": "cross-env GITHUB_PAGES=true webpack --mode production --config ./scripts/webpack.config.dev.js",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js",
+    "test:coverage": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --coverage",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out ./docs/api --readme ./README.md --excludeProtected --excludePrivate --excludeInternal --hideGenerator && npm run build:site && node scripts/build-pages.js && npm run seo:validate && npm run pwa:validate",
     "seo:validate": "node scripts/validate-seo.js",
     "pwa:validate": "node scripts/validate-pwa.js",
+    "package:validate": "node scripts/validate-package-exports.js",
     "pwa:preview": "npm run docs && node scripts/preview-pages.js",
     "lint": "eslint ./examples ./scripts ./site ./src ./test ./types ./project.config.js",
     "lint:fix": "npm run lint -- --fix",

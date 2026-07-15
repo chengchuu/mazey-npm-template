@@ -1,14 +1,17 @@
 /** @jest-environment node */
 
-const path = require("node:path");
-const pkg = require("../package.json");
-const projectConfig = require("../project.config");
-const { createManifest } = require("../scripts/build-pages");
-const webpackConfig = require("../scripts/webpack.config.dev");
-const {
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import pkg from "../package.json" with { type: "json" };
+import projectConfig from "../project.config.js";
+import { createManifest } from "../scripts/build-pages.js";
+import {
   packageDetails,
   repositoryDetails,
-} = require("../scripts/project-config-utils");
+} from "../scripts/project-config-utils.js";
+import webpackConfig from "../scripts/webpack.config.dev.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.package.name).toBe(pkg.name);

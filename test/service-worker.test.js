@@ -1,18 +1,18 @@
 /** @jest-environment node */
 
-const { readFileSync } = require("node:fs");
-const path = require("node:path");
-const vm = require("node:vm");
-const projectConfig = require("../project.config");
-const {
-  createManifest,
-  renderServiceWorker,
-} = require("../scripts/build-pages");
-const {
+import { jest } from "@jest/globals";
+import { readFileSync } from "node:fs";
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import vm from "node:vm";
+import projectConfig from "../project.config.js";
+import { createManifest, renderServiceWorker } from "../scripts/build-pages.js";
+import {
   manifestMetadataFailures,
   pngDimensions,
-} = require("../scripts/validate-pwa");
+} from "../scripts/validate-pwa.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const siteOrigin = new URL(projectConfig.site.url).origin;
 const projectUrl = (relative = "") =>

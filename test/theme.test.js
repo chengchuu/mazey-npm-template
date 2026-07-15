@@ -1,8 +1,9 @@
 /** @jest-environment jsdom */
 
-const { initializeNavigation } = require("../site/navigation");
-const { initializeThemeControls } = require("../site/theme");
-const projectConfig = require("../project.config");
+import { jest } from "@jest/globals";
+import { initializeNavigation } from "../site/navigation.ts";
+import { initializeThemeControls } from "../site/theme.ts";
+import projectConfig from "../project.config.js";
 
 const { colorDark, colorLight, storageKey } = projectConfig.site.theme;
 

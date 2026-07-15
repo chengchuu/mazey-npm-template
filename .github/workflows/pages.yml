@@ -42,14 +42,8 @@ jobs:
       - name: Run tests
         run: npm test -- --runInBand
 
-      - name: Build docs
+      - name: Build and validate docs
         run: npm run docs
-
-      - name: Validate generated SEO
-        run: npm run seo:validate
-
-      - name: Validate generated PWA
-        run: npm run pwa:validate
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

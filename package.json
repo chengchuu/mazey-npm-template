@@ -54,7 +54,7 @@
   "bugs": {
     "url": "https://github.com/chengchuu/mazey-npm-template/issues"
   },
-  "homepage": "https://chengchuu.github.io/mazey-npm-template/",
+  "homepage": "https://i.mazey.net/x/mazey-npm-template/",
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/preset-env": "^7.29.7",

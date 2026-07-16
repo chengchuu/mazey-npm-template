@@ -48,7 +48,13 @@
   border: 1px solid var(--color-accent);
   border-radius: 0.35rem;
   color: inherit;
-  background: transparent;
+  background: var(--color-background-secondary, transparent);
+}
+
+.site-project-links select option,
+.tsd-theme-toggle select option {
+  color: var(--color-text, CanvasText);
+  background-color: var(--color-background, Canvas);
 }
 
 .site-project-links select:focus-visible,

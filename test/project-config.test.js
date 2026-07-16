@@ -20,7 +20,7 @@ test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.site.url).toBe(new URL(pkg.homepage).href);
   expect(projectConfig.site.basePath).toBe(new URL(pkg.homepage).pathname);
   expect(projectConfig.seo.openGraphImage).toMatchObject({
-    file: "logo-dark-circle-open-graph-1200x630.png",
+    file: "logo-purple-circle-open-graph-1200x630.png",
     width: 1200,
     height: 630,
     type: "image/png",

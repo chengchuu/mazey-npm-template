@@ -60,7 +60,7 @@ Then edit `project.config.js` for values that cannot be derived safely:
   base, hover, active, soft, and RGB values together and preserve readable contrast.
 - Page titles and descriptions when the new library is not a greeting API.
 - Favicon, logo, Open Graph image, or PWA icon filenames when the replacement assets use different
-  names. Update `const openGraphImageFile = "logo-dark-circle-open-graph-1200x630.png";` for the
+  names. Update `const openGraphImageFile = "logo-purple-circle-open-graph-1200x630.png";` for the
   social preview. Keep that image at 1200x630 unless intentionally changing its configured width and
   height.
 

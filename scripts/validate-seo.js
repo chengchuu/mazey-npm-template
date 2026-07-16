@@ -102,6 +102,49 @@ function validateJsonLd(label, html, expectedUrl) {
   }
 }
 
+function localFragmentError(sourceFile, href, outputRoot = docs) {
+  const hashIndex = href.indexOf("#");
+  if (hashIndex === -1) return null;
+
+  const pathPart = href.slice(0, hashIndex);
+  if (/^(?:[a-z][a-z\d+.-]*:)?\/\//i.test(pathPart)) return null;
+
+  let fragment;
+  let targetPath;
+  try {
+    fragment = decodeURIComponent(href.slice(hashIndex + 1));
+    const decodedPath = decodeURIComponent(pathPart);
+    targetPath = decodedPath
+      ? path.resolve(path.dirname(sourceFile), decodedPath)
+      : sourceFile;
+  } catch {
+    return `invalid encoded fragment link ${href}`;
+  }
+
+  if (!fragment) return `empty fragment link ${href}`;
+  if (existsSync(targetPath) && statSync(targetPath).isDirectory())
+    targetPath = path.join(targetPath, "index.html");
+
+  const relativeTarget = path.relative(outputRoot, targetPath);
+  if (
+    relativeTarget === ".." ||
+    relativeTarget.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeTarget)
+  )
+    return `fragment link leaves the Pages artifact: ${href}`;
+  if (!existsSync(targetPath))
+    return `fragment document is missing for ${href}`;
+
+  const targetHtml = readFileSync(targetPath, "utf8");
+  const ids = matches(targetHtml, /\sid=["']([^"']+)["']/gi).map(
+    (match) => match[1],
+  );
+  if (!ids.includes(fragment))
+    return `fragment target #${fragment} is missing for ${href}`;
+
+  return null;
+}
+
 function validatePage({
   label,
   file,
@@ -175,8 +218,12 @@ function validatePage({
   validateHeadingOrder(label, html);
   validateJsonLd(label, html, canonical);
   for (const href of requiredLinks) {
-    if (!attribute(html, "a", "href", href))
+    if (!attribute(html, "a", "href", href)) {
       fail(`${label}: missing crawlable link to ${href}`);
+      continue;
+    }
+    const fragmentError = localFragmentError(file, href);
+    if (fragmentError) fail(`${label}: ${fragmentError}`);
   }
   if (!attribute(html, "link", "href", expectedCss))
     fail(`${label}: missing generated stylesheet ${expectedCss}`);
@@ -331,7 +378,7 @@ function validateSite() {
       file: path.join(docs, "index.html"),
       canonical: sitePages.home.url,
       requiredLinks: [
-        "#installation",
+        "#install",
         "#usage",
         "./api/",
         "./playground/",
@@ -355,8 +402,9 @@ function validateSite() {
       canonical: sitePages.playground.url,
       requiredLinks: [
         "../",
-        "../#installation",
+        "../#install",
         "../#usage",
+        "../#website-app-help",
         "../api/",
         projectConfig.urls.github,
         projectConfig.urls.npm,
@@ -421,4 +469,4 @@ if (
   }
 }
 
-export { attribute, validateSite, visibleText };
+export { attribute, localFragmentError, validateSite, visibleText };

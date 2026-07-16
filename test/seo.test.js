@@ -13,6 +13,7 @@ import {
   normalizeHeadingOrder,
   transformApiHtml,
 } from "../scripts/build-pages.js";
+import { localFragmentError } from "../scripts/validate-seo.js";
 import projectConfig from "../project.config.js";
 
 const { displayName } = projectConfig.brand;
@@ -27,8 +28,16 @@ function expectNavigationLabel(html, label) {
 }
 
 test("site navigation and hero styling follow the shared template convention", () => {
-  for (const file of ["site/index.html", "examples/index.html"]) {
-    const html = readFileSync(path.join(process.cwd(), file), "utf8");
+  const homeHtml = readFileSync(
+    path.join(process.cwd(), "site", "index.html"),
+    "utf8",
+  );
+  const playgroundHtml = readFileSync(
+    path.join(process.cwd(), "examples", "index.html"),
+    "utf8",
+  );
+
+  for (const html of [homeHtml, playgroundHtml]) {
     for (const label of [
       "Home",
       "Playground",
@@ -44,6 +53,27 @@ test("site navigation and hero styling follow the shared template convention", (
     expect(html).not.toContain(">API/Docs</a>");
   }
 
+  expect(homeHtml).toContain('href="#install">Install</a>');
+  expect(homeHtml).toContain('id="install"');
+  expect(homeHtml).toContain('<h2 id="install-title">Install</h2>');
+  expect(homeHtml).toContain('href="#usage">Usage</a>');
+  expect(homeHtml).toContain('id="usage"');
+  expect(homeHtml).toContain('<h2 id="usage-title">Usage</h2>');
+  expect(homeHtml).toContain('id="website-app-help"');
+  expect(homeHtml).toContain(
+    '<h2 id="website-app-help-title">Website app help</h2>',
+  );
+  expect(playgroundHtml).toContain('href="../#install">Install</a>');
+  expect(playgroundHtml).toContain('href="../#usage">Usage</a>');
+  expect(playgroundHtml).toContain(
+    'href="../#website-app-help">Website app help</a>',
+  );
+
+  for (const html of [homeHtml, playgroundHtml]) {
+    expect(html).not.toContain("#installation");
+    expect(html).not.toContain("#install-project-website");
+  }
+
   const css = readFileSync(
     path.join(process.cwd(), "site", "site.css"),
     "utf8",
@@ -51,6 +81,32 @@ test("site navigation and hero styling follow the shared template convention", (
   expect(css).toMatch(
     /\.hero\s*{[\s\S]*?radial-gradient\([\s\S]*?var\(--mn-primary-soft\)[\s\S]*?var\(--mn-surface\);[\s\S]*?}/,
   );
+});
+
+test("generated cross-page fragment links resolve inside the Pages artifact", () => {
+  const rootDir = mkdtempSync(path.join(os.tmpdir(), "mazey-fragments-"));
+  const homeFile = path.join(rootDir, "index.html");
+  const playgroundFile = path.join(rootDir, "playground", "index.html");
+
+  try {
+    mkdirSync(path.dirname(playgroundFile), { recursive: true });
+    writeFileSync(homeFile, '<section id="install"><h2>Install</h2></section>');
+    writeFileSync(playgroundFile, "<main></main>");
+
+    expect(
+      localFragmentError(playgroundFile, "../#install", rootDir),
+    ).toBeNull();
+    expect(localFragmentError(playgroundFile, "../#missing", rootDir)).toBe(
+      "fragment target #missing is missing for ../#missing",
+    );
+
+    writeFileSync(homeFile, '<section data-id="install"></section>');
+    expect(localFragmentError(playgroundFile, "../#install", rootDir)).toBe(
+      "fragment target #install is missing for ../#install",
+    );
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
 });
 
 test("API metadata transformation is complete and idempotent", () => {

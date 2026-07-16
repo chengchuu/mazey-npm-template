@@ -374,7 +374,12 @@ function validateSite() {
       label: "API documentation",
       file: path.join(docs, "api", "index.html"),
       canonical: sitePages.api.url,
-      requiredLinks: [sitePages.home.url],
+      requiredLinks: [
+        sitePages.home.url,
+        sitePages.api.url,
+        projectConfig.urls.github,
+        projectConfig.urls.npm,
+      ],
       expectedTitle: sitePages.api.title,
       expectedDescription: sitePages.api.description,
       expectedCss: "../assets/api.css",

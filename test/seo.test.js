@@ -20,6 +20,39 @@ const { pages } = projectConfig.site;
 
 const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main></body></html>`;
 
+function expectNavigationLabel(html, label) {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  expect(html).toMatch(new RegExp(`>\\s*${escapedLabel}\\s*</a>`));
+}
+
+test("site navigation and hero styling follow the shared template convention", () => {
+  for (const file of ["site/index.html", "examples/index.html"]) {
+    const html = readFileSync(path.join(process.cwd(), file), "utf8");
+    for (const label of [
+      "Home",
+      "Playground",
+      "Install",
+      "Usage",
+      "API",
+      "GitHub",
+      "npm",
+    ]) {
+      expectNavigationLabel(html, label);
+    }
+    expect(html).not.toContain(">Installation</a>");
+    expect(html).not.toContain(">API/Docs</a>");
+  }
+
+  const css = readFileSync(
+    path.join(process.cwd(), "site", "site.css"),
+    "utf8",
+  );
+  expect(css).toMatch(
+    /\.hero\s*{[\s\S]*?radial-gradient\([\s\S]*?var\(--mn-primary-soft\)[\s\S]*?var\(--mn-surface\);[\s\S]*?}/,
+  );
+});
+
 test("API metadata transformation is complete and idempotent", () => {
   const transformed = transformApiHtml(typeDocHtml, "index.html");
   expect(transformApiHtml(transformed, "index.html")).toBe(transformed);
@@ -30,6 +63,14 @@ test("API metadata transformation is complete and idempotent", () => {
     `<link rel="icon" href="${projectConfig.assets.faviconUrl}" type="image/png"/>`,
   );
   expect(transformed).toContain(`<a href="${pages.home.url}">Project home</a>`);
+  expect(transformed).toContain(`<a href="${pages.api.url}">API overview</a>`);
+  expect(transformed).toContain(
+    `<a href="${projectConfig.urls.github}">GitHub</a>`,
+  );
+  expect(transformed).toContain(
+    `<a href="${projectConfig.urls.npm}">npm package</a>`,
+  );
+  expect(transformed).not.toContain("Website app help");
   expect(transformed).toContain(
     `<meta property="og:image" content="${projectConfig.seo.openGraphImage.url}"/>`,
   );

@@ -153,7 +153,7 @@ site's **Install app** action when the browser exposes an install prompt. Other 
 installation through their menus. On iPhone and iPad, Safari users can choose **Share**, then
 **Add to Home Screen**; its capabilities are not identical to a Chrome installation.
 
-Installed standalone mode keeps Home, Playground, API, GitHub, and npm navigation available.
+Installed standalone mode keeps Home, Playground, Install, Usage, API, GitHub, and npm navigation available.
 Adding the website to your device and the browser Fullscreen API are separate capabilities, so
 using the standalone app does not guarantee native fullscreen support.
 

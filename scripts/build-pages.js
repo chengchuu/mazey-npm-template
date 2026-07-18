@@ -65,6 +65,24 @@ function normalizeHeadingOrder(html) {
   );
 }
 
+function ensurePrimaryApiHeading(html, isIndex) {
+  let output = html.replace(
+    /<div class="tsd-page-title">[\s\S]*?<\/div>/i,
+    (pageTitle) =>
+      pageTitle.replace(
+        /<h([2-6])(\b[^>]*)>([\s\S]*?)<\/h\1>/i,
+        "<h1$2>$3</h1>",
+      ),
+  );
+  if (isIndex) {
+    output = output.replace(
+      /(<div class="tsd-page-title">[\s\S]*?<\/div>[\s\S]*?)<h1(\b[^>]*)>([\s\S]*?)<\/h1>/i,
+      "$1<h2$2>$3</h2>",
+    );
+  }
+  return output;
+}
+
 function transformApiHtml(html, relativeFile) {
   const cleanHtml = html
     .replace(markerExpression(seoStart, seoEnd), "")
@@ -92,7 +110,7 @@ function transformApiHtml(html, relativeFile) {
   const assetPrefix = "../".repeat(
     relativeFile.replaceAll(path.sep, "/").split("/").length,
   );
-  const themeInitializer = `(()=>{try{const k=${JSON.stringify(theme.storageKey)},v=localStorage.getItem(k)||"system",t=v==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):v,r=t==="dark"?"dark":"light",m=document.querySelector('meta[name="theme-color"][data-theme-color]');document.documentElement.dataset.bsTheme=r;document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r;if(m)m.content=r==="dark"?m.dataset.themeColorDark:m.dataset.themeColorLight;localStorage.setItem("tsd-theme",v==="system"?"os":v)}catch{}})();`;
+  const themeInitializer = `(()=>{try{const k=${JSON.stringify(theme.storageKey)},s=localStorage.getItem(k),v=s==="light"||s==="dark"?s:"system",t=v==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):v,r=t==="dark"?"dark":"light",m=document.querySelector('meta[name="theme-color"][data-theme-color]');document.documentElement.dataset.bsTheme=r;document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r;if(m)m.content=r==="dark"?m.dataset.themeColorDark:m.dataset.themeColorLight;localStorage.setItem("tsd-theme",v==="system"?"os":v)}catch{}})();`;
   const structuredData = JSON.stringify({
     "@context": "https://schema.org",
     "@type": "TechArticle",
@@ -141,7 +159,10 @@ function transformApiHtml(html, relativeFile) {
     .replace(/<meta name="description"[^>]*>/i, "")
     .replace(/<link rel="canonical"[^>]*>/i, "")
     .replace(/<link rel="icon"[^>]*>/i, "")
-    .replace(/<script>[^<]*document\.body\.style\.display[^<]*<\/script>/i, "")
+    .replace(
+      /<script\b[^>]*>(?:(?!<\/script>)[\s\S])*?document\.body\.style\.display(?:(?!<\/script>)[\s\S])*?<\/script>/i,
+      "",
+    )
     .replace(/<html\b(?![^>]*data-bs-theme)/i, '<html data-bs-theme="light"')
     .replace("</head>", `${metadata}</head>`);
 
@@ -158,15 +179,6 @@ function transformApiHtml(html, relativeFile) {
     '<div class="tsd-theme-toggle"><label class="settings-label" for="mazey-api-theme">Theme</label><select id="mazey-api-theme" data-theme-select aria-label="Choose API documentation theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>',
   );
 
-  if (isIndex) {
-    output = output.replace(
-      new RegExp(
-        `<div class="tsd-page-title">\\s*<h1>${escapeRegExp(displayName)}<\\/h1><\\/div>`,
-        "i",
-      ),
-      "",
-    );
-  }
   const pwaUi = [
     pwaUiStart,
     '<aside class="site-pwa-update" aria-label="Website update" data-pwa-update hidden>',
@@ -175,7 +187,9 @@ function transformApiHtml(html, relativeFile) {
     "</aside>",
     pwaUiEnd,
   ].join("");
-  return normalizeHeadingOrder(output.replace("</body>", `${pwaUi}</body>`));
+  output = output.replace("</body>", `${pwaUi}</body>`);
+  output = ensurePrimaryApiHeading(output, isIndex);
+  return normalizeHeadingOrder(output);
 }
 
 function htmlFiles(directory) {
@@ -186,35 +200,43 @@ function htmlFiles(directory) {
   });
 }
 
+function filesIn(directory) {
+  return readdirSync(directory).flatMap((name) => {
+    const file = path.join(directory, name);
+    return statSync(file).isDirectory() ? filesIn(file) : [file];
+  });
+}
+
 function requirePath(file) {
   if (!existsSync(file))
     throw new Error(`Required Pages source is missing: ${file}`);
 }
 
-function fingerprintPages(directory) {
+function fingerprintPages(directory, additionalSources = []) {
   const hash = createHash("sha256");
-  const files = readdirSync(directory)
-    .flatMap((name) => {
-      const file = path.join(directory, name);
-      return statSync(file).isDirectory() ? htmlAndAssetFiles(file) : [file];
-    })
+  const files = filesIn(directory)
     .filter(
       (file) => !file.endsWith("service-worker.js") && !file.endsWith(".map"),
     )
-    .sort();
-  for (const file of files) {
-    hash.update(path.relative(directory, file));
-    hash.update("\0");
-    hash.update(readFileSync(file));
+    .map((file) => ({
+      file,
+      name: path.relative(directory, file).replaceAll(path.sep, "/"),
+    }))
+    .sort((left, right) =>
+      left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
+    );
+  for (const { file, name } of files) {
+    const contents = readFileSync(file);
+    hash.update(`${Buffer.byteLength(name)}:${name}${contents.byteLength}:`);
+    hash.update(contents);
+  }
+  for (const { name, contents } of additionalSources) {
+    hash.update(
+      `${Buffer.byteLength(name)}:${name}${Buffer.byteLength(contents)}:`,
+    );
+    hash.update(contents);
   }
   return hash.digest("hex").slice(0, 16);
-}
-
-function htmlAndAssetFiles(directory) {
-  return readdirSync(directory).flatMap((name) => {
-    const file = path.join(directory, name);
-    return statSync(file).isDirectory() ? htmlAndAssetFiles(file) : [file];
-  });
 }
 
 function createManifest() {
@@ -237,6 +259,46 @@ function createManifest() {
   };
 }
 
+function apiAppShellAssets(html) {
+  const allowedLinkRelations = new Set([
+    "icon",
+    "manifest",
+    "modulepreload",
+    "preload",
+    "stylesheet",
+  ]);
+  const assets = new Set();
+  for (const match of html.matchAll(/<(link|script|use)\b[^>]*>/gi)) {
+    const tagName = match[1].toLowerCase();
+    const attributes = Object.fromEntries(
+      [...match[0].matchAll(/([:\w-]+)(?:=["']([^"']*)["'])?/g)].map(
+        (attribute) => [attribute[1].toLowerCase(), attribute[2] ?? ""],
+      ),
+    );
+    if (
+      tagName === "link" &&
+      !String(attributes.rel)
+        .toLowerCase()
+        .split(/\s+/)
+        .some((relation) => allowedLinkRelations.has(relation))
+    )
+      continue;
+
+    const reference = attributes.src || attributes.href;
+    if (!reference) continue;
+    const assetUrl = new URL(reference, pages.api.url);
+    if (
+      assetUrl.origin !== new URL(projectConfig.site.url).origin ||
+      !assetUrl.pathname.startsWith(projectConfig.site.basePath)
+    )
+      continue;
+
+    assetUrl.hash = "";
+    assets.add(`${assetUrl.pathname}${assetUrl.search}`);
+  }
+  return [...assets].sort();
+}
+
 function replaceWorkerToken(source, token, value) {
   if (!source.includes(token))
     throw new Error(`Service worker token is missing: ${token}`);
@@ -244,11 +306,12 @@ function replaceWorkerToken(source, token, value) {
   return source.replaceAll(token, escaped);
 }
 
-function renderServiceWorker(source, cacheVersion) {
+function renderServiceWorker(source, cacheVersion, apiAssets = []) {
   return [
     ["__PWA_PROJECT_BASE__", projectConfig.site.basePath],
     ["__PWA_CACHE_PREFIX__", projectConfig.pwa.cachePrefix],
     ["__PWA_CACHE_VERSION__", cacheVersion],
+    ["__PWA_API_APP_SHELL__", JSON.stringify(apiAssets)],
   ].reduce(
     (rendered, [token, value]) => replaceWorkerToken(rendered, token, value),
     source,
@@ -267,6 +330,7 @@ function writeSeoAssets(docs) {
     path.join(docs, "sitemap.xml"),
     `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${locations}\n</urlset>\n`,
   );
+  writeFileSync(path.join(docs, ".nojekyll"), "");
 }
 
 function writePwaAssets(rootDir, docs) {
@@ -285,9 +349,47 @@ function writePwaAssets(rootDir, docs) {
     path.join(site, "service-worker.js"),
     "utf8",
   );
+  const apiAssets = apiAppShellAssets(
+    readFileSync(path.join(docs, "api", "index.html"), "utf8"),
+  );
+  for (const asset of apiAssets) {
+    const assetUrl = new URL(asset, projectConfig.site.url);
+    let relativeAsset;
+    try {
+      relativeAsset = decodeURIComponent(
+        assetUrl.pathname.slice(projectConfig.site.basePath.length),
+      );
+    } catch {
+      throw new Error(`API app-shell asset has invalid encoding: ${asset}`);
+    }
+    const assetFile = path.resolve(docs, relativeAsset);
+    const relativeAssetFile = path.relative(docs, assetFile);
+    if (
+      relativeAssetFile === ".." ||
+      relativeAssetFile.startsWith(`..${path.sep}`) ||
+      path.isAbsolute(relativeAssetFile)
+    )
+      throw new Error(`API app-shell asset leaves Pages output: ${asset}`);
+    requirePath(assetFile);
+  }
+  const workerInputs = JSON.stringify({
+    apiAssets,
+    cachePrefix: projectConfig.pwa.cachePrefix,
+    projectBase: projectConfig.site.basePath,
+    workerSource,
+  });
   writeFileSync(
     path.join(docs, "service-worker.js"),
-    renderServiceWorker(workerSource, fingerprintPages(docs)),
+    renderServiceWorker(
+      workerSource,
+      fingerprintPages(docs, [
+        {
+          name: "generated/service-worker-inputs.json",
+          contents: workerInputs,
+        },
+      ]),
+      apiAssets,
+    ),
   );
 }
 
@@ -334,9 +436,11 @@ if (
   buildPages();
 
 export {
+  apiAppShellAssets,
   apiPageUrl,
   buildPages,
   createManifest,
+  ensurePrimaryApiHeading,
   fingerprintPages,
   normalizeHeadingOrder,
   renderServiceWorker,

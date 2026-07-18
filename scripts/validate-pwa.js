@@ -2,6 +2,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path, { dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import projectConfig from "../project.config.js";
+import { apiAppShellAssets } from "./build-pages.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const defaultRoot = path.resolve(__dirname, "..");
@@ -14,6 +15,13 @@ const manifestDisplayModes = new Set([
 
 function manifestMetadataFailures(manifest) {
   const failures = [];
+  if (
+    manifest === null ||
+    typeof manifest !== "object" ||
+    Array.isArray(manifest)
+  ) {
+    return ["Manifest must be a JSON object"];
+  }
   for (const field of ["name", "short_name", "description"]) {
     if (typeof manifest[field] !== "string" || !manifest[field].trim())
       failures.push(`Manifest ${field} must be a non-empty string`);
@@ -24,6 +32,8 @@ function manifestMetadataFailures(manifest) {
     if (!/^#[0-9a-f]{6}$/i.test(manifest[field] ?? ""))
       failures.push(`Manifest ${field} must be a six-digit hex color`);
   }
+  if (!Array.isArray(manifest.icons))
+    failures.push("Manifest icons must be an array");
   return failures;
 }
 
@@ -32,11 +42,22 @@ function pngDimensions(file) {
   const signature = "89504e470d0a1a0a";
   if (contents.subarray(0, 8).toString("hex") !== signature)
     throw new Error(`${file}: expected a PNG signature`);
+  if (contents.length < 24)
+    throw new Error(`${file}: truncated PNG IHDR chunk`);
   if (contents.subarray(12, 16).toString("ascii") !== "IHDR")
     throw new Error(`${file}: missing PNG IHDR chunk`);
+  const ihdrLength = contents.readUInt32BE(8);
+  if (ihdrLength !== 13)
+    throw new Error(`${file}: invalid PNG IHDR length ${ihdrLength}`);
+  if (contents.length < 33)
+    throw new Error(`${file}: truncated PNG IHDR chunk`);
+  const width = contents.readUInt32BE(16);
+  const height = contents.readUInt32BE(20);
+  if (!width || !height)
+    throw new Error(`${file}: PNG dimensions must be positive`);
   return {
-    width: contents.readUInt32BE(16),
-    height: contents.readUInt32BE(20),
+    width,
+    height,
   };
 }
 
@@ -62,6 +83,12 @@ function filesIn(directory) {
   });
 }
 
+function hasPwaRuntimeReference(source) {
+  return /\bserviceWorker\b|beforeinstallprompt|manifest\.webmanifest/.test(
+    source,
+  );
+}
+
 function validatePwa({ rootDir = defaultRoot } = {}) {
   const failures = [];
   const fail = (message) => failures.push(message);
@@ -79,8 +106,14 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
     }
   }
 
-  if (manifest) {
-    manifestMetadataFailures(manifest).forEach(fail);
+  const manifestIsObject =
+    manifest !== null &&
+    typeof manifest === "object" &&
+    !Array.isArray(manifest);
+  if (manifest !== undefined) manifestMetadataFailures(manifest).forEach(fail);
+
+  let iconCount = 0;
+  if (manifestIsObject) {
     if (manifest.name !== projectConfig.pwa.name)
       fail(`Manifest name must be ${projectConfig.pwa.name}`);
     if (manifest.short_name !== projectConfig.pwa.shortName)
@@ -102,8 +135,17 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
 
     const requiredSizes = new Set(["192x192", "512x512"]);
     let hasMaskable = false;
-    for (const icon of manifest.icons ?? []) {
-      if (!icon.src?.startsWith(projectConfig.site.basePath)) {
+    const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
+    iconCount = icons.length;
+    for (const icon of icons) {
+      if (icon === null || typeof icon !== "object" || Array.isArray(icon)) {
+        fail("Manifest icons must contain objects");
+        continue;
+      }
+      if (
+        typeof icon.src !== "string" ||
+        !icon.src.startsWith(projectConfig.site.basePath)
+      ) {
         fail(
           `Manifest icon URL must start with ${projectConfig.site.basePath}: ${icon.src}`,
         );
@@ -111,10 +153,19 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       }
       if (icon.type !== "image/png")
         fail(`Manifest icon must use image/png: ${icon.src}`);
-      const iconFile = path.join(
+      const iconFile = path.resolve(
         docs,
         icon.src.slice(projectConfig.site.basePath.length),
       );
+      const relativeIconFile = path.relative(docs, iconFile);
+      if (
+        relativeIconFile === ".." ||
+        relativeIconFile.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativeIconFile)
+      ) {
+        fail(`Manifest icon must stay inside docs: ${icon.src}`);
+        continue;
+      }
       if (!existsSync(iconFile)) {
         fail(`Manifest icon is missing: ${icon.src}`);
         continue;
@@ -122,7 +173,13 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       const [declaredWidth, declaredHeight] = String(icon.sizes)
         .split("x")
         .map(Number);
-      const actual = pngDimensions(iconFile);
+      let actual;
+      try {
+        actual = pngDimensions(iconFile);
+      } catch (error) {
+        fail(`Manifest icon is invalid: ${icon.src} (${error.message})`);
+        continue;
+      }
       if (actual.width !== declaredWidth || actual.height !== declaredHeight) {
         fail(
           `Manifest icon dimensions do not match ${icon.src}: declared ${icon.sizes}, actual ${actual.width}x${actual.height}`,
@@ -209,6 +266,14 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
       fail("Service worker must ignore cross-origin requests");
     if (!worker.includes('event.data?.type === "SKIP_WAITING"'))
       fail("Service worker updates must require an explicit message");
+    const apiIndex = path.join(docs, "api", "index.html");
+    if (existsSync(apiIndex)) {
+      const apiAssets = apiAppShellAssets(readFileSync(apiIndex, "utf8"));
+      for (const asset of apiAssets) {
+        if (!worker.includes(asset))
+          fail(`Service worker does not precache API asset: ${asset}`);
+      }
+    }
   }
 
   const scriptDirectory = path.join(docs, "assets");
@@ -231,16 +296,12 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
   const packageSource = filesIn(sourceDirectory)
     .map((file) => readFileSync(file, "utf8"))
     .join("\n");
-  if (
-    /serviceWorker|beforeinstallprompt|manifest\.webmanifest/.test(
-      packageSource,
-    )
-  )
+  if (hasPwaRuntimeReference(packageSource))
     fail("Published package source must not contain PWA runtime behavior");
 
   if (failures.length)
     throw new Error(`PWA validation failed:\n- ${failures.join("\n- ")}`);
-  return { icons: manifest.icons.length, pages: pages.length };
+  return { icons: iconCount, pages: pages.length };
 }
 
 if (
@@ -258,4 +319,9 @@ if (
   }
 }
 
-export { manifestMetadataFailures, pngDimensions, validatePwa };
+export {
+  hasPwaRuntimeReference,
+  manifestMetadataFailures,
+  pngDimensions,
+  validatePwa,
+};

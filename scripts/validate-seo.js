@@ -19,16 +19,20 @@ function matches(html, expression) {
   return [...html.matchAll(expression)];
 }
 
+function attributes(tag) {
+  return Object.fromEntries(
+    matches(tag, /([:\w-]+)(?:=["']([^"']*)["'])?/g).map((item) => [
+      item[1].toLowerCase(),
+      item[2] ?? "",
+    ]),
+  );
+}
+
 function attribute(html, tag, name, value) {
   const tags = matches(html, new RegExp(`<${tag}\\b[^>]*>`, "gi"));
   for (const match of tags) {
-    const attributes = Object.fromEntries(
-      matches(match[0], /([:\w-]+)=["']([^"']*)["']/g).map((item) => [
-        item[1].toLowerCase(),
-        item[2],
-      ]),
-    );
-    if (attributes[name] === value) return attributes;
+    const values = attributes(match[0]);
+    if (values[name] === value) return values;
   }
   return null;
 }
@@ -41,6 +45,17 @@ function visibleText(html) {
     .replace(/&(?:nbsp|amp|lt|gt|quot|#39);/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+const embeddedMarkupExpression =
+  /<!--[\s\S]*?-->|<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/gi;
+
+function elementIds(html) {
+  const markup = html.replace(embeddedMarkupExpression, "");
+  return matches(markup, /<[a-z][^>]*>/gi).flatMap((match) => {
+    const values = attributes(match[0]);
+    return Object.hasOwn(values, "id") ? [values.id] : [];
+  });
 }
 
 function validateSocialImage(label, html) {
@@ -107,15 +122,29 @@ function localFragmentError(sourceFile, href, outputRoot = docs) {
   if (hashIndex === -1) return null;
 
   const pathPart = href.slice(0, hashIndex);
-  if (/^(?:[a-z][a-z\d+.-]*:)?\/\//i.test(pathPart)) return null;
+  if (/^[a-z][a-z\d+.-]*:/i.test(pathPart) || pathPart.startsWith("//"))
+    return null;
+  const queryIndex = pathPart.indexOf("?");
+  const pathnamePart =
+    queryIndex === -1 ? pathPart : pathPart.slice(0, queryIndex);
 
   let fragment;
   let targetPath;
   try {
     fragment = decodeURIComponent(href.slice(hashIndex + 1));
-    const decodedPath = decodeURIComponent(pathPart);
+    const decodedPath = decodeURIComponent(pathnamePart);
+    if (
+      decodedPath.startsWith("/") &&
+      !decodedPath.startsWith(projectConfig.site.basePath)
+    )
+      return `fragment link leaves the Pages artifact: ${href}`;
     targetPath = decodedPath
-      ? path.resolve(path.dirname(sourceFile), decodedPath)
+      ? decodedPath.startsWith("/")
+        ? path.resolve(
+            outputRoot,
+            decodedPath.slice(projectConfig.site.basePath.length),
+          )
+        : path.resolve(path.dirname(sourceFile), decodedPath)
       : sourceFile;
   } catch {
     return `invalid encoded fragment link ${href}`;
@@ -136,13 +165,24 @@ function localFragmentError(sourceFile, href, outputRoot = docs) {
     return `fragment document is missing for ${href}`;
 
   const targetHtml = readFileSync(targetPath, "utf8");
-  const ids = matches(targetHtml, /\sid=["']([^"']+)["']/gi).map(
-    (match) => match[1],
-  );
+  const ids = elementIds(targetHtml);
   if (!ids.includes(fragment))
     return `fragment target #${fragment} is missing for ${href}`;
 
   return null;
+}
+
+function localFragmentErrors(sourceFile, html, outputRoot = docs) {
+  const markup = html.replace(embeddedMarkupExpression, "");
+  const hrefs = new Set(
+    matches(markup, /<a\b[^>]*>/gi)
+      .map((match) => attributes(match[0]).href)
+      .filter((href) => href?.includes("#") && href !== "#"),
+  );
+
+  return [...hrefs]
+    .map((href) => localFragmentError(sourceFile, href, outputRoot))
+    .filter(Boolean);
 }
 
 function validatePage({
@@ -222,9 +262,9 @@ function validatePage({
       fail(`${label}: missing crawlable link to ${href}`);
       continue;
     }
-    const fragmentError = localFragmentError(file, href);
-    if (fragmentError) fail(`${label}: ${fragmentError}`);
   }
+  for (const fragmentError of localFragmentErrors(file, html))
+    fail(`${label}: ${fragmentError}`);
   if (!attribute(html, "link", "href", expectedCss))
     fail(`${label}: missing generated stylesheet ${expectedCss}`);
   for (const script of expectedScripts) {
@@ -283,11 +323,27 @@ function validateApiPages() {
       fail(`API ${relative}: missing API theme stylesheet`);
     if (!attribute(html, "script", "src", `${assetPrefix}assets/api.js`))
       fail(`API ${relative}: missing API theme script`);
+    for (const control of [
+      'id="tsd-search-trigger"',
+      '<dialog id="tsd-search"',
+      'id="tsd-search-input"',
+      'id="tsd-search-results"',
+    ]) {
+      if (!html.includes(control))
+        fail(`API ${relative}: missing search dialog control ${control}`);
+    }
     const h1s = matches(html, /<h1\b[^>]*>([\s\S]*?)<\/h1>/gi);
     if (h1s.length !== 1 || !visibleText(h1s[0][1]))
       fail(`API ${relative}: expected exactly one non-empty h1`);
+    const firstHeading = html.match(/<h([1-6])\b/i);
+    if (firstHeading?.[1] !== "1")
+      fail(`API ${relative}: first heading must be h1`);
     validateHeadingOrder(`API ${relative}`, html);
     validateJsonLd(`API ${relative}`, html, canonical);
+    if (relative !== "index.html") {
+      for (const fragmentError of localFragmentErrors(file, html))
+        fail(`API ${relative}: ${fragmentError}`);
+    }
     const title = html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim();
     if (!title) fail(`API ${relative}: missing title`);
     else if (titles.has(title))
@@ -300,6 +356,8 @@ function validateApiPages() {
 function validateStaticFiles() {
   const robotsPath = path.join(docs, "robots.txt");
   const sitemapPath = path.join(docs, "sitemap.xml");
+  if (!existsSync(path.join(docs, ".nojekyll")))
+    fail(".nojekyll: missing from Pages artifact");
   for (const asset of [
     "assets/shared.css",
     "assets/shared.js",
@@ -469,4 +527,10 @@ if (
   }
 }
 
-export { attribute, localFragmentError, validateSite, visibleText };
+export {
+  attribute,
+  localFragmentError,
+  localFragmentErrors,
+  validateSite,
+  visibleText,
+};

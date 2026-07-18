@@ -8,18 +8,23 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import vm from "node:vm";
 import {
   buildPages,
+  fingerprintPages,
   normalizeHeadingOrder,
   transformApiHtml,
 } from "../scripts/build-pages.js";
-import { localFragmentError } from "../scripts/validate-seo.js";
+import {
+  localFragmentError,
+  localFragmentErrors,
+} from "../scripts/validate-seo.js";
 import projectConfig from "../project.config.js";
 
 const { displayName } = projectConfig.brand;
 const { pages } = projectConfig.site;
 
-const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main></body></html>`;
+const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"><button id="tsd-search-trigger" aria-label="Search"></button><dialog id="tsd-search"><input id="tsd-search-input"><ul id="tsd-search-results"></ul></dialog></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main></body></html>`;
 
 function expectNavigationLabel(html, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -96,6 +101,16 @@ test("generated cross-page fragment links resolve inside the Pages artifact", ()
     expect(
       localFragmentError(playgroundFile, "../#install", rootDir),
     ).toBeNull();
+    expect(
+      localFragmentError(playgroundFile, "../?view=compact#install", rootDir),
+    ).toBeNull();
+    expect(
+      localFragmentError(
+        playgroundFile,
+        "mailto:docs@example.com#install",
+        rootDir,
+      ),
+    ).toBeNull();
     expect(localFragmentError(playgroundFile, "../#missing", rootDir)).toBe(
       "fragment target #missing is missing for ../#missing",
     );
@@ -104,6 +119,28 @@ test("generated cross-page fragment links resolve inside the Pages artifact", ()
     expect(localFragmentError(playgroundFile, "../#install", rootDir)).toBe(
       "fragment target #install is missing for ../#install",
     );
+
+    writeFileSync(
+      homeFile,
+      "<script>const example = '<section id=\"install\"></section>';</script>",
+    );
+    expect(localFragmentError(playgroundFile, "../#install", rootDir)).toBe(
+      "fragment target #install is missing for ../#install",
+    );
+    expect(
+      localFragmentErrors(
+        playgroundFile,
+        '<a href="../#install">Install</a><a href="#">Menu</a>',
+        rootDir,
+      ),
+    ).toEqual(["fragment target #install is missing for ../#install"]);
+    expect(
+      localFragmentErrors(
+        playgroundFile,
+        '<script>const link = \'<a href="../#install">Install</a>\';</script><style>.example::after { content: \'<a href="../#install">\'; }</style><!-- <a href="../#install"> -->',
+        rootDir,
+      ),
+    ).toEqual([]);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
   }
@@ -137,6 +174,9 @@ test("API metadata transformation is complete and idempotent", () => {
   expect(transformed).toContain('src="../assets/api.js"');
   expect(transformed).not.toMatch(/<button\b[^>]*data-pwa-install\b/);
   expect(transformed.match(/<h1\b/g)).toHaveLength(1);
+  expect(transformed.match(/<h([1-6])\b/i)?.[1]).toBe("1");
+  expect(transformed).toContain('id="tsd-search-trigger"');
+  expect(transformed).toContain('<dialog id="tsd-search"');
   expect(transformed).not.toContain('document.body.style.display="none"');
   expect(() =>
     JSON.parse(
@@ -145,6 +185,36 @@ test("API metadata transformation is complete and idempotent", () => {
       )[1],
     ),
   ).not.toThrow();
+});
+
+test("API theme bootstrap rejects corrupted stored preferences", () => {
+  const transformed = transformApiHtml(typeDocHtml, "index.html");
+  const initializer = [...transformed.matchAll(/<script>([\s\S]*?)<\/script>/g)]
+    .map((match) => match[1])
+    .find((script) => script.includes("tsd-theme"));
+  const values = new Map([[projectConfig.site.theme.storageKey, "corrupted"]]);
+  const documentElement = { dataset: {}, style: {} };
+
+  vm.runInNewContext(initializer, {
+    document: {
+      documentElement,
+      querySelector: () => ({
+        content: projectConfig.site.theme.colorLight,
+        dataset: {
+          themeColorDark: projectConfig.site.theme.colorDark,
+          themeColorLight: projectConfig.site.theme.colorLight,
+        },
+      }),
+    },
+    localStorage: {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => values.set(key, value),
+    },
+    matchMedia: () => ({ matches: false }),
+  });
+
+  expect(documentElement.dataset.bsTheme).toBe("light");
+  expect(values.get("tsd-theme")).toBe("os");
 });
 
 test("API subpages receive self-referencing canonical URLs", () => {
@@ -180,6 +250,47 @@ test("Pages assembly fails clearly for missing sources", () => {
   }
 });
 
+test("Pages assembly rejects missing TypeDoc app-shell assets", () => {
+  const rootDir = mkdtempSync(
+    path.join(os.tmpdir(), "mazey-pages-missing-api-asset-"),
+  );
+  const files = {
+    "docs/api/index.html": typeDocHtml.replace(
+      "</head>",
+      '<script src="assets/missing.js"></script></head>',
+    ),
+    "dist-dev/index.html": "<html><body><h1>Home</h1></body></html>",
+    "dist-dev/playground/index.html":
+      "<html><body><h1>Playground</h1></body></html>",
+    "dist-dev/assets/api.css": "body {}",
+    "dist-dev/assets/api.js": "void 0;",
+    [`dist-dev/images/${projectConfig.assets.faviconFile}`]: "favicon",
+    [`dist-dev/images/${projectConfig.seo.openGraphImage.file}`]:
+      "open graph image",
+    "site/service-worker.js":
+      'const base = "__PWA_PROJECT_BASE__"; const prefix = "__PWA_CACHE_PREFIX__"; const version = "__PWA_CACHE_VERSION__"; const api = JSON.parse("__PWA_API_APP_SHELL__");\n',
+    ...Object.fromEntries(
+      projectConfig.pwa.icons.map((icon) => [
+        `images/${icon.file}`,
+        icon.sizes,
+      ]),
+    ),
+  };
+  try {
+    for (const [relative, contents] of Object.entries(files)) {
+      const file = path.join(rootDir, relative);
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, contents);
+    }
+
+    expect(() => buildPages({ rootDir })).toThrow(
+      /Required Pages source is missing: .*api[/\\]assets[/\\]missing\.js/,
+    );
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
 test("Pages assembly is repeatable without duplicating API metadata", () => {
   const rootDir = mkdtempSync(path.join(os.tmpdir(), "mazey-pages-repeat-"));
   const files = {
@@ -189,10 +300,11 @@ test("Pages assembly is repeatable without duplicating API metadata", () => {
       "<html><body><h1>Playground</h1></body></html>",
     "dist-dev/assets/api.css": "body {}",
     "dist-dev/assets/api.js": "void 0;",
+    [`dist-dev/images/${projectConfig.assets.faviconFile}`]: "favicon",
     [`dist-dev/images/${projectConfig.seo.openGraphImage.file}`]:
       "open graph image",
     "site/service-worker.js":
-      'const base = "__PWA_PROJECT_BASE__"; const prefix = "__PWA_CACHE_PREFIX__"; const version = "__PWA_CACHE_VERSION__";\n',
+      'const base = "__PWA_PROJECT_BASE__"; const prefix = "__PWA_CACHE_PREFIX__"; const version = "__PWA_CACHE_VERSION__"; const api = JSON.parse("__PWA_API_APP_SHELL__");\n',
     ...Object.fromEntries(
       projectConfig.pwa.icons.map((icon) => [
         `images/${icon.file}`,
@@ -237,5 +349,82 @@ test("Pages assembly is repeatable without duplicating API metadata", () => {
     expect(firstWorker).not.toMatch(/__PWA_[A-Z_]+__/);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("Pages fingerprint changes when the service worker source changes", () => {
+  const directory = mkdtempSync(path.join(os.tmpdir(), "mazey-pages-worker-"));
+  try {
+    writeFileSync(path.join(directory, "index.html"), "same page");
+    const first = fingerprintPages(directory, [
+      { name: "site/service-worker.js", contents: "worker version one" },
+    ]);
+    const second = fingerprintPages(directory, [
+      { name: "site/service-worker.js", contents: "worker version two" },
+    ]);
+    expect(second).not.toBe(first);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test("project-root fragment links resolve inside the Pages artifact", () => {
+  const rootDir = mkdtempSync(path.join(os.tmpdir(), "mazey-root-fragments-"));
+  const homeFile = path.join(rootDir, "index.html");
+  const playgroundFile = path.join(rootDir, "playground", "index.html");
+
+  try {
+    mkdirSync(path.dirname(playgroundFile), { recursive: true });
+    writeFileSync(homeFile, '<section id="install"><h2>Install</h2></section>');
+    writeFileSync(playgroundFile, "<main></main>");
+
+    expect(
+      localFragmentError(
+        playgroundFile,
+        `${projectConfig.site.basePath}#install`,
+        rootDir,
+      ),
+    ).toBeNull();
+    expect(
+      localFragmentError(playgroundFile, "/another-project/#install", rootDir),
+    ).toBe(
+      "fragment link leaves the Pages artifact: /another-project/#install",
+    );
+  } finally {
+    rmSync(rootDir, { recursive: true, force: true });
+  }
+});
+
+test("API transformation preserves unrelated inline scripts", () => {
+  const source = typeDocHtml.replace(
+    '<script>document.body.style.display="none"</script>',
+    '<script>window.keepMe = true;</script><script>\n  document.body.style.display = "none";\n</script>',
+  );
+  const transformed = transformApiHtml(source, "index.html");
+
+  expect(transformed).toContain("window.keepMe = true;");
+  expect(transformed).not.toContain("document.body.style.display");
+});
+
+test("Pages fingerprints frame filenames and contents unambiguously", () => {
+  const firstDirectory = mkdtempSync(
+    path.join(os.tmpdir(), "mazey-pages-frame-a-"),
+  );
+  const secondDirectory = mkdtempSync(
+    path.join(os.tmpdir(), "mazey-pages-frame-b-"),
+  );
+
+  try {
+    writeFileSync(path.join(firstDirectory, "a"), "bc");
+    writeFileSync(path.join(firstDirectory, "d"), "e");
+    writeFileSync(path.join(secondDirectory, "a"), "b");
+    writeFileSync(path.join(secondDirectory, "cd"), "e");
+
+    expect(fingerprintPages(firstDirectory)).not.toBe(
+      fingerprintPages(secondDirectory),
+    );
+  } finally {
+    rmSync(firstDirectory, { recursive: true, force: true });
+    rmSync(secondDirectory, { recursive: true, force: true });
   }
 });

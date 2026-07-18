@@ -2,6 +2,7 @@
 
 import path, { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { deepFreeze } from "mazey";
 import pkg from "../package.json" with { type: "json" };
 import projectConfig from "../project.config.js";
 import { createManifest } from "../scripts/build-pages.js";
@@ -105,4 +106,13 @@ test("project configuration is immutable", () => {
     projectConfig.site.theme.primary.light.base,
   );
   expect(Object.isFrozen(projectConfig.site.theme.primary.dark)).toBe(true);
+});
+
+test("Mazey deep freezing terminates for circular configuration objects", () => {
+  const value = { nested: {} };
+  value.self = value;
+
+  expect(deepFreeze(value)).toBe(value);
+  expect(Object.isFrozen(value)).toBe(true);
+  expect(Object.isFrozen(value.nested)).toBe(true);
 });

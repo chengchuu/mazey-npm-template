@@ -2,13 +2,30 @@ export type ThemePreference = "system" | "light" | "dark";
 
 const preferences = new Set<ThemePreference>(["system", "light", "dark"]);
 
-function readPreference(storage: Storage, storageKey: string): ThemePreference {
+function readPreference(
+  windowRef: Window,
+  storageKey: string,
+): ThemePreference {
   try {
-    const value = storage.getItem(storageKey) as ThemePreference | null;
+    const value = windowRef.localStorage.getItem(
+      storageKey,
+    ) as ThemePreference | null;
     return value && preferences.has(value) ? value : "system";
   } catch {
     return "system";
   }
+}
+
+function listenForMediaChanges(
+  media: MediaQueryList,
+  listener: () => void,
+): () => void {
+  if (media.addEventListener) {
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }
+  media.addListener(listener);
+  return () => media.removeListener(listener);
 }
 
 export function initializeThemeControls(
@@ -63,18 +80,18 @@ export function initializeThemeControls(
     apply(control.value as ThemePreference, true);
   };
   const handleSystemTheme = () => {
-    if (readPreference(windowRef.localStorage, storageKey) === "system")
+    if (readPreference(windowRef, storageKey) === "system")
       apply("system", false);
   };
 
   root.dataset.themeControlsReady = "true";
-  apply(readPreference(windowRef.localStorage, storageKey), false);
+  apply(readPreference(windowRef, storageKey), false);
   documentRef.addEventListener("change", handleChange);
-  media.addEventListener?.("change", handleSystemTheme);
+  const removeMediaListener = listenForMediaChanges(media, handleSystemTheme);
 
   return () => {
     documentRef.removeEventListener("change", handleChange);
-    media.removeEventListener?.("change", handleSystemTheme);
+    removeMediaListener();
     delete root.dataset.themeControlsReady;
   };
 }

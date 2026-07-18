@@ -7,7 +7,7 @@ import projectConfig from "../project.config.js";
 
 const { colorDark, colorLight, storageKey } = projectConfig.site.theme;
 
-test("theme selection follows the system and persists an explicit choice", () => {
+function renderThemeControl() {
   document.documentElement.removeAttribute("data-theme-controls-ready");
   document.head.innerHTML = `
     <meta name="theme-color" content="${colorLight}" data-theme-color
@@ -22,6 +22,10 @@ test("theme selection follows the system and persists an explicit choice", () =>
       </select>
     </label>
   `;
+}
+
+test("theme selection follows the system and persists an explicit choice", () => {
+  renderThemeControl();
   const mediaListeners = [];
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
@@ -51,6 +55,47 @@ test("theme selection follows the system and persists an explicit choice", () =>
   expect(localStorage.getItem("tsd-theme")).toBe("light");
   expect(mediaListeners).toHaveLength(1);
   cleanup();
+});
+
+test("theme initialization tolerates inaccessible local storage", () => {
+  renderThemeControl();
+  const media = {
+    matches: true,
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
+  };
+  const windowRef = {
+    get localStorage() {
+      throw new DOMException("Storage unavailable", "SecurityError");
+    },
+    matchMedia: () => media,
+  };
+
+  let cleanup;
+  expect(() => {
+    cleanup = initializeThemeControls(storageKey, document, windowRef);
+  }).not.toThrow();
+  expect(document.documentElement.dataset.bsTheme).toBe("dark");
+  cleanup();
+});
+
+test("theme changes support legacy MediaQueryList listeners", () => {
+  renderThemeControl();
+  localStorage.clear();
+  const media = {
+    matches: false,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+  };
+  const windowRef = {
+    localStorage,
+    matchMedia: () => media,
+  };
+  const cleanup = initializeThemeControls(storageKey, document, windowRef);
+
+  expect(media.addListener).toHaveBeenCalledTimes(1);
+  cleanup();
+  expect(media.removeListener).toHaveBeenCalledTimes(1);
 });
 
 test("Bootstrap navigation closes on Escape and restores toggle focus", () => {

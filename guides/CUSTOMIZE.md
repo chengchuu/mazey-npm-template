@@ -1,5 +1,7 @@
 # Customize This Template
 
+This maintained guide lives under `guides/`; generated GitHub Pages output belongs in `docs/`.
+
 Use this checklist after forking or copying the repository to create a new npm library. Make source
 changes first, then regenerate `lib`, `dist-dev`, and `docs`; do not edit generated output by hand.
 

@@ -60,8 +60,6 @@ const templateParameters = {
   THEME_STORAGE_KEY_JSON: JSON.stringify(projectConfig.site.theme.storageKey),
 };
 const runtimeConfig = {
-  packageName: projectConfig.package.name,
-  displayName: projectConfig.brand.displayName,
   installCommand: projectConfig.package.installCommand,
   themeStorageKey: projectConfig.site.theme.storageKey,
   pwa: {

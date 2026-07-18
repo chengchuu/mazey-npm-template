@@ -23,6 +23,18 @@ interface WindowWithIdleCallback {
   requestIdleCallback?: (callback: () => void) => number;
 }
 
+function listenForMediaChanges(
+  media: MediaQueryList,
+  listener: () => void,
+): () => void {
+  if (media.addEventListener) {
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }
+  media.addListener(listener);
+  return () => media.removeListener(listener);
+}
+
 function setHidden(elements: Element[], hidden: boolean): void {
   elements.forEach((element) => {
     if (element instanceof HTMLElement) element.hidden = hidden;
@@ -52,15 +64,19 @@ export function shouldRegisterSiteServiceWorker(
   locationRef: Location,
   navigatorRef: Navigator,
 ): boolean {
-  const isLocalhost = new Set(["localhost", "127.0.0.1", "[::1]"]).has(
-    locationRef.hostname,
-  );
-  return (
-    config.enabled &&
-    "serviceWorker" in navigatorRef &&
-    (locationRef.protocol === "https:" || isLocalhost) &&
-    locationRef.pathname.startsWith(config.scope)
-  );
+  try {
+    const isLocalhost = new Set(["localhost", "127.0.0.1", "[::1]"]).has(
+      locationRef.hostname,
+    );
+    return (
+      config.enabled &&
+      typeof navigatorRef.serviceWorker?.register === "function" &&
+      (locationRef.protocol === "https:" || isLocalhost) &&
+      locationRef.pathname.startsWith(config.scope)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function initializeInstallExperience(
@@ -145,7 +161,10 @@ export function initializeInstallExperience(
   );
   windowRef.addEventListener("beforeinstallprompt", handlePromptAvailable);
   windowRef.addEventListener("appinstalled", handleInstalled);
-  displayMode.addEventListener?.("change", handleDisplayMode);
+  const removeDisplayModeListener = listenForMediaChanges(
+    displayMode,
+    handleDisplayMode,
+  );
 
   return () => {
     installButtons.forEach((button) =>
@@ -153,7 +172,7 @@ export function initializeInstallExperience(
     );
     windowRef.removeEventListener("beforeinstallprompt", handlePromptAvailable);
     windowRef.removeEventListener("appinstalled", handleInstalled);
-    displayMode.removeEventListener?.("change", handleDisplayMode);
+    removeDisplayModeListener();
   };
 }
 

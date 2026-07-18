@@ -59,7 +59,9 @@
       (() => {
         try {
           const key = <%= THEME_STORAGE_KEY_JSON %>;
-          const value = localStorage.getItem(key) || "system";
+          const stored = localStorage.getItem(key);
+          const value =
+            stored === "light" || stored === "dark" ? stored : "system";
           const theme =
             value === "system"
               ? matchMedia("(prefers-color-scheme: dark)").matches

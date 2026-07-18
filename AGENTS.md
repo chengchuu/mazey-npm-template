@@ -36,7 +36,7 @@ Keep the package generic, browser-friendly, and easy to rename.
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
-- `CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
+- `guides/CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
   identity before using the template for another library.
 - `lib`: generated publish output; do not edit it by hand.
 - `dist-dev`, `docs`, and `coverage`: generated development, documentation, and test output.
@@ -213,7 +213,7 @@ Update `README.md` when changing:
 - Node.js or TypeScript requirements;
 - release or documentation workflows visible to maintainers.
 
-Update `CUSTOMIZE.md` when identity-bearing files, generated outputs, Pages/PWA paths, or release
+Update `guides/CUSTOMIZE.md` when identity-bearing files, generated outputs, Pages/PWA paths, or release
 steps change. Keep it explicit that the npm package name, repository name, Pages base path, browser
 bundle filename, and IIFE global can be different values.
 
@@ -318,7 +318,7 @@ PWA output, uploads `docs`, and deploys through the `github-pages` environment.
 
 Do not copy package-specific source code, repository URLs, or API names into this project during a
 rename. A broader rename requires checking `package.json`, Rollup output naming, source metadata,
-README links, workflows, and tests together. Follow `CUSTOMIZE.md`; most identity and deployment
+README links, workflows, and tests together. Follow `guides/CUSTOMIZE.md`; most identity and deployment
 values should flow from `package.json` and `project.config.js` rather than manual replacements.
 
 ## Change Discipline

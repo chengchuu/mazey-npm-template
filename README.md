@@ -1,6 +1,6 @@
 > **Note:** This package is a working npm library template. Use it as a starting point and replace
 > the sample package identity and API before publishing your own library. Follow
-> [Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/CUSTOMIZE.md)
+> [Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/guides/CUSTOMIZE.md)
 > after forking or copying the project.
 
 # mazey-npm-template
@@ -128,7 +128,7 @@ The project website is served at <http://localhost:8080/>. The playground is ava
 Package metadata remains in `package.json`. A package-safe helper derives bundle names without
 loading website settings, while shared repository, website, theme, SEO, and PWA settings flow through
 `project.config.js`. See
-[Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/CUSTOMIZE.md) for
+[Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/guides/CUSTOMIZE.md) for
 the post-fork checklist.
 
 Generate the complete GitHub Pages artifact, including the website, playground, API documentation,

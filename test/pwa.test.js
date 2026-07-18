@@ -49,6 +49,28 @@ async function settle() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+test("install state changes support legacy MediaQueryList listeners", () => {
+  renderInstallControls();
+  const media = {
+    matches: false,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+  };
+  const windowRef = Object.assign(new EventTarget(), {
+    matchMedia: () => media,
+  });
+  const cleanup = initializeInstallExperience(
+    document,
+    windowRef,
+    navigator,
+    appName,
+  );
+
+  expect(media.addListener).toHaveBeenCalledTimes(1);
+  cleanup();
+  expect(media.removeListener).toHaveBeenCalledTimes(1);
+});
+
 test.each([
   ["accepted", "The app installation was accepted."],
   [
@@ -176,6 +198,41 @@ test("service-worker registration is production-scoped and uses exact paths", as
     projectConfig.pwa.serviceWorkerUrl,
     { scope: projectConfig.site.basePath },
   );
+});
+
+test("service-worker registration requires a usable browser API", () => {
+  const siteUrl = new URL(projectConfig.site.url);
+  const productionLocation = {
+    hostname: siteUrl.hostname,
+    pathname: projectConfig.site.basePath,
+    protocol: siteUrl.protocol,
+  };
+  const inaccessibleNavigator = {};
+  Object.defineProperty(inaccessibleNavigator, "serviceWorker", {
+    get() {
+      throw new DOMException("Service workers unavailable", "SecurityError");
+    },
+  });
+
+  expect(
+    shouldRegisterSiteServiceWorker(pwaConfig, productionLocation, {
+      serviceWorker: undefined,
+    }),
+  ).toBe(false);
+  expect(() =>
+    shouldRegisterSiteServiceWorker(
+      pwaConfig,
+      productionLocation,
+      inaccessibleNavigator,
+    ),
+  ).not.toThrow();
+  expect(
+    shouldRegisterSiteServiceWorker(
+      pwaConfig,
+      productionLocation,
+      inaccessibleNavigator,
+    ),
+  ).toBe(false);
 });
 
 test("waiting updates activate only after confirmation and reload once", () => {

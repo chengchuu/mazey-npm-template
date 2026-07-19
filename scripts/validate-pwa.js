@@ -211,8 +211,21 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
     )
       fail(`${label} must link ${projectConfig.pwa.manifestUrl}`);
     const themeColor = findTag(html, "meta", "name", "theme-color");
-    if (!themeColor?.content || !("data-theme-color" in themeColor))
+    if (!themeColor?.content || !("data-theme-color" in themeColor)) {
       fail(`${label} is missing dynamic theme-color metadata`);
+    } else {
+      const lightThemeColor = projectConfig.site.theme.colorPrimary;
+      const darkThemeColor = projectConfig.site.theme.primary.dark.base;
+      if (
+        themeColor.content !== lightThemeColor ||
+        themeColor["data-theme-color-light"] !== lightThemeColor
+      ) {
+        fail(`${label} must use the light primary theme color`);
+      }
+      if (themeColor["data-theme-color-dark"] !== darkThemeColor) {
+        fail(`${label} must use the dark primary theme color`);
+      }
+    }
     if (!findTag(html, "meta", "name", "description"))
       fail(`${label} lost its SEO description`);
     if (!findTag(html, "link", "rel", "canonical"))

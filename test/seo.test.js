@@ -148,6 +148,7 @@ test("generated cross-page fragment links resolve inside the Pages artifact", ()
 
 test("API metadata transformation is complete and idempotent", () => {
   const transformed = transformApiHtml(typeDocHtml, "index.html");
+  const theme = projectConfig.site.theme;
   expect(transformApiHtml(transformed, "index.html")).toBe(transformed);
   expect(transformed).toContain(
     `<link rel="canonical" href="${pages.api.url}"/>`,
@@ -172,6 +173,9 @@ test("API metadata transformation is complete and idempotent", () => {
   );
   expect(transformed).toContain('href="../assets/api.css"');
   expect(transformed).toContain('src="../assets/api.js"');
+  expect(transformed).toContain(
+    `<meta name="theme-color" content="${theme.colorPrimary}" data-theme-color data-theme-color-light="${theme.colorPrimary}" data-theme-color-dark="${theme.primary.dark.base}"/>`,
+  );
   expect(transformed).not.toMatch(/<button\b[^>]*data-pwa-install\b/);
   expect(transformed.match(/<h1\b/g)).toHaveLength(1);
   expect(transformed.match(/<h([1-6])\b/i)?.[1]).toBe("1");
@@ -193,16 +197,17 @@ test("API theme bootstrap rejects corrupted stored preferences", () => {
     .map((match) => match[1])
     .find((script) => script.includes("tsd-theme"));
   const values = new Map([[projectConfig.site.theme.storageKey, "corrupted"]]);
+  const theme = projectConfig.site.theme;
   const documentElement = { dataset: {}, style: {} };
 
   vm.runInNewContext(initializer, {
     document: {
       documentElement,
       querySelector: () => ({
-        content: projectConfig.site.theme.colorLight,
+        content: theme.colorPrimary,
         dataset: {
-          themeColorDark: projectConfig.site.theme.colorDark,
-          themeColorLight: projectConfig.site.theme.colorLight,
+          themeColorDark: theme.primary.dark.base,
+          themeColorLight: theme.colorPrimary,
         },
       }),
     },

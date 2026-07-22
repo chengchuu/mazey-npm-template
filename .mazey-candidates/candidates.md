@@ -5,14 +5,14 @@
 - Files inspected: 60 current source-controlled or review-relevant project files (55 text/source
   files and five source image headers). Generated Husky internals, ignored local lockfiles,
   dependencies, and generated build output were excluded.
-- Helpers inspected: 82 utility-like functions or embedded helper units.
+- Helpers inspected: 83 utility-like functions or embedded helper units.
 - Strong candidates: 0 outstanding; three original candidates were completed in Mazey 5.1.0.
 - Candidates requiring generalization: 6.
-- Already available in Mazey: 4 reviewed behaviors.
+- Already available in Mazey: 6 reviewed behaviors.
 - Native API preferred: 12.
-- Project-specific: 48.
+- Project-specific: 47.
 - Rejected: 12.
-- Comparison authority: installed `mazey@5.1.0`, its declarations, the refreshed `prefer-mazey` API map, and
+- Comparison authority: installed `mazey@5.3.1`, its declarations, the refreshed `prefer-mazey` API map, and
   the sibling Mazey source where behavior required confirmation.
 
 ## Strong candidates
@@ -114,7 +114,7 @@ No strong candidates remain outstanding from this audit.
 
 ## Already available in Mazey
 
-Mazey 5.1.0 completed four reviewed behaviors:
+Mazey 5.3.1 provides six reviewed behaviors:
 
 - `toJavaScriptGlobalName` now replaces the former local `javaScriptGlobal` helper.
 - `parseGitHubRepository` now provides the reusable core inside `repositoryDetails`.
@@ -122,6 +122,10 @@ Mazey 5.1.0 completed four reviewed behaviors:
   for testability.
 - `isSafePWAEnv({ requireManifest, scope })` completed the proposed generic eligibility extension;
   the local registration predicate still adds project enablement and injected environment policy.
+- `resolveThemePreference` replaces the former local preference validation, storage read, and
+  system/fallback resolution.
+- `setThemePreference` replaces the former project-theme storage write while preserving
+  session-only selection when persistence fails.
 
 `project.config.js:1,106-169` also continues to use `deepFreeze` correctly.
 
@@ -131,8 +135,6 @@ Potentially similar APIs were rejected as replacements after source comparison:
   a narrower double-quoted HTML attribute set.
 - `removeHTML` strips tags but does not remove script/style contents or decode/collapse text as
   `visibleText` attempts to do.
-- `getLocalStorage` JSON-parses and lets storage access errors propagate; `readPreference` validates
-  a theme enum and falls back when storage is inaccessible.
 - `isStandalonePWA` and the extended `isSafePWAEnv` are available, but their global-environment
   signatures are not drop-in replacements for every injected local test adapter.
 
@@ -171,8 +173,8 @@ the documented behavior rather than copied from dependencies or generated output
 ## Validation checklist
 
 - All source paths and line ranges were checked against the current worktree.
-- Mazey comparisons were checked against installed `mazey@5.1.0` declarations and relevant sibling
-  source, including the four completed candidate APIs.
+- Mazey comparisons were checked against installed `mazey@5.3.1` declarations and relevant sibling
+  source, including the six adopted APIs.
 - Generated output, dependencies, and third-party code were excluded from the inventory.
 - `candidates.json` was parsed as JSON and checked for allowed enum values and matching summary.
 - Markdown files were checked with the repository's formatter.

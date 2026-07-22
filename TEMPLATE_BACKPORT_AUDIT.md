@@ -21,7 +21,7 @@ This audit compares the optimized `mazey` project with `mazey-npm-template` and 
 - Kept PWA runtime APIs out of published package source without rejecting inert identifiers such as `serviceWorkerUrl`.
 - Updated GitHub workflows to the current stable `actions/setup-node@v6`, limited default publish-workflow permissions to read-only, and scoped write permissions to the publish job.
 - Made the publish workflow run the repository's complete `npm run preview` validation before publication.
-- Upgraded the `mazey` development dependency to 5.1.0 and reused its cycle-safe `deepFreeze`, `toJavaScriptGlobalName`, and `parseGitHubRepository` utilities for immutable build configuration and package identity derivation.
+- Upgraded the `mazey` development dependency to 5.3.1 and reused its cycle-safe `deepFreeze`, package-identity helpers, and public theme preference APIs.
 
 ## Improvements Generalized Before Adoption
 
@@ -83,7 +83,7 @@ No generated output is intended to be committed as part of this backport.
 
 ## Dependency Changes
 
-- Upgraded the `mazey` development dependency from 4.13.2 to 5.1.0 for shared configuration and package-identity helpers.
+- Upgraded the `mazey` development dependency from 4.13.2 to 5.3.1 for shared configuration, package identity, and website theme preference helpers.
 - Added no runtime dependencies.
 - No source-controlled lockfile is used or modified; local ignored lockfiles are not part of the
   repository change.

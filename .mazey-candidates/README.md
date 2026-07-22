@@ -9,13 +9,15 @@ test fixtures, native operations, and implementations that are too fragile for a
 The review covered authored source, scripts, configuration, examples, tests, declarations, HTML
 templates, package metadata, and contributor documentation. Generated output and dependencies were
 excluded. Each helper was checked for callers, tests, runtime requirements, mutation, side effects,
-edge cases, provenance, and behavioral overlap with the installed Mazey 5.1.0 public API.
+edge cases, provenance, and behavioral overlap with the installed Mazey 5.3.1 public API.
 
 ## Completion Update
 
 Mazey 5.1.0 now provides `toJavaScriptGlobalName`, `parseGitHubRepository`, `isStandalonePWA`, and
 the proposed `isSafePWAEnv` options. The reports preserve the original reasoning and mark these
-items as `already-in-mazey`; proposal drafts remain as historical design records.
+items as `already-in-mazey`; proposal drafts remain as historical design records. Mazey 5.3.1 also
+replaces the local theme preference reader and persistence logic with `resolveThemePreference` and
+`setThemePreference`.
 
 The reports use six classifications:
 

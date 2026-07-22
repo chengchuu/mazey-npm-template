@@ -57,7 +57,6 @@ const templateParameters = {
   THEME_PRIMARY_HOVER_RGB: projectConfig.site.theme.primary.light.hoverRgb,
   THEME_PRIMARY_RGB: projectConfig.site.theme.primary.light.rgb,
   THEME_PRIMARY_SOFT: projectConfig.site.theme.primary.light.soft,
-  THEME_STORAGE_KEY_JSON: JSON.stringify(projectConfig.site.theme.storageKey),
 };
 const runtimeConfig = {
   installCommand: projectConfig.package.installCommand,

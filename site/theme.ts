@@ -1,25 +1,15 @@
-export type ThemePreference = "system" | "light" | "dark";
+import { resolveThemePreference, setThemePreference } from "mazey";
+import type { ThemePreference, ThemePreferenceResult } from "mazey";
 
-const preferences = new Set<ThemePreference>(["system", "light", "dark"]);
+export type { ThemePreference } from "mazey";
 
-function readPreference(
-  windowRef: Window,
-  storageKey: string,
-): ThemePreference {
-  try {
-    const value = windowRef.localStorage.getItem(
-      storageKey,
-    ) as ThemePreference | null;
-    return value && preferences.has(value) ? value : "system";
-  } catch {
-    return "system";
-  }
-}
+const systemThemeQuery = "(prefers-color-scheme: dark)";
 
 function listenForMediaChanges(
-  media: MediaQueryList,
+  media: MediaQueryList | null,
   listener: () => void,
 ): () => void {
+  if (!media) return () => undefined;
   if (media.addEventListener) {
     media.addEventListener("change", listener);
     return () => media.removeEventListener("change", listener);
@@ -36,56 +26,89 @@ export function initializeThemeControls(
   const root = documentRef.documentElement;
   if (root.dataset.themeControlsReady === "true") return () => undefined;
 
-  const media = windowRef.matchMedia("(prefers-color-scheme: dark)");
+  const storage = {
+    getItem: (key: string) => windowRef.localStorage.getItem(key),
+    setItem: (key: string, value: string) =>
+      windowRef.localStorage.setItem(key, value),
+  };
+  let media: MediaQueryList | null = null;
+  try {
+    media = windowRef.matchMedia(systemThemeQuery);
+  } catch {
+    // Mazey resolves to the configured fallback when this adapter throws.
+  }
+  const matchMedia = () => {
+    if (!media) throw new Error("System theme detection is unavailable.");
+    return media;
+  };
 
-  const apply = (value: ThemePreference, persist: boolean) => {
-    const selected = preferences.has(value) ? value : "system";
-    const resolved =
-      selected === "system" ? (media.matches ? "dark" : "light") : selected;
-
-    root.dataset.bsTheme = resolved;
-    root.dataset.theme = resolved;
-    root.style.colorScheme = resolved;
+  const apply = ({ preference, resolvedTheme }: ThemePreferenceResult) => {
+    root.dataset.bsTheme = resolvedTheme;
+    root.dataset.theme = resolvedTheme;
+    root.style.colorScheme = resolvedTheme;
     const themeColor = documentRef.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"][data-theme-color]',
     );
     if (themeColor) {
       themeColor.content =
-        resolved === "dark"
+        resolvedTheme === "dark"
           ? (themeColor.dataset.themeColorDark ?? themeColor.content)
           : (themeColor.dataset.themeColorLight ?? themeColor.content);
     }
 
     try {
-      if (persist) windowRef.localStorage.setItem(storageKey, selected);
-      windowRef.localStorage.setItem(
-        "tsd-theme",
-        selected === "system" ? "os" : selected,
-      );
+      storage.setItem("tsd-theme", preference === "system" ? "os" : preference);
     } catch {
-      // Storage may be unavailable in privacy-restricted contexts.
+      // TypeDoc synchronization is optional when storage is unavailable.
     }
 
     documentRef
       .querySelectorAll<HTMLSelectElement>("[data-theme-select]")
       .forEach((control) => {
-        if (control.value !== selected) control.value = selected;
+        if (control.value !== preference) control.value = preference;
       });
   };
+
+  const initialTheme = resolveThemePreference({
+    storageKey,
+    url: documentRef.URL,
+    storage,
+    matchMedia,
+    fallback: "light",
+  });
+  let selectedPreference = initialTheme.preference;
+  const sessionUrl = new URL(documentRef.URL);
+  sessionUrl.searchParams.delete("theme");
+  const resolveSelectedTheme = () =>
+    resolveThemePreference({
+      storageKey,
+      url: sessionUrl,
+      storage: { getItem: () => selectedPreference },
+      matchMedia,
+      fallback: "light",
+    });
 
   const handleChange = (event: Event) => {
     const control = event.target;
     if (!(control instanceof HTMLSelectElement)) return;
     if (!control.matches("[data-theme-select]")) return;
-    apply(control.value as ThemePreference, true);
+    const preference = control.value as ThemePreference;
+    try {
+      setThemePreference({ storageKey, preference, storage });
+    } catch (error) {
+      if (!(error instanceof TypeError)) throw error;
+      apply(resolveSelectedTheme());
+      return;
+    }
+    selectedPreference = preference;
+    apply(resolveSelectedTheme());
   };
   const handleSystemTheme = () => {
-    if (readPreference(windowRef, storageKey) === "system")
-      apply("system", false);
+    if (selectedPreference === "system") apply(resolveSelectedTheme());
   };
 
   root.dataset.themeControlsReady = "true";
-  apply(readPreference(windowRef, storageKey), false);
+  apply(initialTheme);
   documentRef.addEventListener("change", handleChange);
   const removeMediaListener = listenForMediaChanges(media, handleSystemTheme);
 

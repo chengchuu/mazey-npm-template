@@ -4,14 +4,14 @@
     "version": "2.1.6",
     "repository": "https://github.com/chengchuu/mazey-npm-template"
   },
-  "generatedAt": "2026-07-18T12:19:09Z",
+  "generatedAt": "2026-07-22T11:59:23Z",
   "summary": {
-    "inspected": 82,
+    "inspected": 83,
     "strongCandidates": 0,
     "generalizationCandidates": 6,
-    "existingMazeyFunctions": 4,
+    "existingMazeyFunctions": 6,
     "nativePreferred": 12,
-    "projectSpecific": 48,
+    "projectSpecific": 47,
     "rejected": 12
   },
   "inventory": {

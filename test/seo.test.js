@@ -8,7 +8,6 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import vm from "node:vm";
 import {
   buildPages,
   fingerprintPages,
@@ -56,6 +55,8 @@ test("site navigation and hero styling follow the shared template convention", (
     }
     expect(html).not.toContain(">Installation</a>");
     expect(html).not.toContain(">API/Docs</a>");
+    expect(html).not.toContain("localStorage.getItem");
+    expect(html).not.toContain("THEME_STORAGE_KEY_JSON");
   }
 
   expect(homeHtml).toContain('href="#install">Install</a>');
@@ -185,6 +186,8 @@ test("API metadata transformation is complete and idempotent", () => {
   expect(transformed).toContain('id="tsd-search-trigger"');
   expect(transformed).toContain('<dialog id="tsd-search"');
   expect(transformed).not.toContain('document.body.style.display="none"');
+  expect(transformed).not.toContain("localStorage.getItem");
+  expect(transformed).not.toContain('localStorage.setItem("tsd-theme"');
   expect(() =>
     JSON.parse(
       transformed.match(
@@ -192,37 +195,6 @@ test("API metadata transformation is complete and idempotent", () => {
       )[1],
     ),
   ).not.toThrow();
-});
-
-test("API theme bootstrap rejects corrupted stored preferences", () => {
-  const transformed = transformApiHtml(typeDocHtml, "index.html");
-  const initializer = [...transformed.matchAll(/<script>([\s\S]*?)<\/script>/g)]
-    .map((match) => match[1])
-    .find((script) => script.includes("tsd-theme"));
-  const values = new Map([[projectConfig.site.theme.storageKey, "corrupted"]]);
-  const theme = projectConfig.site.theme;
-  const documentElement = { dataset: {}, style: {} };
-
-  vm.runInNewContext(initializer, {
-    document: {
-      documentElement,
-      querySelector: () => ({
-        content: theme.colorPrimary,
-        dataset: {
-          themeColorDark: theme.colorDark,
-          themeColorLight: theme.colorLight,
-        },
-      }),
-    },
-    localStorage: {
-      getItem: (key) => values.get(key) ?? null,
-      setItem: (key, value) => values.set(key, value),
-    },
-    matchMedia: () => ({ matches: false }),
-  });
-
-  expect(documentElement.dataset.bsTheme).toBe("light");
-  expect(values.get("tsd-theme")).toBe("os");
 });
 
 test("API subpages receive self-referencing canonical URLs", () => {

@@ -214,16 +214,17 @@ function validatePwa({ rootDir = defaultRoot } = {}) {
     if (!themeColor?.content || !("data-theme-color" in themeColor)) {
       fail(`${label} is missing dynamic theme-color metadata`);
     } else {
-      const lightThemeColor = projectConfig.site.theme.colorPrimary;
-      const darkThemeColor = projectConfig.site.theme.primary.dark.base;
-      if (
-        themeColor.content !== lightThemeColor ||
-        themeColor["data-theme-color-light"] !== lightThemeColor
-      ) {
-        fail(`${label} must use the light primary theme color`);
+      const defaultThemeColor = projectConfig.site.theme.colorPrimary;
+      const lightThemeColor = projectConfig.site.theme.colorLight;
+      const darkThemeColor = projectConfig.site.theme.colorDark;
+      if (themeColor.content !== defaultThemeColor) {
+        fail(`${label} must use the default primary theme color`);
+      }
+      if (themeColor["data-theme-color-light"] !== lightThemeColor) {
+        fail(`${label} must use the light navbar background color`);
       }
       if (themeColor["data-theme-color-dark"] !== darkThemeColor) {
-        fail(`${label} must use the dark primary theme color`);
+        fail(`${label} must use the dark navbar background color`);
       }
     }
     if (!findTag(html, "meta", "name", "description"))

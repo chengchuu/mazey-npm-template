@@ -5,8 +5,8 @@ import { initializeNavigation } from "../site/navigation.ts";
 import { initializeThemeControls } from "../site/theme.ts";
 import projectConfig from "../project.config.js";
 
-const { colorPrimary, primary, storageKey } = projectConfig.site.theme;
-const darkThemeColor = primary.dark.base;
+const { colorPrimary, colorLight, colorDark, storageKey } =
+  projectConfig.site.theme;
 
 afterEach(() => {
   localStorage.clear();
@@ -16,7 +16,7 @@ function renderThemeControl() {
   document.documentElement.removeAttribute("data-theme-controls-ready");
   document.head.innerHTML = `
     <meta name="theme-color" content="${colorPrimary}" data-theme-color
-      data-theme-color-light="${colorPrimary}" data-theme-color-dark="${darkThemeColor}">
+      data-theme-color-light="${colorLight}" data-theme-color-dark="${colorDark}">
   `;
   document.body.innerHTML = `
     <label>Theme
@@ -47,14 +47,14 @@ test("theme selection follows the system and persists an explicit choice", () =>
 
   expect(document.documentElement.dataset.bsTheme).toBe("dark");
   expect(document.querySelector('meta[name="theme-color"]').content).toBe(
-    darkThemeColor,
+    colorDark,
   );
   expect(select.value).toBe("system");
   select.value = "light";
   select.dispatchEvent(new Event("change", { bubbles: true }));
   expect(document.documentElement.dataset.bsTheme).toBe("light");
   expect(document.querySelector('meta[name="theme-color"]').content).toBe(
-    colorPrimary,
+    colorLight,
   );
   expect(localStorage.getItem(storageKey)).toBe("light");
   expect(localStorage.getItem("tsd-theme")).toBe("light");

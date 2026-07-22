@@ -86,6 +86,9 @@ test("site navigation and hero styling follow the shared template convention", (
   expect(css).toMatch(
     /\.hero\s*{[\s\S]*?radial-gradient\([\s\S]*?var\(--mn-primary-soft\)[\s\S]*?var\(--mn-surface\);[\s\S]*?}/,
   );
+  expect(css).toMatch(
+    /\.site-header\s*{[^}]*background:\s*var\(--mn-background\);[^}]*}/,
+  );
 });
 
 test("generated cross-page fragment links resolve inside the Pages artifact", () => {
@@ -174,7 +177,7 @@ test("API metadata transformation is complete and idempotent", () => {
   expect(transformed).toContain('href="../assets/api.css"');
   expect(transformed).toContain('src="../assets/api.js"');
   expect(transformed).toContain(
-    `<meta name="theme-color" content="${theme.colorPrimary}" data-theme-color data-theme-color-light="${theme.colorPrimary}" data-theme-color-dark="${theme.primary.dark.base}"/>`,
+    `<meta name="theme-color" content="${theme.colorPrimary}" data-theme-color data-theme-color-light="${theme.colorLight}" data-theme-color-dark="${theme.colorDark}"/>`,
   );
   expect(transformed).not.toMatch(/<button\b[^>]*data-pwa-install\b/);
   expect(transformed.match(/<h1\b/g)).toHaveLength(1);
@@ -206,8 +209,8 @@ test("API theme bootstrap rejects corrupted stored preferences", () => {
       querySelector: () => ({
         content: theme.colorPrimary,
         dataset: {
-          themeColorDark: theme.primary.dark.base,
-          themeColorLight: theme.colorPrimary,
+          themeColorDark: theme.colorDark,
+          themeColorLight: theme.colorLight,
         },
       }),
     },

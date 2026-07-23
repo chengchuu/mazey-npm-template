@@ -1,0 +1,427 @@
+{
+  "project": {
+    "name": "mazey-npm-template",
+    "version": "2.1.6",
+    "repository": "https://github.com/chengchuu/mazey-npm-template"
+  },
+  "generatedAt": "2026-07-22T11:59:23Z",
+  "summary": {
+    "inspected": 83,
+    "strongCandidates": 0,
+    "generalizationCandidates": 6,
+    "existingMazeyFunctions": 6,
+    "nativePreferred": 12,
+    "projectSpecific": 47,
+    "rejected": 12
+  },
+  "inventory": {
+    "filesInspected": 60,
+    "textAndSourceFiles": 55,
+    "sourceImages": 5,
+    "completeSourceMap": "source-map.md",
+    "note": "The candidates array contains contribution candidates only; the complete classified inventory is in source-map.md."
+  },
+  "candidates": [
+    {
+      "currentName": "javaScriptGlobal",
+      "proposedName": "toJavaScriptGlobalName",
+      "classification": "already-in-mazey",
+      "sourceFile": "scripts/project-config-utils.js",
+      "sourceLines": "1,22",
+      "purpose": "Convert arbitrary text to a deterministic uppercase ASCII JavaScript identifier for IIFE globals.",
+      "proposedSignature": "function toJavaScriptGlobalName(value: string): string",
+      "runtime": "universal",
+      "dependencies": [],
+      "sideEffects": [],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "equivalent",
+        "function": "toJavaScriptGlobalName",
+        "notes": "Mazey 5.1.0 provides the exact behavior and the local duplicate has been removed."
+      },
+      "generalizationRequired": [
+        "Rename to state uppercase global-name semantics.",
+        "Document that Unicode and punctuation become underscores."
+      ],
+      "testCases": [
+        "plain package name",
+        "scoped npm package name",
+        "empty string",
+        "leading digit",
+        "dollar and underscore",
+        "repeated punctuation",
+        "Unicode input",
+        "non-string runtime input",
+        "repeated invocation"
+      ],
+      "risks": [
+        "The output is an identifier only and must not be treated as authorization for dynamic evaluation.",
+        "Changing ASCII or case policy later would be breaking."
+      ]
+    },
+    {
+      "currentName": "repositoryDetails",
+      "proposedName": "parseGitHubRepository",
+      "classification": "already-in-mazey",
+      "sourceFile": "scripts/project-config-utils.js",
+      "sourceLines": "27-37",
+      "purpose": "Parse common GitHub repository shorthands and transport URLs into canonical identity fields.",
+      "proposedSignature": "function parseGitHubRepository(value: string): GitHubRepositoryDetails",
+      "runtime": "universal",
+      "dependencies": [],
+      "sideEffects": ["Throws for malformed or unsupported input."],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "equivalent-core",
+        "function": "parseGitHubRepository",
+        "notes": "Mazey 5.1.0 provides the strict parser; the local wrapper retains npm metadata extraction and package-specific errors."
+      },
+      "generalizationRequired": [
+        "Move npm repository-object extraction to the caller.",
+        "Reject or explicitly define credentials, query strings, fragments, and percent encoding.",
+        "Use generic error messages independent of package.json."
+      ],
+      "testCases": [
+        "github shorthand",
+        "owner/name shorthand",
+        "SCP syntax",
+        "git protocol",
+        "git+ssh URL",
+        "git+https URL",
+        "optional .git suffix",
+        "uppercase and www host",
+        "scoped npm package context does not affect parsing",
+        "empty and whitespace input",
+        "extra path segments",
+        "non-GitHub host",
+        "query and fragment policy",
+        "Unicode and percent encoding",
+        "repeated invocation"
+      ],
+      "risks": [
+        "Canonical parsing is not repository authorization.",
+        "Overly permissive shorthand grammar can accept unintended text."
+      ]
+    },
+    {
+      "currentName": "isStandaloneMode",
+      "proposedName": "isStandalonePWA",
+      "classification": "already-in-mazey",
+      "sourceFile": "site/pwa.ts",
+      "sourceLines": "52-60",
+      "purpose": "Detect standard standalone display mode and the iOS Safari navigator.standalone fallback.",
+      "proposedSignature": "function isStandalonePWA(): boolean",
+      "runtime": "browser-preferred",
+      "dependencies": [],
+      "sideEffects": [],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "equivalent",
+        "function": "isStandalonePWA",
+        "notes": "Mazey 5.1.0 provides the guarded global API; the project retains an injected adapter for deterministic tests."
+      },
+      "generalizationRequired": [
+        "Guard missing browser globals and missing matchMedia.",
+        "Keep injected host objects internal to tests rather than the ordinary public signature."
+      ],
+      "testCases": [
+        "standard standalone match",
+        "iOS navigator.standalone true",
+        "ordinary browser tab",
+        "Node or SSR globals absent",
+        "matchMedia absent",
+        "both signals present",
+        "host method throws",
+        "repeated invocation",
+        "no global mutation"
+      ],
+      "risks": [
+        "Standalone display does not prove installation, service-worker control, or origin trust.",
+        "Browser vendors may add display modes that need separate policy."
+      ]
+    },
+    {
+      "currentName": "packageDetails",
+      "proposedName": "split-package-metadata-derivations",
+      "classification": "generalize-first",
+      "sourceFile": "scripts/project-config-utils.js",
+      "sourceLines": "3-25",
+      "purpose": "Derive package build identity from package metadata.",
+      "proposedSignature": "No composite public API proposed",
+      "runtime": "build-time",
+      "dependencies": [],
+      "sideEffects": ["Throws when package name is missing."],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "none",
+        "function": null,
+        "notes": "No composite equivalent; parts are native, project policy, or separate candidates."
+      },
+      "generalizationRequired": [
+        "Keep package validation and install-command policy local.",
+        "Use native package basename extraction.",
+        "Replace incomplete author normalization with a specified parser or no abstraction.",
+        "Extract global-name generation independently."
+      ],
+      "testCases": [
+        "scoped and unscoped names",
+        "missing name",
+        "string and object authors",
+        "missing optional metadata",
+        "input not mutated"
+      ],
+      "risks": [
+        "A broad packageDetails API would freeze project-specific release policy into Mazey.",
+        "Current author-string behavior is incomplete."
+      ]
+    },
+    {
+      "currentName": "fingerprintPages",
+      "proposedName": "fingerprintFiles",
+      "classification": "generalize-first",
+      "sourceFile": "scripts/build-pages.js",
+      "sourceLines": "215-240",
+      "purpose": "Create a deterministic cryptographic content fingerprint from named byte sequences.",
+      "proposedSignature": "function fingerprintFiles(files: Iterable<{ name: string; contents: Uint8Array | string }>, options?: FingerprintOptions): string",
+      "runtime": "node-compatible",
+      "dependencies": ["node:crypto in the current implementation"],
+      "sideEffects": [
+        "Current implementation reads a directory synchronously."
+      ],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "none",
+        "function": null,
+        "notes": "Mazey genHashCode is a small non-cryptographic string hash and is not equivalent."
+      },
+      "generalizationRequired": [
+        "Remove directory walking and project exclusion rules.",
+        "Define ordering and duplicate logical-name behavior.",
+        "Define whether caller-provided logical names normalize path separators.",
+        "Make algorithm and output length explicit."
+      ],
+      "testCases": [
+        "empty iterable",
+        "same contents and order",
+        "different names",
+        "different bytes",
+        "Unicode names and strings",
+        "duplicate names",
+        "Windows and POSIX logical paths",
+        "input collection not mutated",
+        "repeated invocation"
+      ],
+      "risks": [
+        "A truncated digest is a cache key, not a signature.",
+        "Duplicate logical names or caller-provided separator aliases require an explicit policy."
+      ]
+    },
+    {
+      "currentName": "pngDimensions",
+      "proposedName": "readPngDimensions",
+      "classification": "generalize-first",
+      "sourceFile": "scripts/validate-pwa.js",
+      "sourceLines": "40-62",
+      "purpose": "Read width and height from a PNG IHDR header without decoding image pixels.",
+      "proposedSignature": "function readPngDimensions(data: Uint8Array): { width: number; height: number }",
+      "runtime": "universal",
+      "dependencies": ["node:fs and Buffer in the current implementation"],
+      "sideEffects": [
+        "Current implementation reads a file synchronously.",
+        "Throws for invalid headers."
+      ],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "none",
+        "function": null,
+        "notes": "No Mazey image-header parser exists."
+      },
+      "generalizationRequired": [
+        "Accept bytes rather than a file path.",
+        "Use DataView or specified byte reads instead of Buffer-only methods.",
+        "Define whether the API validates only a complete IHDR header or the full PNG structure and CRCs.",
+        "Define whether dimensions above the PNG specification limit should be rejected by this helper."
+      ],
+      "testCases": [
+        "valid 1x1 PNG header",
+        "large valid dimensions",
+        "empty and truncated input",
+        "bad signature",
+        "missing or displaced IHDR",
+        "zero dimensions",
+        "Uint8Array view with byte offset",
+        "input not mutated",
+        "repeated invocation"
+      ],
+      "risks": [
+        "Header dimensions do not prove that the complete PNG is valid or safe to decode.",
+        "Unbounded dimensions should not be used for allocation without limits."
+      ]
+    },
+    {
+      "currentName": "localFragmentError/localFragmentErrors",
+      "proposedName": "validateLocalHtmlFragments",
+      "classification": "generalize-first",
+      "sourceFile": "scripts/validate-seo.js",
+      "sourceLines": "120-186",
+      "purpose": "Validate local HTML fragment links within a bounded output tree.",
+      "proposedSignature": "async function validateLocalHtmlFragments(documents: Iterable<HtmlDocument>): Promise<FragmentIssue[]>",
+      "runtime": "node-compatible",
+      "dependencies": [
+        "node:fs and node:path in the current implementation",
+        "a real HTML parser would be required"
+      ],
+      "sideEffects": ["Current implementation reads files synchronously."],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "none",
+        "function": null,
+        "notes": "No Mazey link or fragment validator exists."
+      },
+      "generalizationRequired": [
+        "Parse HTML instead of using regex attribute/id extraction.",
+        "Separate document loading from validation.",
+        "Return structured issues.",
+        "Define query, percent-decoding, symlink, case-sensitivity, and directory-index rules."
+      ],
+      "testCases": [
+        "same-document fragment",
+        "relative document fragment",
+        "directory index fragment",
+        "query before fragment",
+        "external and protocol-relative links ignored",
+        "empty and malformed encoding",
+        "missing document and missing ID",
+        "path escapes output root",
+        "Unicode IDs",
+        "Windows and POSIX paths",
+        "duplicate links",
+        "repeated invocation"
+      ],
+      "risks": [
+        "Filesystem containment is incomplete without explicit symlink policy.",
+        "HTML parser behavior must match deployment semantics."
+      ]
+    },
+    {
+      "currentName": "manifestMetadataFailures",
+      "proposedName": "validateWebAppManifestMetadata",
+      "classification": "generalize-first",
+      "sourceFile": "scripts/validate-pwa.js",
+      "sourceLines": "16-38",
+      "purpose": "Return structured validation issues for a documented subset of web app manifest metadata.",
+      "proposedSignature": "function validateWebAppManifestMetadata(value: unknown, options?: ManifestValidationOptions): ManifestIssue[]",
+      "runtime": "universal",
+      "dependencies": [],
+      "sideEffects": [],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "none",
+        "function": null,
+        "notes": "Mazey isSafePWAEnv only checks runtime prerequisites and does not validate manifest data."
+      },
+      "generalizationRequired": [
+        "Preserve safe unknown-input handling.",
+        "Define the standards subset and configurable required fields.",
+        "Return field/code/message issues instead of project prose.",
+        "Support valid CSS colors or explicitly document a six-digit-hex policy."
+      ],
+      "testCases": [
+        "valid minimal object",
+        "null, array, and primitive input",
+        "blank and Unicode names",
+        "supported and unsupported display values",
+        "color formats and malformed colors",
+        "input not mutated",
+        "multiple issues",
+        "repeated invocation"
+      ],
+      "risks": [
+        "A partial validator can imply standards compliance it does not provide.",
+        "The manifest specification evolves and requires maintenance."
+      ]
+    },
+    {
+      "currentName": "shouldRegisterSiteServiceWorker",
+      "proposedName": "extend-isSafePWAEnv",
+      "classification": "already-in-mazey",
+      "sourceFile": "site/pwa.ts",
+      "sourceLines": "62-80",
+      "purpose": "Determine whether the current context is eligible for service-worker registration under optional scope policy.",
+      "proposedSignature": "function isSafePWAEnv(options?: { requireManifest?: boolean; scope?: string }): boolean",
+      "runtime": "browser-preferred",
+      "dependencies": [],
+      "sideEffects": [],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "implemented-extension",
+        "function": "isSafePWAEnv",
+        "notes": "Mazey 5.1.0 now supports requireManifest and scope options; the local predicate retains project enablement and injected environment policy."
+      },
+      "generalizationRequired": [
+        "Keep project enabled flag in the caller.",
+        "Use secure-context semantics consistently rather than duplicating protocol/localhost rules.",
+        "Define normalized scope matching and encoded path behavior.",
+        "Preserve default isSafePWAEnv behavior for compatibility."
+      ],
+      "testCases": [
+        "browser and Node contexts",
+        "secure and insecure contexts",
+        "service worker absent",
+        "manifest required and optional",
+        "matching and nonmatching scopes",
+        "localhost IPv4 and IPv6",
+        "encoded path",
+        "no mutation",
+        "repeated invocation"
+      ],
+      "risks": [
+        "Changing current isSafePWAEnv defaults would be breaking.",
+        "Eligibility does not guarantee successful registration."
+      ]
+    },
+    {
+      "currentName": "resolveRequest",
+      "proposedName": "resolvePathWithinRoot",
+      "classification": "generalize-first",
+      "sourceFile": "scripts/preview-pages.js",
+      "sourceLines": "31-45",
+      "purpose": "Resolve a decoded relative path only when it remains inside an allowed root.",
+      "proposedSignature": "function resolvePathWithinRoot(root: string, value: string, options?: PathContainmentOptions): string | null",
+      "runtime": "node-only",
+      "dependencies": ["node:path", "node:fs in the current implementation"],
+      "sideEffects": [
+        "Current implementation performs existence and stat checks."
+      ],
+      "mutatesInput": false,
+      "mazeyComparison": {
+        "status": "none",
+        "function": null,
+        "notes": "Mazey has no Node filesystem containment helper."
+      },
+      "generalizationRequired": [
+        "Separate URL parsing, base-path policy, filesystem existence, and directory-index resolution.",
+        "Define realpath and symlink containment.",
+        "Reject encoded separators and null bytes consistently.",
+        "Cover Windows drive, UNC, and case-insensitive path behavior."
+      ],
+      "testCases": [
+        "root file and nested file",
+        "dot and dot-dot segments",
+        "prefix collision sibling",
+        "absolute path",
+        "empty value",
+        "percent-encoded traversal and separators",
+        "malformed percent encoding",
+        "null byte",
+        "symlink escape",
+        "Windows drive and UNC forms",
+        "repeated invocation"
+      ],
+      "risks": [
+        "Lexical path containment alone does not prevent symlink escape.",
+        "Platform-specific normalization can create security gaps."
+      ]
+    }
+  ]
+}

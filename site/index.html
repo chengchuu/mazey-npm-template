@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= ROOT_TITLE %></title>
+    <meta name="description" content="<%= ROOT_DESCRIPTION %>" />
+    <link rel="canonical" href="<%= SITE_URL %>" />
+    <link rel="sitemap" type="application/xml" href="<%= SITEMAP_URL %>" />
+    <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
+    <% if (MANIFEST_URL) { %>
+    <link rel="manifest" href="<%= MANIFEST_URL %>" />
+    <% } %>
+    <meta
+      name="theme-color"
+      content="<%= THEME_COLOR_PRIMARY %>"
+      data-theme-color
+      data-theme-color-light="<%= THEME_COLOR_LIGHT %>"
+      data-theme-color-dark="<%= THEME_COLOR_DARK %>"
+    />
+    <style>
+      :root {
+        --project-theme-primary: <%= THEME_COLOR_PRIMARY %>;
+        --project-theme-primary-hover: <%= THEME_PRIMARY_HOVER %>;
+        --project-theme-primary-active: <%= THEME_PRIMARY_ACTIVE %>;
+        --project-theme-primary-soft: <%= THEME_PRIMARY_SOFT %>;
+        --project-theme-primary-rgb: <%= THEME_PRIMARY_RGB %>;
+        --project-theme-primary-hover-rgb: <%= THEME_PRIMARY_HOVER_RGB %>;
+        --project-theme-primary-dark: <%= THEME_PRIMARY_DARK %>;
+        --project-theme-primary-dark-hover: <%= THEME_PRIMARY_DARK_HOVER %>;
+        --project-theme-primary-dark-active: <%= THEME_PRIMARY_DARK_ACTIVE %>;
+        --project-theme-primary-dark-soft: <%= THEME_PRIMARY_DARK_SOFT %>;
+        --project-theme-primary-dark-rgb: <%= THEME_PRIMARY_DARK_RGB %>;
+        --project-theme-primary-dark-hover-rgb: <%= THEME_PRIMARY_DARK_HOVER_RGB
+          %>;
+        --project-theme-light: <%= THEME_COLOR_LIGHT %>;
+        --project-theme-dark: <%= THEME_COLOR_DARK %>;
+      }
+    </style>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="<%= DISPLAY_NAME %>" />
+    <meta property="og:title" content="<%= ROOT_TITLE %>" />
+    <meta property="og:description" content="<%= ROOT_DESCRIPTION %>" />
+    <meta property="og:url" content="<%= SITE_URL %>" />
+    <meta property="og:image" content="<%= OPEN_GRAPH_IMAGE_URL %>" />
+    <meta property="og:image:type" content="<%= OPEN_GRAPH_IMAGE_TYPE %>" />
+    <meta property="og:image:width" content="<%= OPEN_GRAPH_IMAGE_WIDTH %>" />
+    <meta property="og:image:height" content="<%= OPEN_GRAPH_IMAGE_HEIGHT %>" />
+    <meta property="og:image:alt" content="<%= OPEN_GRAPH_IMAGE_ALT %>" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="<%= ROOT_TITLE %>" />
+    <meta name="twitter:description" content="<%= ROOT_DESCRIPTION %>" />
+    <meta name="twitter:image" content="<%= OPEN_GRAPH_IMAGE_URL %>" />
+    <meta name="twitter:image:alt" content="<%= OPEN_GRAPH_IMAGE_ALT %>" />
+    <script type="application/ld+json">
+      <%= ROOT_JSON_LD %>
+    </script>
+  </head>
+  <body id="top">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="site-header">
+      <nav
+        class="navbar navbar-expand-xl site-navbar"
+        aria-label="Primary navigation"
+        data-site-navbar
+      >
+        <div class="container">
+          <a class="navbar-brand d-flex align-items-center gap-2" href="./">
+            <img
+              class="brand-logo"
+              src="<%= LOGO_URL %>"
+              width="32"
+              height="32"
+              alt=""
+            />
+            <span><%= DISPLAY_NAME %></span>
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            aria-controls="primary-navigation"
+            aria-expanded="false"
+            aria-label="Toggle project navigation"
+            data-nav-toggle
+          >
+            <span class="navbar-toggler-icon" aria-hidden="true"></span>
+          </button>
+          <div id="primary-navigation" class="navbar-collapse" data-mobile-nav>
+            <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="./">Home</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="./playground/">Playground</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#install">Install</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="#usage">Usage</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="./api/">API</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= GITHUB_URL %>">GitHub</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= NPM_URL %>">npm</a>
+              </li>
+            </ul>
+            <label class="theme-control ms-xl-3">
+              <span>Theme</span>
+              <select
+                class="form-select form-select-sm w-auto"
+                data-theme-select
+                aria-label="Choose website theme"
+              >
+                <option value="system">System</option>
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container">
+          <img
+            class="hero-logo"
+            src="<%= LOGO_URL %>"
+            width="72"
+            height="72"
+            alt="<%= DISPLAY_NAME %> logo"
+          />
+          <h1 id="hero-title"><%= DISPLAY_NAME %></h1>
+          <p class="lead"><%= ROOT_DESCRIPTION %></p>
+          <div class="hero-actions" aria-label="Project actions">
+            <a class="btn btn-primary btn-lg" href="./playground/"
+              >Open playground</a
+            >
+            <a class="btn btn-outline-secondary btn-lg" href="./api/"
+              >View API documentation</a
+            >
+            <a class="btn btn-outline-secondary btn-lg" href="<%= GITHUB_URL %>"
+              >View on GitHub</a
+            >
+            <a class="btn btn-outline-secondary btn-lg" href="<%= NPM_URL %>"
+              >View npm package</a
+            >
+          </div>
+          <div class="install-command" aria-label="npm installation command">
+            <code><%= INSTALL_COMMAND %></code>
+            <button class="btn" type="button" data-copy-install>
+              Copy command
+            </button>
+          </div>
+          <p
+            class="copy-status"
+            role="status"
+            aria-live="polite"
+            data-copy-status
+          ></p>
+          <p
+            class="pwa-status"
+            role="status"
+            aria-live="polite"
+            data-pwa-status
+          ></p>
+        </div>
+      </section>
+
+      <section
+        id="features"
+        class="section-band"
+        aria-labelledby="features-title"
+      >
+        <div class="container">
+          <div class="section-heading">
+            <h2 id="features-title">A complete small-library workflow</h2>
+            <p>
+              The repository keeps package source, browser development, API
+              documentation, tests, and publishing responsibilities separate.
+            </p>
+          </div>
+          <div class="row g-3">
+            <article class="col-md-4">
+              <div class="card feature-card p-4">
+                <span class="feature-marker" aria-hidden="true">1</span>
+                <h3>Typed public API</h3>
+                <p class="mb-0 text-muted-custom">
+                  Root imports expose <code>createGreeting</code> and its
+                  TypeScript options type.
+                </p>
+              </div>
+            </article>
+            <article class="col-md-4">
+              <div class="card feature-card p-4">
+                <span class="feature-marker" aria-hidden="true">2</span>
+                <h3>Multiple package formats</h3>
+                <p class="mb-0 text-muted-custom">
+                  Rollup produces ESM, CommonJS, browser IIFE, declaration, and
+                  source-map files without runtime dependencies.
+                </p>
+              </div>
+            </article>
+            <article class="col-md-4">
+              <div class="card feature-card p-4">
+                <span class="feature-marker" aria-hidden="true">3</span>
+                <h3>Release-ready checks</h3>
+                <p class="mb-0 text-muted-custom">
+                  Jest, TypeScript, ESLint, Prettier, TypeDoc, package previews,
+                  and GitHub Actions are configured for maintainers.
+                </p>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="install"
+        class="section-band section-band--muted"
+        aria-labelledby="install-title"
+      >
+        <div class="container">
+          <div class="section-heading">
+            <h2 id="install-title">Install</h2>
+            <p>
+              Use the package through a module-aware project or load the browser
+              bundle directly from a CDN.
+            </p>
+          </div>
+          <div class="row g-4">
+            <article class="col-lg-6">
+              <h3 class="h5">npm</h3>
+              <p class="text-muted-custom">
+                TypeScript discovers the published declarations automatically;
+                no separate <code>@types</code> package is required.
+              </p>
+              <pre class="code-sample"><code><%= INSTALL_COMMAND %></code></pre>
+            </article>
+            <article class="col-lg-6">
+              <h3 class="h5">Browser CDN</h3>
+              <p class="text-muted-custom">
+                Load the IIFE bundle when a package manager or bundler is not
+                available. Pin an exact version for production use.
+              </p>
+              <pre
+                class="code-sample"
+              ><code>&lt;script src="https://cdn.jsdelivr.net/npm/<%= PACKAGE_NAME %>/lib/<%= BUNDLE_FILENAME %>"&gt;&lt;/script&gt;
+&lt;script&gt;
+  const message = <%= IIFE_GLOBAL %>.createGreeting("browser");
+&lt;/script&gt;</code></pre>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="usage" class="section-band" aria-labelledby="usage-title">
+        <div class="container">
+          <div class="row g-4 align-items-start">
+            <div class="col-lg-5">
+              <h2 id="usage-title">Usage</h2>
+              <p class="text-muted-custom">
+                Import from the package root. The sample API trims the provided
+                name, falls back to <code>friend</code> for blank input, and
+                accepts optional punctuation.
+              </p>
+              <a href="./api/">Read the complete typed API documentation</a>
+            </div>
+            <div class="col-lg-7">
+              <pre
+                class="code-sample"
+              ><code>import { createGreeting } from "<%= PACKAGE_NAME %>";
+
+createGreeting("Cheng");
+// "Hello, Cheng!"
+
+createGreeting("community", { punctuation: "." });
+// "Hello, community."</code></pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        class="section-band section-band--muted"
+        aria-labelledby="playground-title"
+      >
+        <div class="container">
+          <div class="row g-4 align-items-center">
+            <div class="col-lg-7">
+              <h2 id="playground-title">Try the public API</h2>
+              <p class="text-muted-custom">
+                The live playground runs <code>createGreeting</code> in your
+                browser, lets you adjust its supported options, and displays the
+                generated result immediately.
+              </p>
+            </div>
+            <div class="col-lg-5 text-lg-end">
+              <a class="btn btn-primary btn-lg" href="./playground/"
+                >Open the live playground</a
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-band" aria-labelledby="formats-title">
+        <div class="container">
+          <div class="section-heading">
+            <h2 id="formats-title">Published outputs</h2>
+            <p>
+              Package metadata directs consumers to the appropriate generated
+              file while preserving a browser bundle for direct script usage.
+            </p>
+          </div>
+          <dl class="row format-list mb-0">
+            <dt class="col-sm-3">ES modules</dt>
+            <dd class="col-sm-9"><code>lib/index.esm.js</code></dd>
+            <dt class="col-sm-3">CommonJS</dt>
+            <dd class="col-sm-9"><code>lib/index.cjs</code></dd>
+            <dt class="col-sm-3">Browser IIFE</dt>
+            <dd class="col-sm-9"><code>lib/<%= BUNDLE_FILENAME %></code></dd>
+            <dt class="col-sm-3">Type declarations</dt>
+            <dd class="col-sm-9"><code>lib/index.d.ts</code></dd>
+          </dl>
+        </div>
+      </section>
+
+      <section
+        id="website-app-help"
+        class="section-band section-band--muted"
+        aria-labelledby="website-app-help-title"
+        data-pwa-install-help
+      >
+        <div class="container">
+          <div class="section-heading mb-0">
+            <h2 id="website-app-help-title">Website app help</h2>
+            <p>
+              Supported Chrome and Edge browsers may expose an install icon or
+              the Install app action below. Other browsers may require their own
+              menus; availability depends on the browser and platform.
+            </p>
+            <p>
+              On iPhone and iPad, Safari users can use Share, then Add to Home
+              Screen. This does not provide exactly the same capabilities as a
+              Chrome installation. Installing the website also does not grant
+              native Fullscreen API support.
+            </p>
+            <div class="mt-3 mb-3" data-pwa-install-container hidden>
+              <button
+                class="btn btn-outline-secondary btn-lg"
+                type="button"
+                data-pwa-install
+                hidden
+              >
+                Install app
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside
+      class="pwa-update-notice"
+      aria-label="Website update"
+      data-pwa-update
+      hidden
+    >
+      <span
+        >A new version of the <%= DISPLAY_NAME %> website is available.</span
+      >
+      <button class="btn btn-primary btn-sm" type="button" data-pwa-update-now>
+        Update now
+      </button>
+    </aside>
+
+    <footer class="site-footer">
+      <div class="container d-lg-flex justify-content-between gap-4">
+        <p class="mb-3 mb-lg-0">
+          <strong><%= DISPLAY_NAME %></strong><br />MIT-licensed TypeScript npm
+          library template.
+        </p>
+        <nav aria-label="Footer navigation">
+          <ul class="list-inline d-flex flex-wrap gap-3">
+            <li><a href="./playground/">Playground</a></li>
+            <li><a href="./api/">API documentation</a></li>
+            <li><a href="<%= GITHUB_URL %>">GitHub repository</a></li>
+            <li><a href="<%= NPM_URL %>">npm package</a></li>
+            <li><a href="./sitemap.xml">XML sitemap</a></li>
+            <li><a href="<%= LICENSE_URL %>">MIT License</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

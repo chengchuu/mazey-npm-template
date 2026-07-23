@@ -3,6 +3,8 @@ node_modules/
 
 # Build outputs
 dist/
+dist-dev/
+docs/
 lib/
 coverage/
 
@@ -38,3 +40,5 @@ selenium-debug.log*
 
 # Package lock files
 package-lock.json
+pnpm-lock.yaml
+pnpm-workspace.yaml

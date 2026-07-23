@@ -9,6 +9,7 @@ const { colorPrimary, colorLight, colorDark, storageKey } =
   projectConfig.site.theme;
 
 afterEach(() => {
+  jest.restoreAllMocks();
   localStorage.clear();
   history.replaceState({}, "", "/");
 });
@@ -152,16 +153,20 @@ test("unavailable storage does not prevent session-only theme selection", () => 
     addEventListener: (_name, listener) => mediaListeners.push(listener),
     removeEventListener: jest.fn(),
   };
-  const windowRef = {
-    get localStorage() {
-      throw new DOMException("Storage unavailable", "SecurityError");
-    },
-    matchMedia: () => media,
-  };
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: () => media,
+  });
+  jest.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
+    throw new DOMException("Storage unavailable", "SecurityError");
+  });
+  jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+    throw new DOMException("Storage unavailable", "SecurityError");
+  });
 
   let cleanup;
   expect(() => {
-    cleanup = initializeThemeControls(storageKey, document, windowRef);
+    cleanup = initializeThemeControls(storageKey);
   }).not.toThrow();
   expect(document.documentElement.dataset.bsTheme).toBe("dark");
   const select = document.querySelector("[data-theme-select]");
@@ -212,11 +217,11 @@ test("theme changes support legacy MediaQueryList listeners", () => {
     addListener: jest.fn(),
     removeListener: jest.fn(),
   };
-  const windowRef = {
-    localStorage,
-    matchMedia: () => media,
-  };
-  const cleanup = initializeThemeControls(storageKey, document, windowRef);
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: () => media,
+  });
+  const cleanup = initializeThemeControls(storageKey);
 
   expect(media.addListener).toHaveBeenCalledTimes(1);
   cleanup();

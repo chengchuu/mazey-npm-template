@@ -1,6 +1,6 @@
 {
   "name": "mazey-npm-template",
-  "version": "2.1.6",
+  "version": "2.1.7",
   "type": "module",
   "description": "A TypeScript template for publishing npm packages in CJS, ESM, and browser formats.",
   "main": "./lib/index.cjs",
@@ -86,7 +86,7 @@
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
     "lint-staged": "^17.0.8",
-    "mazey": "^5.3.1",
+    "mazey": "^5.4.0",
     "mini-css-extract-plugin": "^2.10.2",
     "prettier": "^3.9.5",
     "rollup": "^4.62.2",

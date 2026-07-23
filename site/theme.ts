@@ -1,5 +1,5 @@
 import { resolveThemePreference, setThemePreference } from "mazey";
-import type { ThemePreference, ThemePreferenceResult } from "mazey";
+import type { ResolvedTheme, ThemePreference } from "mazey";
 
 export type { ThemePreference } from "mazey";
 
@@ -18,35 +18,25 @@ function listenForMediaChanges(
   return () => media.removeListener(listener);
 }
 
-export function initializeThemeControls(
-  storageKey: string,
-  documentRef: Document = document,
-  windowRef: Window = window,
-): () => void {
-  const root = documentRef.documentElement;
+export function initializeThemeControls(storageKey: string): () => void {
+  const root = document.documentElement;
   if (root.dataset.themeControlsReady === "true") return () => undefined;
 
-  const storage = {
-    getItem: (key: string) => windowRef.localStorage.getItem(key),
-    setItem: (key: string, value: string) =>
-      windowRef.localStorage.setItem(key, value),
-  };
   let media: MediaQueryList | null = null;
   try {
-    media = windowRef.matchMedia(systemThemeQuery);
+    media = window.matchMedia(systemThemeQuery);
   } catch {
-    // Mazey resolves to the configured fallback when this adapter throws.
+    // Mazey resolves to its light fallback when system detection fails.
   }
-  const matchMedia = () => {
-    if (!media) throw new Error("System theme detection is unavailable.");
-    return media;
-  };
 
-  const apply = ({ preference, resolvedTheme }: ThemePreferenceResult) => {
+  const resolveSelectedTheme = (preference: ThemePreference): ResolvedTheme =>
+    preference === "system" ? (media?.matches ? "dark" : "light") : preference;
+
+  const apply = (preference: ThemePreference, resolvedTheme: ResolvedTheme) => {
     root.dataset.bsTheme = resolvedTheme;
     root.dataset.theme = resolvedTheme;
     root.style.colorScheme = resolvedTheme;
-    const themeColor = documentRef.querySelector<HTMLMetaElement>(
+    const themeColor = document.querySelector<HTMLMetaElement>(
       'meta[name="theme-color"][data-theme-color]',
     );
     if (themeColor) {
@@ -57,36 +47,24 @@ export function initializeThemeControls(
     }
 
     try {
-      storage.setItem("tsd-theme", preference === "system" ? "os" : preference);
+      window.localStorage.setItem(
+        "tsd-theme",
+        preference === "system" ? "os" : preference,
+      );
     } catch {
       // TypeDoc synchronization is optional when storage is unavailable.
     }
 
-    documentRef
+    document
       .querySelectorAll<HTMLSelectElement>("[data-theme-select]")
       .forEach((control) => {
         if (control.value !== preference) control.value = preference;
       });
   };
 
-  const initialTheme = resolveThemePreference({
-    storageKey,
-    url: documentRef.URL,
-    storage,
-    matchMedia,
-    fallback: "light",
-  });
-  let selectedPreference = initialTheme.preference;
-  const sessionUrl = new URL(documentRef.URL);
-  sessionUrl.searchParams.delete("theme");
-  const resolveSelectedTheme = () =>
-    resolveThemePreference({
-      storageKey,
-      url: sessionUrl,
-      storage: { getItem: () => selectedPreference },
-      matchMedia,
-      fallback: "light",
-    });
+  const initialTheme = resolveThemePreference(storageKey);
+  let selectedPreference: ThemePreference =
+    initialTheme.label === "System" ? "system" : initialTheme.value;
 
   const handleChange = (event: Event) => {
     const control = event.target;
@@ -94,26 +72,28 @@ export function initializeThemeControls(
     if (!control.matches("[data-theme-select]")) return;
     const preference = control.value as ThemePreference;
     try {
-      setThemePreference({ storageKey, preference, storage });
+      setThemePreference(storageKey, preference);
     } catch (error) {
       if (!(error instanceof TypeError)) throw error;
-      apply(resolveSelectedTheme());
+      apply(selectedPreference, resolveSelectedTheme(selectedPreference));
       return;
     }
     selectedPreference = preference;
-    apply(resolveSelectedTheme());
+    apply(preference, resolveSelectedTheme(preference));
   };
   const handleSystemTheme = () => {
-    if (selectedPreference === "system") apply(resolveSelectedTheme());
+    if (selectedPreference === "system") {
+      apply("system", resolveSelectedTheme("system"));
+    }
   };
 
   root.dataset.themeControlsReady = "true";
-  apply(initialTheme);
-  documentRef.addEventListener("change", handleChange);
+  apply(selectedPreference, initialTheme.value);
+  document.addEventListener("change", handleChange);
   const removeMediaListener = listenForMediaChanges(media, handleSystemTheme);
 
   return () => {
-    documentRef.removeEventListener("change", handleChange);
+    document.removeEventListener("change", handleChange);
     removeMediaListener();
     delete root.dataset.themeControlsReady;
   };

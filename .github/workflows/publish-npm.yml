@@ -15,7 +15,6 @@ on:
   # Publish
   push:
     branches:
-      - main
       - "release/v*"
   workflow_dispatch:
 

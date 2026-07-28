@@ -50,7 +50,7 @@ This audit compares the optimized `mazey` project with `mazey-npm-template` and 
 
 Added:
 
-- `TEMPLATE_BACKPORT_AUDIT.md`
+- `guides/TEMPLATE_BACKPORT_AUDIT.md`
 
 Moved:
 

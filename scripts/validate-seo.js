@@ -265,8 +265,13 @@ function validatePage({
   }
   for (const fragmentError of localFragmentErrors(file, html))
     fail(`${label}: ${fragmentError}`);
-  if (!attribute(html, "link", "href", expectedCss))
-    fail(`${label}: missing generated stylesheet ${expectedCss}`);
+  const expectedStylesheets = Array.isArray(expectedCss)
+    ? expectedCss
+    : [expectedCss];
+  for (const stylesheet of expectedStylesheets) {
+    if (!attribute(html, "link", "href", stylesheet))
+      fail(`${label}: missing generated stylesheet ${stylesheet}`);
+  }
   for (const script of expectedScripts) {
     if (!attribute(html, "script", "src", script))
       fail(`${label}: missing generated script ${script}`);
@@ -363,6 +368,7 @@ function validateStaticFiles() {
     "assets/shared.js",
     "assets/home.js",
     "assets/playground.js",
+    "assets/playground.css",
     "assets/api.css",
     "assets/api.js",
     `images/${projectConfig.assets.faviconFile}`,
@@ -469,7 +475,10 @@ function validateSite() {
       ],
       expectedTitle: sitePages.playground.title,
       expectedDescription: sitePages.playground.description,
-      expectedCss: `${projectConfig.site.basePath}assets/shared.css`,
+      expectedCss: [
+        `${projectConfig.site.basePath}assets/shared.css`,
+        `${projectConfig.site.basePath}assets/playground.css`,
+      ],
       expectedScripts: [
         `${projectConfig.site.basePath}assets/shared.js`,
         `${projectConfig.site.basePath}assets/playground.js`,

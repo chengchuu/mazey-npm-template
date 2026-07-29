@@ -60,6 +60,7 @@ const templateParameters = {
 };
 const runtimeConfig = {
   installCommand: projectConfig.package.installCommand,
+  packageName: projectConfig.package.name,
   themeStorageKey: projectConfig.site.theme.storageKey,
   pwa: {
     appName: projectConfig.brand.displayName,
@@ -78,7 +79,7 @@ export default {
       dependOn: "shared",
     },
     playground: {
-      import: _resolve("../examples/index.ts"),
+      import: _resolve("../examples/index.tsx"),
       dependOn: "shared",
     },
     api: _resolve("../site/api.ts"),

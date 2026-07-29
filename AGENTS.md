@@ -14,7 +14,8 @@ Keep the package generic, browser-friendly, and easy to rename.
 - `src/typing.d.ts`: public TypeScript interfaces and type aliases.
 - `types/global.d.ts`: ambient browser type augmentations.
 - `test`: Jest tests for public behavior.
-- `examples`: source-controlled playground HTML and TypeScript that exercise the package root API.
+- `examples`: React 19 playground components, entrypoint, HTML shell, and scoped styles that exercise
+  the framework-independent package root API.
 - `project.config.js`: central package-derived repository, site, theme, SEO, browser bundle, and PWA
   configuration used by build tooling.
 - `scripts/project-config-utils.js`: pure package identity and GitHub repository normalization
@@ -123,10 +124,12 @@ Rollup may use the pure package helper, but it must not import `project.config.j
 website/PWA metadata to build the npm package.
 
 Webpack owns the public landing page, local development server, and interactive playground.
-`npm run dev` serves the website on port 8080 and the playground at `/playground/`. Keep
-`examples/index.ts` small and representative of the public root API. Bootstrap is a build-time
-development dependency and must not become a published runtime dependency. Do not couple the npm
-package build to Webpack or make development depend on prebuilt `lib` files without a clear reason.
+`npm run dev` serves the website on port 8080 and the React 19 playground at `/playground/`. Keep
+`examples/index.tsx` limited to application bootstrap, keep reusable components under
+`examples/components`, and import the representative public API through `../src`. Bootstrap and
+React are build-time development dependencies and must not become published runtime dependencies.
+Do not couple the npm package build to Webpack or make development depend on prebuilt `lib` files
+without a clear reason.
 
 Webpack has two intentional URL modes:
 
@@ -189,6 +192,8 @@ manifest, not only whether Rollup exits successfully.
 
 Website and Pages changes are covered by dedicated suites:
 
+- `test/playground.test.tsx`: controlled React form behavior, errors, announcements, and shared
+  theme/PWA integration.
 - `test/seo.test.js`: API HTML transformation, canonical metadata, favicon paths, headings, and
   repeatable Pages assembly.
 - `test/theme.test.js`: system/light/dark preference and dynamic browser theme-color behavior.

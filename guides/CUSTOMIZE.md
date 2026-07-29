@@ -81,9 +81,10 @@ Replace the greeting example with the new library's real public API:
   declarations are unnecessary, remove `globalDtsConf` and the `indexDtsConf` reference banner from
   `scripts/rollup.config.mjs` together; do not edit generated declarations in `lib`.
 - Replace tests in `test/example.test.js` and add focused tests for the new behavior.
-- Update `examples/index.ts` so the playground imports the package root API through `../src`.
-- Replace API names, descriptions, and code samples in `README.md`, `site/index.html`, and
-  `examples/index.html`.
+- Update the React components under `examples/` so the playground imports the package root API
+  through `../src` without duplicating library behavior.
+- Replace API names, descriptions, and code samples in `README.md`, `site/index.html`,
+  `examples/index.html`, and the relevant files under `examples/components/`.
 
 Keep `src/index.ts` as the clear public entrypoint. Consumers should not need to import private
 source paths.
@@ -113,7 +114,10 @@ Replace the template-facing content in these source files:
 - `AGENTS.md`: package contract, output names, URLs, commands, and project-specific agent guidance.
 - `site/index.html`: navigation, headings, install snippets, API examples, package formats, and
   footer.
-- `examples/index.html`: playground title, descriptions, labels, fallback content, and footer.
+- `examples/index.html`: playground metadata, crawlable shell content, navigation, fallback content,
+  and footer.
+- `examples/App.tsx` and `examples/components/`: controlled playground behavior, form labels,
+  results, and errors.
 - `site/index.ts` and `site/pwa.ts`: page behavior or generic user-facing messages when the new
   project needs different interactions. Package identity and the install command are injected.
 
@@ -129,8 +133,9 @@ The public website is a GitHub Pages project site. Update all of these together:
 - `package.json#homepage` supplies the production site URL and its Pages base path.
 - `project.config.js` supplies branding, page metadata, theme colors, icon filenames, manifest
   settings, and all derived website/PWA URLs.
-- `site/index.html` and `examples/index.html` contain page-specific prose and API examples; identity,
-  install commands, bundle names, theme values, and update messages are injected automatically.
+- `site/index.html`, `examples/index.html`, and the React components under `examples/` contain
+  page-specific prose and API examples; identity, install commands, bundle names, theme values, and
+  update messages are injected automatically.
 - `site/service-worker.js` contains caching policy and build tokens. The Pages build replaces its
   project base, cache prefix, and cache version from central configuration.
 - `scripts/build-pages.js` generates `manifest.webmanifest`, `robots.txt`, and `sitemap.xml`, then

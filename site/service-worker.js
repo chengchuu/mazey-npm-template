@@ -15,6 +15,7 @@ const APP_SHELL = [
     `${PROJECT_BASE}assets/shared.js`,
     `${PROJECT_BASE}assets/home.js`,
     `${PROJECT_BASE}assets/playground.js`,
+    `${PROJECT_BASE}assets/playground.css`,
     `${PROJECT_BASE}assets/api.css`,
     `${PROJECT_BASE}assets/api.js`,
     ...API_APP_SHELL,

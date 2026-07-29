@@ -122,8 +122,9 @@ npm install
 npm run dev
 ```
 
-The project website is served at <http://localhost:8080/>. The playground is available at
-<http://localhost:8080/playground/> and imports the public API directly from `src`.
+The project website is served at <http://localhost:8080/>. The React 19 playground is available at
+<http://localhost:8080/playground/> and imports the public API directly from `src`. React is used
+only for the website example; the published package API remains framework-independent.
 
 Package metadata remains in `package.json`. A package-safe helper derives bundle names without
 loading website settings, while shared repository, website, theme, SEO, and PWA settings flow through

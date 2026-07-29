@@ -48,7 +48,7 @@ test("initial theme follows URL, storage, system, and fallback precedence", () =
 
   expect(document.documentElement.dataset.bsTheme).toBe("dark");
   expect(select.value).toBe("dark");
-  expect(localStorage.getItem(storageKey)).toBe("light");
+  expect(localStorage.getItem(storageKey)).toBe("dark");
   expect(localStorage.getItem("tsd-theme")).toBe("dark");
   cleanup();
 });

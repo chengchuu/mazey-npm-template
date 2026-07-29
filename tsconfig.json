@@ -10,6 +10,7 @@
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
     "types": [],
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -18,6 +19,7 @@
   "include": [
     "./src/**/*.ts",
     "./examples/**/*.ts",
+    "./examples/**/*.tsx",
     "./site/**/*.ts",
     "./types/**/*.ts"
   ],

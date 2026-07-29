@@ -114,6 +114,9 @@ test("app-shell installation precaches TypeDoc dependencies", async () => {
   await installation;
 
   const fetchedUrls = fetch.mock.calls.map(([url]) => url);
+  expect(fetchedUrls).toContain(
+    `${projectConfig.site.basePath}assets/playground.css`,
+  );
   for (const asset of apiAssets) {
     expect(fetchedUrls).toContain(asset);
     expect(runtimeCache.put).toHaveBeenCalledWith(

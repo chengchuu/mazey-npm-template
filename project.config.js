@@ -18,9 +18,9 @@ siteUrl.hash = "";
 const displayName = pkg.name;
 const githubUrl = repository.url;
 const npmUrl = `https://www.npmjs.com/package/${pkg.name}`;
-const faviconFile = "logo-purple-circle-transparent-32x32.png";
-const logoFile = "logo-purple-circle-transparent-192x192.png";
-const openGraphImageFile = "logo-purple-circle-open-graph-1200x630.png";
+const faviconFile = "logo-32x32.png";
+const logoFile = "logo-192x192.png";
+const openGraphImageFile = "logo-open-graph-1200x630.png";
 const primaryPalette = {
   light: {
     base: "#5b3fd6",
@@ -66,19 +66,19 @@ const pages = {
 };
 const pwaIcons = [
   {
-    file: "logo-purple-circle-transparent-192x192.png",
+    file: "logo-192x192.png",
     sizes: "192x192",
     type: "image/png",
     purpose: "any",
   },
   {
-    file: "logo-purple-circle-transparent-512x512.png",
+    file: "logo-512x512.png",
     sizes: "512x512",
     type: "image/png",
     purpose: "any",
   },
   {
-    file: "logo-purple-circle-transparent-maskable-512x512.png",
+    file: "logo-maskable-512x512.png",
     sizes: "512x512",
     type: "image/png",
     purpose: "maskable",

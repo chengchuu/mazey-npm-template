@@ -20,8 +20,12 @@ test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.package.installCommand).toBe(`npm install ${pkg.name}`);
   expect(projectConfig.site.url).toBe(new URL(pkg.homepage).href);
   expect(projectConfig.site.basePath).toBe(new URL(pkg.homepage).pathname);
+  expect(projectConfig.assets).toMatchObject({
+    faviconFile: "logo-32x32.png",
+    logoFile: "logo-192x192.png",
+  });
   expect(projectConfig.seo.openGraphImage).toMatchObject({
-    file: "logo-purple-circle-open-graph-1200x630.png",
+    file: "logo-open-graph-1200x630.png",
     width: 1200,
     height: 630,
     type: "image/png",
@@ -33,6 +37,11 @@ test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.pwa.serviceWorkerUrl).toBe(
     `${projectConfig.site.basePath}service-worker.js`,
   );
+  expect(projectConfig.pwa.icons.map(({ file }) => file)).toEqual([
+    "logo-192x192.png",
+    "logo-512x512.png",
+    "logo-maskable-512x512.png",
+  ]);
   expect(pkg.unpkg).toBe(`lib/${projectConfig.package.bundleBaseName}.min.js`);
   expect(pkg.jsdelivr).toBe(pkg.unpkg);
 });

@@ -23,20 +23,22 @@ const logoFile = "logo-192x192.png";
 const openGraphImageFile = "logo-open-graph-1200x630.png";
 const primaryPalette = {
   light: {
-    base: "#5b3fd6",
-    hover: "#4229b5",
-    active: "#362097",
-    soft: "#ece8ff",
-    rgb: "91, 63, 214",
-    hoverRgb: "66, 41, 181",
+    base: "#4d8ffb",
+    hover: "#256fd8",
+    active: "#185aaa",
+    soft: "#eaf2ff",
+    rgb: "77, 143, 251",
+    hoverRgb: "37, 111, 216",
+    activeRgb: "24, 90, 170",
   },
   dark: {
-    base: "#a997ff",
-    hover: "#c3b7ff",
-    active: "#d9d2ff",
-    soft: "#29234c",
-    rgb: "169, 151, 255",
-    hoverRgb: "195, 183, 255",
+    base: "#5089e8",
+    hover: "#6198ee",
+    active: "#74a5f3",
+    soft: "#1b3155",
+    rgb: "80, 137, 232",
+    hoverRgb: "97, 152, 238",
+    activeRgb: "116, 165, 243",
   },
 };
 const theme = {

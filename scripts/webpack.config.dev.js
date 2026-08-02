@@ -47,8 +47,11 @@ const templateParameters = {
   THEME_COLOR_LIGHT: projectConfig.site.theme.colorLight,
   THEME_COLOR_PRIMARY: projectConfig.site.theme.colorPrimary,
   THEME_PRIMARY_ACTIVE: projectConfig.site.theme.primary.light.active,
+  THEME_PRIMARY_ACTIVE_RGB: projectConfig.site.theme.primary.light.activeRgb,
   THEME_PRIMARY_DARK: projectConfig.site.theme.primary.dark.base,
   THEME_PRIMARY_DARK_ACTIVE: projectConfig.site.theme.primary.dark.active,
+  THEME_PRIMARY_DARK_ACTIVE_RGB:
+    projectConfig.site.theme.primary.dark.activeRgb,
   THEME_PRIMARY_DARK_HOVER: projectConfig.site.theme.primary.dark.hover,
   THEME_PRIMARY_DARK_HOVER_RGB: projectConfig.site.theme.primary.dark.hoverRgb,
   THEME_PRIMARY_DARK_RGB: projectConfig.site.theme.primary.dark.rgb,

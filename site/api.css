@@ -4,7 +4,7 @@
   --light-color-background-active: var(--project-theme-primary-soft);
   --light-color-text: #152033;
   --light-color-text-aside: #536078;
-  --light-color-link: var(--project-theme-primary);
+  --light-color-link: var(--project-theme-primary-hover);
   --light-color-focus-outline: #dc7217;
 }
 

@@ -6,8 +6,7 @@ Guidance for automated coding agents working in `mazey-npm-template`.
 
 This directory is the primary npm package. Improve maintainability, package quality, developer experience.
 
-Keep the package generic, browser-friendly, and easy to rename. Preserve the package identity
-`mazey-npm-template` unless the user explicitly requests a rename.
+Keep the package generic, browser-friendly, and easy to rename.
 
 ## Project Shape
 
@@ -15,7 +14,8 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `src/typing.d.ts`: public TypeScript interfaces and type aliases.
 - `types/global.d.ts`: ambient browser type augmentations.
 - `test`: Jest tests for public behavior.
-- `examples`: source-controlled playground HTML and TypeScript that exercise the package root API.
+- `examples`: React 19 playground components, entrypoint, HTML shell, and scoped styles that exercise
+  the framework-independent package root API.
 - `project.config.js`: central package-derived repository, site, theme, SEO, browser bundle, and PWA
   configuration used by build tooling.
 - `scripts/project-config-utils.js`: pure package identity and GitHub repository normalization
@@ -37,7 +37,7 @@ Keep the package generic, browser-friendly, and easy to rename. Preserve the pac
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
-- `CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
+- `guides/CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
   identity before using the template for another library.
 - `lib`: generated publish output; do not edit it by hand.
 - `dist-dev`, `docs`, and `coverage`: generated development, documentation, and test output.
@@ -50,7 +50,7 @@ paths.
 
 The published package currently provides:
 
-- CommonJS: `lib/index.cjs.js`
+- CommonJS: `lib/index.cjs`
 - ES modules: `lib/index.esm.js`
 - Browser IIFE: `lib/mazey-npm-template.min.js`
 - Root declarations: `lib/index.d.ts`
@@ -99,10 +99,14 @@ up the global augmentations. Do not publish an unreferenced ambient declaration 
 
 ## Module And Build Rules
 
-`package.json` does not declare `"type": "module"`.
+`package.json` declares `"type": "module"` while conditional package exports preserve both ESM and
+CommonJS consumer entry points.
 
-- Keep ordinary `.js` scripts in CommonJS syntax.
-- Use `.mjs` for ESM configuration, as Rollup does.
+- Keep ordinary `.js` scripts in ESM syntax and include file extensions in relative Node.js imports.
+- Existing `.mjs` configuration files remain ESM; use `.cjs` only for an intentional CommonJS
+  compatibility boundary.
+- Keep the generated CommonJS package entry at `lib/index.cjs`; a `.js` CommonJS bundle would be
+  interpreted as ESM inside this package.
 - Prefer `node:` specifiers for Node built-ins when touching scripts.
 - Do not introduce module-load browser side effects that fail in Node-based tests or bundlers.
 
@@ -120,10 +124,12 @@ Rollup may use the pure package helper, but it must not import `project.config.j
 website/PWA metadata to build the npm package.
 
 Webpack owns the public landing page, local development server, and interactive playground.
-`npm run dev` serves the website on port 8080 and the playground at `/playground/`. Keep
-`examples/index.ts` small and representative of the public root API. Bootstrap is a build-time
-development dependency and must not become a published runtime dependency. Do not couple the npm
-package build to Webpack or make development depend on prebuilt `lib` files without a clear reason.
+`npm run dev` serves the website on port 8080 and the React 19 playground at `/playground/`. Keep
+`examples/index.tsx` limited to application bootstrap, keep reusable components under
+`examples/components`, and import the representative public API through `../src`. Bootstrap and
+React are build-time development dependencies and must not become published runtime dependencies.
+Do not couple the npm package build to Webpack or make development depend on prebuilt `lib` files
+without a clear reason.
 
 Webpack has two intentional URL modes:
 
@@ -186,6 +192,8 @@ manifest, not only whether Rollup exits successfully.
 
 Website and Pages changes are covered by dedicated suites:
 
+- `test/playground.test.tsx`: controlled React form behavior, errors, announcements, and shared
+  theme/PWA integration.
 - `test/seo.test.js`: API HTML transformation, canonical metadata, favicon paths, headings, and
   repeatable Pages assembly.
 - `test/theme.test.js`: system/light/dark preference and dynamic browser theme-color behavior.
@@ -210,7 +218,7 @@ Update `README.md` when changing:
 - Node.js or TypeScript requirements;
 - release or documentation workflows visible to maintainers.
 
-Update `CUSTOMIZE.md` when identity-bearing files, generated outputs, Pages/PWA paths, or release
+Update `guides/CUSTOMIZE.md` when identity-bearing files, generated outputs, Pages/PWA paths, or release
 steps change. Keep it explicit that the npm package name, repository name, Pages base path, browser
 bundle filename, and IIFE global can be different values.
 
@@ -232,18 +240,17 @@ under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap
 `data-bs-theme` attribute. `site/theme.ts` also keeps the browser's theme-color metadata and
 TypeDoc's `tsd-theme` preference synchronized.
 
-Canonical URLs, Open Graph URLs, structured data, crawler files, and external links use absolute
-production URLs. Local assets and internal navigation use document-relative URLs generated for each
-page depth. Manifest resources are manifest-relative, service-worker registration derives the site
-root from the manifest link, and Webpack uses automatic public-path resolution for emitted chunks.
-Validators must prove the canonical Pages prefix plus alternate and nested deployment prefixes.
+Canonical URLs, Open Graph URLs, and structured data should use the production site URL. Assets
+that the browser must load from the current deployment, including the favicon, manifest, worker,
+and PWA icons, must use the project-root `/mazey-npm-template/` base path instead of a hard-coded
+`https://chengchuu.github.io` origin. This keeps both GitHub Pages and
+`http://127.0.0.1:4173/mazey-npm-template/` working. Webpack may override image URLs with its current
+`pagesBase` for ordinary port-8080 development.
 
 PWA source behavior lives under `site`: `service-worker.js` and browser-only registration/install
-logic. `scripts/build-pages.js` generates the manifest, injects worker cache configuration, versions
-the cache, and emits both at the artifact root. Keep manifest `start_url` and `scope` relative to the
-manifest, omit an explicit `id`, and derive worker registration from the manifest URL. At the
-production deployment these resolve to `/mazey-npm-template/`; another prefix creates a distinct app
-identity and cache namespace.
+logic. `scripts/build-pages.js` generates the manifest, injects worker configuration, versions the
+cache, and emits both at the project root. Keep the PWA identity, start URL, worker registration, and
+scope at `/mazey-npm-template/`.
 Normal `npm run dev` must not register the production worker; use `npm run pwa:preview` for local
 production-like testing. Never move PWA registration into `src` or package output.
 
@@ -312,11 +319,11 @@ PWA output, uploads `docs`, and deploys through the `github-pages` environment.
 - require a new-name argument;
 - update only the `name` field in `package.json`;
 - preserve two-space JSON formatting and the trailing newline;
-- remain CommonJS-compatible.
+- remain ESM-compatible.
 
 Do not copy package-specific source code, repository URLs, or API names into this project during a
 rename. A broader rename requires checking `package.json`, Rollup output naming, source metadata,
-README links, workflows, and tests together. Follow `CUSTOMIZE.md`; most identity and deployment
+README links, workflows, and tests together. Follow `guides/CUSTOMIZE.md`; most identity and deployment
 values should flow from `package.json` and `project.config.js` rather than manual replacements.
 
 ## Change Discipline

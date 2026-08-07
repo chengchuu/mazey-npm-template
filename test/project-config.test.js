@@ -1,12 +1,18 @@
 /** @jest-environment node */
 
-const pkg = require("../package.json");
-const projectConfig = require("../project.config");
-const { createManifest } = require("../scripts/build-pages");
-const {
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { deepFreeze } from "mazey";
+import pkg from "../package.json" with { type: "json" };
+import projectConfig from "../project.config.js";
+import { createManifest } from "../scripts/build-pages.js";
+import {
   packageDetails,
   repositoryDetails,
-} = require("../scripts/project-config-utils");
+} from "../scripts/project-config-utils.js";
+import webpackConfig from "../scripts/webpack.config.dev.js";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.package.name).toBe(pkg.name);
@@ -14,7 +20,28 @@ test("project configuration derives package and deployment identity", () => {
   expect(projectConfig.package.installCommand).toBe(`npm install ${pkg.name}`);
   expect(projectConfig.site.url).toBe(new URL(pkg.homepage).href);
   expect(projectConfig.site.basePath).toBe(new URL(pkg.homepage).pathname);
-  expect(projectConfig.pwa.serviceWorkerFile).toBe("service-worker.js");
+  expect(projectConfig.assets).toMatchObject({
+    faviconFile: "logo-32x32.png",
+    logoFile: "logo-192x192.png",
+  });
+  expect(projectConfig.seo.openGraphImage).toMatchObject({
+    file: "logo-open-graph-1200x630.png",
+    width: 1200,
+    height: 630,
+    type: "image/png",
+  });
+  expect(projectConfig.seo.openGraphImage.url).toBe(
+    new URL(`images/${projectConfig.seo.openGraphImage.file}`, pkg.homepage)
+      .href,
+  );
+  expect(projectConfig.pwa.serviceWorkerUrl).toBe(
+    `${projectConfig.site.basePath}service-worker.js`,
+  );
+  expect(projectConfig.pwa.icons.map(({ file }) => file)).toEqual([
+    "logo-192x192.png",
+    "logo-512x512.png",
+    "logo-maskable-512x512.png",
+  ]);
   expect(pkg.unpkg).toBe(`lib/${projectConfig.package.bundleBaseName}.min.js`);
   expect(pkg.jsdelivr).toBe(pkg.unpkg);
 });
@@ -26,6 +53,19 @@ test("package identity derivation does not require website metadata", () => {
     iifeGlobal: "MY_LIBRARY",
     installCommand: "npm install @example/my-library",
   });
+});
+
+test("Webpack emits site images from central configuration", () => {
+  const configuredFiles = [
+    projectConfig.assets.faviconFile,
+    projectConfig.assets.logoFile,
+    projectConfig.seo.openGraphImage.file,
+  ];
+  for (const file of configuredFiles) {
+    expect(webpackConfig.entry.shared).toContain(
+      path.resolve(__dirname, "..", "images", file),
+    );
+  }
 });
 
 test.each([
@@ -54,13 +94,11 @@ test("generated manifest is driven by project configuration", () => {
   const manifest = createManifest();
   expect(manifest.name).toBe(projectConfig.pwa.name);
   expect(manifest.short_name).toBe(projectConfig.pwa.shortName);
-  expect(manifest).not.toHaveProperty("id");
-  expect(manifest.start_url).toBe("./");
-  expect(manifest.scope).toBe("./");
+  expect(manifest.id).toBe(projectConfig.site.basePath);
   expect(manifest.theme_color).toBe(projectConfig.site.theme.colorPrimary);
   expect(manifest.icons).toEqual(
-    projectConfig.pwa.icons.map(({ file, purpose, sizes, type }) => ({
-      src: `./images/${file}`,
+    projectConfig.pwa.icons.map(({ purpose, sizes, src, type }) => ({
+      src,
       sizes,
       type,
       purpose,
@@ -71,9 +109,19 @@ test("generated manifest is driven by project configuration", () => {
 test("project configuration is immutable", () => {
   expect(Object.isFrozen(projectConfig)).toBe(true);
   expect(Object.isFrozen(projectConfig.site.theme)).toBe(true);
+  expect(Object.isFrozen(projectConfig.seo.openGraphImage)).toBe(true);
   expect(Object.isFrozen(projectConfig.pwa.icons)).toBe(true);
   expect(projectConfig.site.theme.colorPrimary).toBe(
     projectConfig.site.theme.primary.light.base,
   );
   expect(Object.isFrozen(projectConfig.site.theme.primary.dark)).toBe(true);
+});
+
+test("Mazey deep freezing terminates for circular configuration objects", () => {
+  const value = { nested: {} };
+  value.self = value;
+
+  expect(deepFreeze(value)).toBe(value);
+  expect(Object.isFrozen(value)).toBe(true);
+  expect(Object.isFrozen(value.nested)).toBe(true);
 });

@@ -1,10 +1,11 @@
-const { deepFreeze } = require("mazey");
-const pkg = require("./package.json");
-const {
+import { deepFreeze } from "mazey";
+import pkg from "./package.json" with { type: "json" };
+import {
   packageDetails,
   repositoryDetails,
-} = require("./scripts/project-config-utils");
+} from "./scripts/project-config-utils.js";
 
+const shortName = "mazey template";
 const packageConfig = packageDetails(pkg);
 const repository = repositoryDetails(pkg.repository);
 const siteUrl = new URL(pkg.homepage);
@@ -15,11 +16,11 @@ siteUrl.pathname = basePath;
 siteUrl.search = "";
 siteUrl.hash = "";
 const displayName = pkg.name;
-const shortName = "mazey template";
 const githubUrl = repository.url;
 const npmUrl = `https://www.npmjs.com/package/${pkg.name}`;
-const faviconFile = "logo-dark-circle-transparent-32x32.png";
-const logoFile = "logo-dark-circle-transparent-200x200.png";
+const faviconFile = "logo-32x32.png";
+const logoFile = "logo-192x192.png";
+const openGraphImageFile = "logo-open-graph-1200x630.png";
 const primaryPalette = {
   light: {
     base: "#5b3fd6",
@@ -65,19 +66,19 @@ const pages = {
 };
 const pwaIcons = [
   {
-    file: "logo-dark-circle-transparent-192x192.png",
+    file: "logo-192x192.png",
     sizes: "192x192",
     type: "image/png",
     purpose: "any",
   },
   {
-    file: "logo-dark-circle-transparent-512x512.png",
+    file: "logo-512x512.png",
     sizes: "512x512",
     type: "image/png",
     purpose: "any",
   },
   {
-    file: "logo-dark-circle-transparent-maskable-512x512.png",
+    file: "logo-maskable-512x512.png",
     sizes: "512x512",
     type: "image/png",
     purpose: "maskable",
@@ -93,8 +94,16 @@ const software = {
   license: `${githubUrl}/blob/main/LICENSE`,
   programmingLanguage: "TypeScript",
 };
+const openGraphImage = {
+  file: openGraphImageFile,
+  url: new URL(`images/${openGraphImageFile}`, siteUrl).href,
+  width: 1200,
+  height: 630,
+  type: "image/png",
+  alt: `The ${displayName} logo over purple and teal abstract technology graphics.`,
+};
 
-module.exports = deepFreeze({
+export default deepFreeze({
   package: packageConfig,
   repository,
   brand: {
@@ -109,7 +118,9 @@ module.exports = deepFreeze({
   },
   assets: {
     faviconFile,
+    faviconUrl: `${basePath}images/${faviconFile}`,
     logoFile,
+    logoUrl: `${basePath}images/${logoFile}`,
   },
   site: {
     url: siteUrl.href,
@@ -119,6 +130,7 @@ module.exports = deepFreeze({
     theme,
   },
   seo: {
+    openGraphImage,
     software,
     rootJsonLd: {
       "@context": "https://schema.org",
@@ -144,10 +156,14 @@ module.exports = deepFreeze({
     display: "standalone",
     backgroundColor: theme.colorLight,
     themeColor: theme.colorPrimary,
-    manifestFile: "manifest.webmanifest",
-    serviceWorkerFile: "service-worker.js",
+    manifestUrl: `${basePath}manifest.webmanifest`,
+    serviceWorkerUrl: `${basePath}service-worker.js`,
     cachePrefix: `${packageConfig.bundleBaseName}-site-`,
     description: `Project website, playground, and TypeScript API documentation for the ${displayName} npm library template.`,
-    icons: pwaIcons,
+    icons: pwaIcons.map(({ file, ...icon }) => ({
+      ...icon,
+      file,
+      src: `${basePath}images/${file}`,
+    })),
   },
 });

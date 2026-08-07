@@ -1,30 +1,27 @@
 /* global self, caches, fetch, URL */
 
+const PROJECT_BASE = "__PWA_PROJECT_BASE__";
 const CACHE_PREFIX = "__PWA_CACHE_PREFIX__";
-const PROJECT_ROOT = new URL("./", self.location.href);
-const PROJECT_PATH = PROJECT_ROOT.pathname;
-const CACHE_NAMESPACE = `${CACHE_PREFIX}${encodeURIComponent(PROJECT_PATH)}-`;
-const CACHE_NAME = `${CACHE_NAMESPACE}__PWA_CACHE_VERSION__`;
-const MAX_CACHE_ENTRIES = 96;
-const projectUrl = (relative = "") => new URL(relative, PROJECT_ROOT).href;
+const CACHE_NAME = `${CACHE_PREFIX}__PWA_CACHE_VERSION__`;
+const MAX_RUNTIME_CACHE_ENTRIES = 96;
+const API_APP_SHELL = JSON.parse("__PWA_API_APP_SHELL__");
 const APP_SHELL = [
-  "",
-  "playground/",
-  "api/",
-  "__PWA_MANIFEST_FILE__",
-  "assets/shared.css",
-  "assets/shared.js",
-  "assets/home.js",
-  "assets/playground.js",
-  "assets/api.css",
-  "assets/api.js",
-  "api/assets/style.css",
-  "api/assets/highlight.css",
-  "api/assets/main.js",
-  "api/assets/icons.js",
-  "api/assets/search.js",
-  "api/assets/navigation.js",
-].map(projectUrl);
+  ...new Set([
+    PROJECT_BASE,
+    `${PROJECT_BASE}playground/`,
+    `${PROJECT_BASE}api/`,
+    `${PROJECT_BASE}manifest.webmanifest`,
+    `${PROJECT_BASE}assets/shared.css`,
+    `${PROJECT_BASE}assets/shared.js`,
+    `${PROJECT_BASE}assets/home.js`,
+    `${PROJECT_BASE}assets/playground.js`,
+    `${PROJECT_BASE}assets/playground.css`,
+    `${PROJECT_BASE}assets/api.css`,
+    `${PROJECT_BASE}assets/api.js`,
+    ...API_APP_SHELL,
+  ]),
+];
+const APP_SHELL_PATHS = new Set(APP_SHELL);
 
 function canCache(response) {
   return (
@@ -39,24 +36,21 @@ function isProjectRequest(request) {
   const url = new URL(request.url);
   return (
     request.method === "GET" &&
-    url.origin === PROJECT_ROOT.origin &&
-    url.pathname.startsWith(PROJECT_PATH) &&
+    url.origin === self.location.origin &&
+    url.pathname.startsWith(PROJECT_BASE) &&
     !url.pathname.endsWith(".map")
-  );
-}
-
-function isLegacyProjectCache(name) {
-  return (
-    name.startsWith(CACHE_PREFIX) &&
-    /^[a-f\d]{16}$/.test(name.slice(CACHE_PREFIX.length))
   );
 }
 
 async function trimCache(cache) {
   const keys = await cache.keys();
+  const runtimeKeys = keys.filter((key) => {
+    const url = new URL(key.url);
+    return !APP_SHELL_PATHS.has(`${url.pathname}${url.search}`);
+  });
   await Promise.all(
-    keys
-      .slice(0, Math.max(0, keys.length - MAX_CACHE_ENTRIES))
+    runtimeKeys
+      .slice(0, Math.max(0, runtimeKeys.length - MAX_RUNTIME_CACHE_ENTRIES))
       .map((key) => cache.delete(key)),
   );
 }
@@ -72,16 +66,25 @@ async function cacheResponse(request, response) {
   }
 }
 
+async function matchCurrentCache(request) {
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    return await cache.match(request);
+  } catch {
+    return undefined;
+  }
+}
+
 async function networkFirst(request) {
   try {
     const response = await fetch(request);
     await cacheResponse(request, response);
     return response;
   } catch (error) {
-    const cached = await caches.match(request).catch(() => undefined);
+    const cached = await matchCurrentCache(request);
     if (cached) return cached;
     if (request.mode === "navigate") {
-      const home = await caches.match(projectUrl());
+      const home = await matchCurrentCache(PROJECT_BASE);
       if (home) return home;
     }
     throw error;
@@ -89,7 +92,7 @@ async function networkFirst(request) {
 }
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request).catch(() => undefined);
+  const cached = await matchCurrentCache(request);
   if (cached) return cached;
   const response = await fetch(request);
   await cacheResponse(request, response);
@@ -97,16 +100,19 @@ async function cacheFirst(request) {
 }
 
 async function cacheAppShell() {
-  try {
-    const cache = await caches.open(CACHE_NAME);
-    await Promise.allSettled(
-      APP_SHELL.map(async (url) => {
-        const response = await fetch(url, { cache: "reload" });
-        if (canCache(response)) await cache.put(url, response);
-      }),
-    );
-  } catch {
-    // Installation can continue when storage is unavailable.
+  const cache = await caches.open(CACHE_NAME);
+  const results = await Promise.allSettled(
+    APP_SHELL.map(async (url) => {
+      const response = await fetch(url, { cache: "reload" });
+      if (!canCache(response))
+        throw new Error(`Cannot precache ${url}: HTTP ${response.status}`);
+      await cache.put(url, response);
+    }),
+  );
+  const failure = results.find((result) => result.status === "rejected");
+  if (failure?.status === "rejected") {
+    await caches.delete(CACHE_NAME).catch(() => undefined);
+    throw failure.reason;
   }
 }
 
@@ -122,9 +128,7 @@ self.addEventListener("activate", (event) => {
         Promise.all(
           names
             .filter(
-              (name) =>
-                (name.startsWith(CACHE_NAMESPACE) && name !== CACHE_NAME) ||
-                isLegacyProjectCache(name),
+              (name) => name.startsWith(CACHE_PREFIX) && name !== CACHE_NAME,
             )
             .map((name) => caches.delete(name)),
         ),

@@ -152,7 +152,13 @@ a {
   align-items: center;
   padding: 5rem 0 4rem;
   border-bottom: 1px solid var(--mn-border);
-  background: var(--mn-surface);
+  background:
+    radial-gradient(
+      circle at 80% 20%,
+      var(--mn-primary-soft),
+      transparent 30rem
+    ),
+    var(--mn-surface);
 }
 
 .hero-logo {
@@ -333,29 +339,6 @@ a {
 
 .format-list dt {
   color: var(--mn-primary);
-}
-
-.playground-panel {
-  border: 1px solid var(--mn-border);
-  border-radius: 0.5rem;
-  background: var(--mn-surface);
-}
-
-.playground-output {
-  min-height: 5.5rem;
-  padding: 1rem;
-  border-left: 4px solid var(--mn-primary);
-  color: var(--mn-text);
-  background: var(--mn-primary-soft);
-}
-
-.playground-output code {
-  color: inherit;
-  font-size: 1.05rem;
-}
-
-.playground-error:empty {
-  display: none;
 }
 
 .site-footer {

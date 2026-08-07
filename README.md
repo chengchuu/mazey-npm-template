@@ -1,6 +1,6 @@
 > **Note:** This package is a working npm library template. Use it as a starting point and replace
 > the sample package identity and API before publishing your own library. Follow
-> [Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/CUSTOMIZE.md)
+> [Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/guides/CUSTOMIZE.md)
 > after forking or copying the project.
 
 # mazey-npm-template
@@ -103,12 +103,12 @@ describes the complete public surface.
 
 ## Package Formats
 
-| Consumer           | Package field | Published file                  |
-| ------------------ | ------------- | ------------------------------- |
-| ESM and bundlers   | `module`      | `lib/index.esm.js`              |
-| Node.js CommonJS   | `main`        | `lib/index.cjs.js`              |
-| Browser/CDN        | `unpkg`       | `lib/mazey-npm-template.min.js` |
-| TypeScript tooling | `types`       | `lib/index.d.ts`                |
+| Consumer           | Package condition       | Published file                  |
+| ------------------ | ----------------------- | ------------------------------- |
+| ESM and bundlers   | `exports.import`        | `lib/index.esm.js`              |
+| Node.js CommonJS   | `exports.require`       | `lib/index.cjs`                 |
+| Browser/CDN        | `unpkg`                 | `lib/mazey-npm-template.min.js` |
+| TypeScript tooling | `exports.types`/`types` | `lib/index.d.ts`                |
 
 Source maps are generated for all JavaScript bundles. The root declarations also load the
 published browser type augmentations from `lib/global.d.ts`.
@@ -122,13 +122,14 @@ npm install
 npm run dev
 ```
 
-The project website is served at <http://localhost:8080/>. The playground is available at
-<http://localhost:8080/playground/> and imports the public API directly from `src`.
+The project website is served at <http://localhost:8080/>. The React 19 playground is available at
+<http://localhost:8080/playground/> and imports the public API directly from `src`. React is used
+only for the website example; the published package API remains framework-independent.
 
 Package metadata remains in `package.json`. A package-safe helper derives bundle names without
 loading website settings, while shared repository, website, theme, SEO, and PWA settings flow through
 `project.config.js`. See
-[Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/CUSTOMIZE.md) for
+[Customize This Template](https://github.com/chengchuu/mazey-npm-template/blob/main/guides/CUSTOMIZE.md) for
 the post-fork checklist.
 
 Generate the complete GitHub Pages artifact, including the website, playground, API documentation,
@@ -153,7 +154,7 @@ site's **Install app** action when the browser exposes an install prompt. Other 
 installation through their menus. On iPhone and iPad, Safari users can choose **Share**, then
 **Add to Home Screen**; its capabilities are not identical to a Chrome installation.
 
-Installed standalone mode keeps Home, Playground, API, GitHub, and npm navigation available.
+Installed standalone mode keeps Home, Playground, Install, Usage, API, GitHub, and npm navigation available.
 Adding the website to your device and the browser Fullscreen API are separate capabilities, so
 using the standalone app does not guarantee native fullscreen support.
 
@@ -168,21 +169,6 @@ Normal `npm run dev` does not register the production service worker. When testi
 use the browser's Application tools to unregister older workers or clear site data before a clean
 install. Do not open generated HTML directly from the filesystem; service workers require HTTPS or
 a trusted local origin such as `localhost`.
-
-### Portable Website Paths
-
-The generated Pages artifact uses document-relative URLs for local assets and navigation, while
-canonical, Open Graph, JSON-LD, GitHub, npm, and sitemap URLs remain absolute. The manifest uses
-relative start, scope, and icon URLs; the service worker derives its root from its own URL. This lets
-one artifact run below another directory prefix without rebuilding:
-
-```bash
-PREVIEW_BASE_PATH="/nested/npm template/" npm run pwa:preview
-```
-
-The manifest intentionally omits an explicit `id`, so its resolved start URL supplies the app
-identity. Moving the artifact to another host or path therefore creates a separate installation;
-existing installations do not migrate automatically.
 
 ## License
 

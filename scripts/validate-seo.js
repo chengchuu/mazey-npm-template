@@ -1,22 +1,15 @@
-const { existsSync, readFileSync, readdirSync, statSync } = require("node:fs");
-const path = require("node:path");
-const projectConfig = require("../project.config");
-const {
-  artifactPathToFile,
-  relativeRootFromFile,
-  resolveArtifactReference,
-} = require("./site-url-utils");
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import path, { dirname } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import projectConfig from "../project.config.js";
+import { pngDimensions } from "./validate-pwa.js";
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
 const sitePages = projectConfig.site.pages;
 
 const root = path.resolve(__dirname, "..");
 const docs = path.join(root, "docs");
 const failures = [];
-const portableDeploymentUrls = [
-  projectConfig.site.url,
-  "https://portable.example/npm-template/",
-  "https://portable.example/nested/npm%20template/",
-];
 
 function fail(message) {
   failures.push(message);
@@ -26,11 +19,11 @@ function matches(html, expression) {
   return [...html.matchAll(expression)];
 }
 
-function tagAttributes(tag) {
+function attributes(tag) {
   return Object.fromEntries(
-    matches(tag, /([:\w-]+)=["']([^"']*)["']/g).map((item) => [
+    matches(tag, /([:\w-]+)(?:=["']([^"']*)["'])?/g).map((item) => [
       item[1].toLowerCase(),
-      item[2],
+      item[2] ?? "",
     ]),
   );
 }
@@ -38,110 +31,10 @@ function tagAttributes(tag) {
 function attribute(html, tag, name, value) {
   const tags = matches(html, new RegExp(`<${tag}\\b[^>]*>`, "gi"));
   for (const match of tags) {
-    const attributes = tagAttributes(match[0]);
-    if (attributes[name] === value) return attributes;
+    const values = attributes(match[0]);
+    if (values[name] === value) return values;
   }
   return null;
-}
-
-function filesWithExtension(directory, extension) {
-  return readdirSync(directory).flatMap((name) => {
-    const file = path.join(directory, name);
-    if (statSync(file).isDirectory())
-      return filesWithExtension(file, extension);
-    return file.endsWith(extension) ? [file] : [];
-  });
-}
-
-function portableHtmlReferences(html) {
-  return matches(html, /<(a|img|link|script)\b[^>]*>/gi).flatMap((match) => {
-    const tag = match[1].toLowerCase();
-    const attributes = tagAttributes(match[0]);
-    if (
-      tag === "link" &&
-      ["canonical", "sitemap"].includes(attributes.rel?.toLowerCase())
-    )
-      return [];
-    const reference =
-      tag === "script" || tag === "img" ? attributes.src : attributes.href;
-    if (!reference || reference.startsWith("#")) return [];
-    if (/^(?:[a-z][a-z\d+.-]*:|\/\/)/i.test(reference)) {
-      try {
-        const url = new URL(reference, projectConfig.site.url);
-        const productionRoot = new URL(projectConfig.site.url);
-        if (
-          url.origin !== productionRoot.origin ||
-          !url.pathname.startsWith(productionRoot.pathname)
-        )
-          return [];
-      } catch {
-        return [];
-      }
-    }
-    return [{ reference, tag }];
-  });
-}
-
-function portableCssReferences(css) {
-  return matches(css, /url\(\s*(["']?)([^"')]+)\1\s*\)/gi)
-    .map((match) => match[2].trim())
-    .filter(
-      (reference) =>
-        reference &&
-        !reference.startsWith("#") &&
-        !/^(?:data:|[a-z][a-z\d+.-]*:|\/\/)/i.test(reference),
-    );
-}
-
-function validateArtifactReferences({
-  artifactRoot = docs,
-  deploymentUrls = portableDeploymentUrls,
-} = {}) {
-  const referenceFailures = [];
-  const validateReference = (reference, sourceFile, kind) => {
-    if (reference.startsWith("/")) {
-      referenceFailures.push(
-        `${sourceFile}: ${kind} must not use root-relative URL ${reference}`,
-      );
-      return;
-    }
-    for (const deploymentUrl of deploymentUrls) {
-      const resolved = resolveArtifactReference(
-        reference,
-        sourceFile,
-        deploymentUrl,
-      );
-      if (!resolved.isLocal) {
-        referenceFailures.push(
-          `${sourceFile}: ${reference} escapes deployment ${deploymentUrl}`,
-        );
-        continue;
-      }
-      const target = artifactPathToFile(artifactRoot, resolved.artifactPath);
-      if (!existsSync(target) || !statSync(target).isFile())
-        referenceFailures.push(
-          `${sourceFile}: ${reference} resolves to missing ${resolved.artifactPath}`,
-        );
-    }
-  };
-
-  for (const file of filesWithExtension(artifactRoot, ".html")) {
-    const relative = path
-      .relative(artifactRoot, file)
-      .replaceAll(path.sep, "/");
-    const html = readFileSync(file, "utf8");
-    for (const { reference, tag } of portableHtmlReferences(html))
-      validateReference(reference, relative, `<${tag}> URL`);
-  }
-  for (const file of filesWithExtension(artifactRoot, ".css")) {
-    const relative = path
-      .relative(artifactRoot, file)
-      .replaceAll(path.sep, "/");
-    const css = readFileSync(file, "utf8");
-    for (const reference of portableCssReferences(css))
-      validateReference(reference, relative, "CSS URL");
-  }
-  return [...new Set(referenceFailures)];
 }
 
 function visibleText(html) {
@@ -152,6 +45,43 @@ function visibleText(html) {
     .replace(/&(?:nbsp|amp|lt|gt|quot|#39);/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+const embeddedMarkupExpression =
+  /<!--[\s\S]*?-->|<script\b[\s\S]*?<\/script>|<style\b[\s\S]*?<\/style>/gi;
+
+function elementIds(html) {
+  const markup = html.replace(embeddedMarkupExpression, "");
+  return matches(markup, /<[a-z][^>]*>/gi).flatMap((match) => {
+    const values = attributes(match[0]);
+    return Object.hasOwn(values, "id") ? [values.id] : [];
+  });
+}
+
+function validateSocialImage(label, html) {
+  const image = projectConfig.seo.openGraphImage;
+  const openGraphValues = {
+    "og:image": image.url,
+    "og:image:type": image.type,
+    "og:image:width": String(image.width),
+    "og:image:height": String(image.height),
+    "og:image:alt": image.alt,
+  };
+  for (const [property, expected] of Object.entries(openGraphValues)) {
+    if (attribute(html, "meta", "property", property)?.content !== expected)
+      fail(`${label}: ${property} must be ${expected}`);
+  }
+  if (
+    attribute(html, "meta", "name", "twitter:card")?.content !==
+    "summary_large_image"
+  )
+    fail(`${label}: twitter:card must be summary_large_image`);
+  if (attribute(html, "meta", "name", "twitter:image")?.content !== image.url)
+    fail(`${label}: twitter:image must be ${image.url}`);
+  if (
+    attribute(html, "meta", "name", "twitter:image:alt")?.content !== image.alt
+  )
+    fail(`${label}: twitter:image:alt must match the Open Graph image alt`);
 }
 
 function validateHeadingOrder(label, html) {
@@ -185,6 +115,74 @@ function validateJsonLd(label, html, expectedUrl) {
   } catch (error) {
     fail(`${label}: JSON-LD is invalid JSON (${error.message})`);
   }
+}
+
+function localFragmentError(sourceFile, href, outputRoot = docs) {
+  const hashIndex = href.indexOf("#");
+  if (hashIndex === -1) return null;
+
+  const pathPart = href.slice(0, hashIndex);
+  if (/^[a-z][a-z\d+.-]*:/i.test(pathPart) || pathPart.startsWith("//"))
+    return null;
+  const queryIndex = pathPart.indexOf("?");
+  const pathnamePart =
+    queryIndex === -1 ? pathPart : pathPart.slice(0, queryIndex);
+
+  let fragment;
+  let targetPath;
+  try {
+    fragment = decodeURIComponent(href.slice(hashIndex + 1));
+    const decodedPath = decodeURIComponent(pathnamePart);
+    if (
+      decodedPath.startsWith("/") &&
+      !decodedPath.startsWith(projectConfig.site.basePath)
+    )
+      return `fragment link leaves the Pages artifact: ${href}`;
+    targetPath = decodedPath
+      ? decodedPath.startsWith("/")
+        ? path.resolve(
+            outputRoot,
+            decodedPath.slice(projectConfig.site.basePath.length),
+          )
+        : path.resolve(path.dirname(sourceFile), decodedPath)
+      : sourceFile;
+  } catch {
+    return `invalid encoded fragment link ${href}`;
+  }
+
+  if (!fragment) return `empty fragment link ${href}`;
+  if (existsSync(targetPath) && statSync(targetPath).isDirectory())
+    targetPath = path.join(targetPath, "index.html");
+
+  const relativeTarget = path.relative(outputRoot, targetPath);
+  if (
+    relativeTarget === ".." ||
+    relativeTarget.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeTarget)
+  )
+    return `fragment link leaves the Pages artifact: ${href}`;
+  if (!existsSync(targetPath))
+    return `fragment document is missing for ${href}`;
+
+  const targetHtml = readFileSync(targetPath, "utf8");
+  const ids = elementIds(targetHtml);
+  if (!ids.includes(fragment))
+    return `fragment target #${fragment} is missing for ${href}`;
+
+  return null;
+}
+
+function localFragmentErrors(sourceFile, html, outputRoot = docs) {
+  const markup = html.replace(embeddedMarkupExpression, "");
+  const hrefs = new Set(
+    matches(markup, /<a\b[^>]*>/gi)
+      .map((match) => attributes(match[0]).href)
+      .filter((href) => href?.includes("#") && href !== "#"),
+  );
+
+  return [...hrefs]
+    .map((href) => localFragmentError(sourceFile, href, outputRoot))
+    .filter(Boolean);
 }
 
 function validatePage({
@@ -237,6 +235,7 @@ function validatePage({
   }
   if (attribute(html, "meta", "property", "og:url")?.content !== canonical)
     fail(`${label}: og:url must match canonical`);
+  validateSocialImage(label, html);
   if (
     attribute(html, "meta", "property", "og:title")?.content !==
     titles[0]?.[1]?.trim()
@@ -259,11 +258,20 @@ function validatePage({
   validateHeadingOrder(label, html);
   validateJsonLd(label, html, canonical);
   for (const href of requiredLinks) {
-    if (!attribute(html, "a", "href", href))
+    if (!attribute(html, "a", "href", href)) {
       fail(`${label}: missing crawlable link to ${href}`);
+      continue;
+    }
   }
-  if (!attribute(html, "link", "href", expectedCss))
-    fail(`${label}: missing generated stylesheet ${expectedCss}`);
+  for (const fragmentError of localFragmentErrors(file, html))
+    fail(`${label}: ${fragmentError}`);
+  const expectedStylesheets = Array.isArray(expectedCss)
+    ? expectedCss
+    : [expectedCss];
+  for (const stylesheet of expectedStylesheets) {
+    if (!attribute(html, "link", "href", stylesheet))
+      fail(`${label}: missing generated stylesheet ${stylesheet}`);
+  }
   for (const script of expectedScripts) {
     if (!attribute(html, "script", "src", script))
       fail(`${label}: missing generated script ${script}`);
@@ -282,7 +290,11 @@ function validatePage({
 }
 
 function findHtml(directory) {
-  return filesWithExtension(directory, ".html");
+  return readdirSync(directory).flatMap((name) => {
+    const file = path.join(directory, name);
+    if (statSync(file).isDirectory()) return findHtml(file);
+    return file.endsWith(".html") ? [file] : [];
+  });
 }
 
 function validateApiPages() {
@@ -295,7 +307,7 @@ function validateApiPages() {
     const relative = path
       .relative(apiDirectory, file)
       .replaceAll(path.sep, "/");
-    const siteRoot = relativeRootFromFile(`api/${relative}`);
+    const assetPrefix = "../".repeat(relative.split("/").length);
     const canonical = attribute(html, "link", "rel", "canonical")?.href;
     if (
       !canonical?.startsWith(sitePages.api.url) ||
@@ -309,27 +321,34 @@ function validateApiPages() {
       fail(`API ${relative}: missing description`);
     if (attribute(html, "meta", "property", "og:url")?.content !== canonical)
       fail(`API ${relative}: Open Graph URL does not match canonical`);
-    if (
-      attribute(html, "link", "rel", "icon")?.href !==
-      `${siteRoot}images/${projectConfig.assets.faviconFile}`
-    )
-      fail(`API ${relative}: favicon is not site-root relative`);
-    if (
-      attribute(html, "link", "rel", "manifest")?.href !==
-      `${siteRoot}${projectConfig.pwa.manifestFile}`
-    )
-      fail(`API ${relative}: manifest link is not site-root relative`);
-    if (!attribute(html, "a", "href", siteRoot))
-      fail(`API ${relative}: project-home link is not depth-correct`);
-    if (!attribute(html, "link", "href", `${siteRoot}assets/api.css`))
+    validateSocialImage(`API ${relative}`, html);
+    if (!attribute(html, "link", "rel", "icon"))
+      fail(`API ${relative}: missing favicon`);
+    if (!attribute(html, "link", "href", `${assetPrefix}assets/api.css`))
       fail(`API ${relative}: missing API theme stylesheet`);
-    if (!attribute(html, "script", "src", `${siteRoot}assets/api.js`))
+    if (!attribute(html, "script", "src", `${assetPrefix}assets/api.js`))
       fail(`API ${relative}: missing API theme script`);
+    for (const control of [
+      'id="tsd-search-trigger"',
+      '<dialog id="tsd-search"',
+      'id="tsd-search-input"',
+      'id="tsd-search-results"',
+    ]) {
+      if (!html.includes(control))
+        fail(`API ${relative}: missing search dialog control ${control}`);
+    }
     const h1s = matches(html, /<h1\b[^>]*>([\s\S]*?)<\/h1>/gi);
     if (h1s.length !== 1 || !visibleText(h1s[0][1]))
       fail(`API ${relative}: expected exactly one non-empty h1`);
+    const firstHeading = html.match(/<h([1-6])\b/i);
+    if (firstHeading?.[1] !== "1")
+      fail(`API ${relative}: first heading must be h1`);
     validateHeadingOrder(`API ${relative}`, html);
     validateJsonLd(`API ${relative}`, html, canonical);
+    if (relative !== "index.html") {
+      for (const fragmentError of localFragmentErrors(file, html))
+        fail(`API ${relative}: ${fragmentError}`);
+    }
     const title = html.match(/<title>([^<]+)<\/title>/i)?.[1]?.trim();
     if (!title) fail(`API ${relative}: missing title`);
     else if (titles.has(title))
@@ -342,18 +361,37 @@ function validateApiPages() {
 function validateStaticFiles() {
   const robotsPath = path.join(docs, "robots.txt");
   const sitemapPath = path.join(docs, "sitemap.xml");
+  if (!existsSync(path.join(docs, ".nojekyll")))
+    fail(".nojekyll: missing from Pages artifact");
   for (const asset of [
     "assets/shared.css",
     "assets/shared.js",
     "assets/home.js",
     "assets/playground.js",
+    "assets/playground.css",
     "assets/api.css",
     "assets/api.js",
     `images/${projectConfig.assets.faviconFile}`,
     `images/${projectConfig.assets.logoFile}`,
+    `images/${projectConfig.seo.openGraphImage.file}`,
   ]) {
     if (!existsSync(path.join(docs, asset)))
       fail(`${asset}: missing from Pages artifact`);
+  }
+  const openGraphImagePath = path.join(
+    docs,
+    "images",
+    projectConfig.seo.openGraphImage.file,
+  );
+  if (existsSync(openGraphImagePath)) {
+    const dimensions = pngDimensions(openGraphImagePath);
+    if (
+      dimensions.width !== projectConfig.seo.openGraphImage.width ||
+      dimensions.height !== projectConfig.seo.openGraphImage.height
+    )
+      fail(
+        `Open Graph image dimensions must be ${projectConfig.seo.openGraphImage.width}x${projectConfig.seo.openGraphImage.height}, found ${dimensions.width}x${dimensions.height}`,
+      );
   }
   const homeCss = path.join(docs, "assets", "shared.css");
   if (
@@ -404,7 +442,7 @@ function validateSite() {
       file: path.join(docs, "index.html"),
       canonical: sitePages.home.url,
       requiredLinks: [
-        "#installation",
+        "#install",
         "#usage",
         "./api/",
         "./playground/",
@@ -414,8 +452,11 @@ function validateSite() {
       ],
       expectedTitle: sitePages.home.title,
       expectedDescription: sitePages.home.description,
-      expectedCss: "assets/shared.css",
-      expectedScripts: ["assets/shared.js", "assets/home.js"],
+      expectedCss: `${projectConfig.site.basePath}assets/shared.css`,
+      expectedScripts: [
+        `${projectConfig.site.basePath}assets/shared.js`,
+        `${projectConfig.site.basePath}assets/home.js`,
+      ],
       expectedSitemap: projectConfig.urls.sitemap,
       requireNavigationToggle: true,
     }),
@@ -425,23 +466,35 @@ function validateSite() {
       canonical: sitePages.playground.url,
       requiredLinks: [
         "../",
-        "../#installation",
+        "../#install",
         "../#usage",
+        "../#website-app-help",
         "../api/",
         projectConfig.urls.github,
         projectConfig.urls.npm,
       ],
       expectedTitle: sitePages.playground.title,
       expectedDescription: sitePages.playground.description,
-      expectedCss: "../assets/shared.css",
-      expectedScripts: ["../assets/shared.js", "../assets/playground.js"],
+      expectedCss: [
+        `${projectConfig.site.basePath}assets/shared.css`,
+        `${projectConfig.site.basePath}assets/playground.css`,
+      ],
+      expectedScripts: [
+        `${projectConfig.site.basePath}assets/shared.js`,
+        `${projectConfig.site.basePath}assets/playground.js`,
+      ],
       requireNavigationToggle: true,
     }),
     validatePage({
       label: "API documentation",
       file: path.join(docs, "api", "index.html"),
       canonical: sitePages.api.url,
-      requiredLinks: ["../"],
+      requiredLinks: [
+        sitePages.home.url,
+        sitePages.api.url,
+        projectConfig.urls.github,
+        projectConfig.urls.npm,
+      ],
       expectedTitle: sitePages.api.title,
       expectedDescription: sitePages.api.description,
       expectedCss: "../assets/api.css",
@@ -460,7 +513,6 @@ function validateSite() {
       fail(`Primary title duplicates an API page title: ${title}`);
   }
   validateStaticFiles();
-  validateArtifactReferences().forEach(fail);
   if (failures.length)
     throw new Error(`SEO validation failed:\n- ${failures.join("\n- ")}`);
   return {
@@ -469,7 +521,10 @@ function validateSite() {
   };
 }
 
-if (require.main === module) {
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
+) {
   try {
     const result = validateSite();
     console.log(
@@ -481,10 +536,10 @@ if (require.main === module) {
   }
 }
 
-module.exports = {
+export {
   attribute,
-  portableDeploymentUrls,
-  validateArtifactReferences,
+  localFragmentError,
+  localFragmentErrors,
   validateSite,
   visibleText,
 };

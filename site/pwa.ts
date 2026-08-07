@@ -1,11 +1,6 @@
 export interface SitePwaConfig {
   appName: string;
   enabled: boolean;
-  serviceWorkerFile: string;
-}
-
-export interface SitePwaUrls {
-  manifestUrl: string;
   scope: string;
   serviceWorkerUrl: string;
 }
@@ -26,6 +21,18 @@ interface NavigatorWithStandalone extends Navigator {
 
 interface WindowWithIdleCallback {
   requestIdleCallback?: (callback: () => void) => number;
+}
+
+function listenForMediaChanges(
+  media: MediaQueryList,
+  listener: () => void,
+): () => void {
+  if (media.addEventListener) {
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }
+  media.addListener(listener);
+  return () => media.removeListener(listener);
 }
 
 function setHidden(elements: Element[], hidden: boolean): void {
@@ -52,54 +59,24 @@ export function isStandaloneMode(
   );
 }
 
-export function resolveSitePwaUrls(
-  documentRef: Document,
-  locationRef: Location,
-  serviceWorkerFile = "service-worker.js",
-): SitePwaUrls | null {
-  const manifestHref = documentRef
-    .querySelector<HTMLLinkElement>('link[rel="manifest"]')
-    ?.getAttribute("href");
-  if (!manifestHref) return null;
-
-  try {
-    const pageUrl = new URL(locationRef.href);
-    const manifestUrl = new URL(manifestHref, pageUrl);
-    if (manifestUrl.origin !== pageUrl.origin) return null;
-    const siteRoot = new URL("./", manifestUrl);
-    return {
-      manifestUrl: manifestUrl.href,
-      scope: siteRoot.href,
-      serviceWorkerUrl: new URL(serviceWorkerFile, siteRoot).href,
-    };
-  } catch {
-    return null;
-  }
-}
-
 export function shouldRegisterSiteServiceWorker(
   config: SitePwaConfig,
-  documentRef: Document,
   locationRef: Location,
   navigatorRef: Navigator,
 ): boolean {
-  const isLocalhost = new Set(["localhost", "127.0.0.1", "[::1]"]).has(
-    locationRef.hostname,
-  );
-  const urls = resolveSitePwaUrls(
-    documentRef,
-    locationRef,
-    config.serviceWorkerFile,
-  );
-  if (!urls) return false;
-  const scope = new URL(urls.scope);
-  return (
-    config.enabled &&
-    "serviceWorker" in navigatorRef &&
-    (locationRef.protocol === "https:" || isLocalhost) &&
-    scope.origin === new URL(locationRef.href).origin &&
-    locationRef.pathname.startsWith(scope.pathname)
-  );
+  try {
+    const isLocalhost = new Set(["localhost", "127.0.0.1", "[::1]"]).has(
+      locationRef.hostname,
+    );
+    return (
+      config.enabled &&
+      typeof navigatorRef.serviceWorker?.register === "function" &&
+      (locationRef.protocol === "https:" || isLocalhost) &&
+      locationRef.pathname.startsWith(config.scope)
+    );
+  } catch {
+    return false;
+  }
 }
 
 export function initializeInstallExperience(
@@ -184,7 +161,10 @@ export function initializeInstallExperience(
   );
   windowRef.addEventListener("beforeinstallprompt", handlePromptAvailable);
   windowRef.addEventListener("appinstalled", handleInstalled);
-  displayMode.addEventListener?.("change", handleDisplayMode);
+  const removeDisplayModeListener = listenForMediaChanges(
+    displayMode,
+    handleDisplayMode,
+  );
 
   return () => {
     installButtons.forEach((button) =>
@@ -192,7 +172,7 @@ export function initializeInstallExperience(
     );
     windowRef.removeEventListener("beforeinstallprompt", handlePromptAvailable);
     windowRef.removeEventListener("appinstalled", handleInstalled);
-    displayMode.removeEventListener?.("change", handleDisplayMode);
+    removeDisplayModeListener();
   };
 }
 
@@ -272,27 +252,16 @@ export async function registerSiteServiceWorker(
   windowRef: Window,
   navigatorRef: Navigator,
 ): Promise<ServiceWorkerRegistration | null> {
-  const urls = resolveSitePwaUrls(
-    documentRef,
-    windowRef.location,
-    config.serviceWorkerFile,
-  );
   if (
-    !urls ||
-    !shouldRegisterSiteServiceWorker(
-      config,
-      documentRef,
-      windowRef.location,
-      navigatorRef,
-    )
+    !shouldRegisterSiteServiceWorker(config, windowRef.location, navigatorRef)
   ) {
     return null;
   }
 
   try {
     const registration = await navigatorRef.serviceWorker.register(
-      urls.serviceWorkerUrl,
-      { scope: urls.scope },
+      config.serviceWorkerUrl,
+      { scope: config.scope },
     );
     monitorServiceWorkerUpdates(
       registration,
@@ -324,14 +293,7 @@ export function initializeSitePwa(config: SitePwaConfig): void {
   root.dataset.pwaReady = "true";
 
   initializeInstallExperience(document, window, navigator, config.appName);
-  if (
-    !shouldRegisterSiteServiceWorker(
-      config,
-      document,
-      window.location,
-      navigator,
-    )
-  )
+  if (!shouldRegisterSiteServiceWorker(config, window.location, navigator))
     return;
 
   const scheduleRegistration = () => {

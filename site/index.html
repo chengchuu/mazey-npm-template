@@ -13,7 +13,7 @@
     <% } %>
     <meta
       name="theme-color"
-      content="<%= THEME_COLOR_LIGHT %>"
+      content="<%= THEME_COLOR_PRIMARY %>"
       data-theme-color
       data-theme-color-light="<%= THEME_COLOR_LIGHT %>"
       data-theme-color-dark="<%= THEME_COLOR_DARK %>"
@@ -42,39 +42,18 @@
     <meta property="og:title" content="<%= ROOT_TITLE %>" />
     <meta property="og:description" content="<%= ROOT_DESCRIPTION %>" />
     <meta property="og:url" content="<%= SITE_URL %>" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="<%= OPEN_GRAPH_IMAGE_URL %>" />
+    <meta property="og:image:type" content="<%= OPEN_GRAPH_IMAGE_TYPE %>" />
+    <meta property="og:image:width" content="<%= OPEN_GRAPH_IMAGE_WIDTH %>" />
+    <meta property="og:image:height" content="<%= OPEN_GRAPH_IMAGE_HEIGHT %>" />
+    <meta property="og:image:alt" content="<%= OPEN_GRAPH_IMAGE_ALT %>" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="<%= ROOT_TITLE %>" />
     <meta name="twitter:description" content="<%= ROOT_DESCRIPTION %>" />
+    <meta name="twitter:image" content="<%= OPEN_GRAPH_IMAGE_URL %>" />
+    <meta name="twitter:image:alt" content="<%= OPEN_GRAPH_IMAGE_ALT %>" />
     <script type="application/ld+json">
       <%= ROOT_JSON_LD %>
-    </script>
-    <script>
-      (() => {
-        try {
-          const key = <%= THEME_STORAGE_KEY_JSON %>;
-          const value = localStorage.getItem(key) || "system";
-          const theme =
-            value === "system"
-              ? matchMedia("(prefers-color-scheme: dark)").matches
-                ? "dark"
-                : "light"
-              : value;
-          const resolved = theme === "dark" ? "dark" : "light";
-          document.documentElement.dataset.bsTheme = resolved;
-          document.documentElement.dataset.theme = resolved;
-          document.documentElement.style.colorScheme = resolved;
-          const themeColor = document.querySelector(
-            'meta[name="theme-color"][data-theme-color]',
-          );
-          if (themeColor) {
-            themeColor.content =
-              resolved === "dark"
-                ? themeColor.dataset.themeColorDark
-                : themeColor.dataset.themeColorLight;
-          }
-          localStorage.setItem("tsd-theme", value === "system" ? "os" : value);
-        } catch {}
-      })();
     </script>
   </head>
   <body id="top">
@@ -115,7 +94,7 @@
                 <a class="nav-link" href="./playground/">Playground</a>
               </li>
               <li class="nav-item">
-                <a class="nav-link" href="#installation">Installation</a>
+                <a class="nav-link" href="#install">Install</a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="#usage">Usage</a>
@@ -158,11 +137,7 @@
             alt="<%= DISPLAY_NAME %> logo"
           />
           <h1 id="hero-title"><%= DISPLAY_NAME %></h1>
-          <p class="lead">
-            A TypeScript npm library template that builds CommonJS, ES modules,
-            a browser IIFE bundle, source maps, and declarations from one public
-            entrypoint.
-          </p>
+          <p class="lead"><%= ROOT_DESCRIPTION %></p>
           <div class="hero-actions" aria-label="Project actions">
             <a class="btn btn-primary btn-lg" href="./playground/"
               >Open playground</a
@@ -176,14 +151,6 @@
             <a class="btn btn-outline-secondary btn-lg" href="<%= NPM_URL %>"
               >View npm package</a
             >
-            <button
-              class="btn btn-outline-secondary btn-lg"
-              type="button"
-              data-pwa-install
-              hidden
-            >
-              Install app
-            </button>
           </div>
           <div class="install-command" aria-label="npm installation command">
             <code><%= INSTALL_COMMAND %></code>
@@ -255,13 +222,13 @@
       </section>
 
       <section
-        id="installation"
+        id="install"
         class="section-band section-band--muted"
-        aria-labelledby="installation-title"
+        aria-labelledby="install-title"
       >
         <div class="container">
           <div class="section-heading">
-            <h2 id="installation-title">Installation</h2>
+            <h2 id="install-title">Install</h2>
             <p>
               Use the package through a module-aware project or load the browser
               bundle directly from a CDN.
@@ -356,7 +323,7 @@ createGreeting("community", { punctuation: "." });
             <dt class="col-sm-3">ES modules</dt>
             <dd class="col-sm-9"><code>lib/index.esm.js</code></dd>
             <dt class="col-sm-3">CommonJS</dt>
-            <dd class="col-sm-9"><code>lib/index.cjs.js</code></dd>
+            <dd class="col-sm-9"><code>lib/index.cjs</code></dd>
             <dt class="col-sm-3">Browser IIFE</dt>
             <dd class="col-sm-9"><code>lib/<%= BUNDLE_FILENAME %></code></dd>
             <dt class="col-sm-3">Type declarations</dt>
@@ -366,19 +333,17 @@ createGreeting("community", { punctuation: "." });
       </section>
 
       <section
-        id="install-project-website"
+        id="website-app-help"
         class="section-band section-band--muted"
-        aria-labelledby="add-website-to-device-title"
+        aria-labelledby="website-app-help-title"
         data-pwa-install-help
       >
         <div class="container">
           <div class="section-heading mb-0">
-            <h2 id="add-website-to-device-title">
-              Add the website to your device
-            </h2>
+            <h2 id="website-app-help-title">Website app help</h2>
             <p>
               Supported Chrome and Edge browsers may expose an install icon or
-              the Install app action above. Other browsers may require their own
+              the Install app action below. Other browsers may require their own
               menus; availability depends on the browser and platform.
             </p>
             <p>
@@ -387,6 +352,16 @@ createGreeting("community", { punctuation: "." });
               Chrome installation. Installing the website also does not grant
               native Fullscreen API support.
             </p>
+            <div class="mt-3 mb-3" data-pwa-install-container hidden>
+              <button
+                class="btn btn-outline-secondary btn-lg"
+                type="button"
+                data-pwa-install
+                hidden
+              >
+                Install app
+              </button>
+            </div>
           </div>
         </div>
       </section>

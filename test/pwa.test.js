@@ -1,25 +1,22 @@
 /** @jest-environment jsdom */
 
-const {
+import { jest } from "@jest/globals";
+import {
   initializeInstallExperience,
   isStandaloneMode,
   monitorServiceWorkerUpdates,
   registerSiteServiceWorker,
-  resolveSitePwaUrls,
   shouldRegisterSiteServiceWorker,
-} = require("../site/pwa");
-const projectConfig = require("../project.config");
+} from "../site/pwa.ts";
+import projectConfig from "../project.config.js";
 
 const appName = projectConfig.brand.displayName;
 const pwaConfig = {
   appName,
   enabled: true,
-  serviceWorkerFile: projectConfig.pwa.serviceWorkerFile,
+  scope: projectConfig.site.basePath,
+  serviceWorkerUrl: projectConfig.pwa.serviceWorkerUrl,
 };
-
-function setManifest(href) {
-  document.head.innerHTML = `<link rel="manifest" href="${href}">`;
-}
 
 function installMatchMedia(matches = false) {
   const media = new EventTarget();
@@ -51,6 +48,28 @@ function installPrompt(outcome) {
 async function settle() {
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
+
+test("install state changes support legacy MediaQueryList listeners", () => {
+  renderInstallControls();
+  const media = {
+    matches: false,
+    addListener: jest.fn(),
+    removeListener: jest.fn(),
+  };
+  const windowRef = Object.assign(new EventTarget(), {
+    matchMedia: () => media,
+  });
+  const cleanup = initializeInstallExperience(
+    document,
+    windowRef,
+    navigator,
+    appName,
+  );
+
+  expect(media.addListener).toHaveBeenCalledTimes(1);
+  cleanup();
+  expect(media.removeListener).toHaveBeenCalledTimes(1);
+});
 
 test.each([
   ["accepted", "The app installation was accepted."],
@@ -137,34 +156,7 @@ test("standalone mode and appinstalled hide installation controls", () => {
   secondCleanup();
 });
 
-test.each([
-  ["https://example.test/npm-template/", "./manifest.webmanifest"],
-  ["https://example.test/npm-template/playground/", "../manifest.webmanifest"],
-  [
-    "https://example.test/npm-template/api/functions/create.html",
-    "../../manifest.webmanifest",
-  ],
-  [
-    "https://example.test/nested/npm%20template/api/",
-    "../manifest.webmanifest",
-  ],
-])("PWA URLs resolve from the manifest at %s", (href, manifestHref) => {
-  setManifest(manifestHref);
-  const locationRef = new URL(href);
-  const expectedRoot = new URL(
-    href.includes("npm%20template")
-      ? "/nested/npm%20template/"
-      : "/npm-template/",
-    href,
-  ).href;
-  expect(resolveSitePwaUrls(document, locationRef)).toEqual({
-    manifestUrl: new URL("manifest.webmanifest", expectedRoot).href,
-    scope: expectedRoot,
-    serviceWorkerUrl: new URL("service-worker.js", expectedRoot).href,
-  });
-});
-
-test("service-worker registration is scope-derived and uses exact paths", async () => {
+test("service-worker registration is production-scoped and uses exact paths", async () => {
   const registration = Object.assign(new EventTarget(), {
     installing: null,
     waiting: null,
@@ -175,50 +167,71 @@ test("service-worker registration is scope-derived and uses exact paths", async 
   });
   const navigatorRef = { serviceWorker };
   const config = pwaConfig;
-  const productionLocation = new URL(projectConfig.site.url);
-  setManifest("./manifest.webmanifest");
+  const siteUrl = new URL(projectConfig.site.url);
+  const productionLocation = {
+    hostname: siteUrl.hostname,
+    pathname: projectConfig.site.basePath,
+    protocol: siteUrl.protocol,
+  };
   const windowRef = { location: productionLocation };
 
   expect(
     shouldRegisterSiteServiceWorker(
       { ...config, enabled: false },
-      document,
       productionLocation,
       navigatorRef,
     ),
   ).toBe(false);
   expect(
-    shouldRegisterSiteServiceWorker(
-      config,
-      document,
-      productionLocation,
-      navigatorRef,
-    ),
+    shouldRegisterSiteServiceWorker(config, productionLocation, navigatorRef),
   ).toBe(true);
   expect(
     shouldRegisterSiteServiceWorker(
       config,
-      document,
-      new URL("http://example.test/npm-template/"),
+      { ...productionLocation, pathname: "/another-project/" },
       navigatorRef,
     ),
   ).toBe(false);
 
   await registerSiteServiceWorker(config, document, windowRef, navigatorRef);
   expect(serviceWorker.register).toHaveBeenCalledWith(
-    new URL("service-worker.js", projectConfig.site.url).href,
-    { scope: projectConfig.site.url },
+    projectConfig.pwa.serviceWorkerUrl,
+    { scope: projectConfig.site.basePath },
   );
 });
 
-test("service-worker registration rejects a cross-origin manifest", () => {
-  setManifest("https://cdn.example.test/manifest.webmanifest");
-  const locationRef = new URL(projectConfig.site.url);
-  expect(resolveSitePwaUrls(document, locationRef)).toBeNull();
+test("service-worker registration requires a usable browser API", () => {
+  const siteUrl = new URL(projectConfig.site.url);
+  const productionLocation = {
+    hostname: siteUrl.hostname,
+    pathname: projectConfig.site.basePath,
+    protocol: siteUrl.protocol,
+  };
+  const inaccessibleNavigator = {};
+  Object.defineProperty(inaccessibleNavigator, "serviceWorker", {
+    get() {
+      throw new DOMException("Service workers unavailable", "SecurityError");
+    },
+  });
+
   expect(
-    shouldRegisterSiteServiceWorker(pwaConfig, document, locationRef, {
-      serviceWorker: {},
+    shouldRegisterSiteServiceWorker(pwaConfig, productionLocation, {
+      serviceWorker: undefined,
     }),
+  ).toBe(false);
+  expect(() =>
+    shouldRegisterSiteServiceWorker(
+      pwaConfig,
+      productionLocation,
+      inaccessibleNavigator,
+    ),
+  ).not.toThrow();
+  expect(
+    shouldRegisterSiteServiceWorker(
+      pwaConfig,
+      productionLocation,
+      inaccessibleNavigator,
+    ),
   ).toBe(false);
 });
 

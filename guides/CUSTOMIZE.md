@@ -1,5 +1,7 @@
 # Customize This Template
 
+This maintained guide lives under `guides/`; generated GitHub Pages output belongs in `docs/`.
+
 Use this checklist after forking or copying the repository to create a new npm library. Make source
 changes first, then regenerate `lib`, `dist-dev`, and `docs`; do not edit generated output by hand.
 
@@ -19,6 +21,7 @@ same string.
 | GitHub Pages base path      | `/mazey-npm-template/`                            | `/my-library/`                             |
 | GitHub Pages URL            | `https://chengchuu.github.io/mazey-npm-template/` | `https://my-account.github.io/my-library/` |
 | Display name                | `mazey-npm-template`                              | `My Library`                               |
+| PWA short name              | `mazey template`                                  | `My Library`                               |
 | Theme storage key           | `mazey-npm-template-theme`                        | `my-library-theme`                         |
 | Service-worker cache prefix | `mazey-npm-template-site-`                        | `my-library-site-`                         |
 
@@ -37,7 +40,7 @@ Edit `package.json`:
 
 - Set `name`, `version`, and `description`.
 - Replace `keywords`, `author`, `repository`, `bugs`, and `homepage`.
-- Keep `main`, `module`, and `types` aligned with the Rollup outputs.
+- Keep `main`, `module`, `types`, and conditional `exports` aligned with the Rollup outputs.
 - Change `unpkg` and `jsdelivr` to the chosen browser bundle filename.
 - Review `license`, `files`, `engines`, dependencies, and peer dependencies for the new library.
 
@@ -53,13 +56,16 @@ lockfile changes. Do not expose the package name or version as a hard-coded runt
 
 Then edit `project.config.js` for values that cannot be derived safely:
 
-- PWA short name.
+- Replace the PWA short name in `const shortName = "mazey template";`. Keep it concise enough for
+  installed-app labels; it does not need to match the npm package name exactly.
 - Light and dark backgrounds plus the coordinated light/dark primary interaction palette. Review
   base, hover, active, soft, and RGB values together and preserve readable contrast.
 - Page titles and descriptions when the new library is not a greeting API.
-- Favicon, logo, or PWA icon filenames when the replacement assets use different names.
+- Favicon, logo, Open Graph image, or PWA icon filenames when the replacement assets use different
+  names. Update `const openGraphImageFile = "logo-open-graph-1200x630.png";` for the social preview.
+  Keep that image at 1200x630 unless intentionally changing its configured width and height.
 
-Keep `project.config.js` in CommonJS format. Node scripts import it directly, Webpack injects a
+Keep `project.config.js` in ESM format. Node scripts import it directly, Webpack injects a
 browser-safe subset through `site/runtime-config.ts`, and the Pages build generates static files from
 it. Do not import this configuration from the published `src` entrypoint.
 
@@ -74,9 +80,10 @@ Replace the greeting example with the new library's real public API:
   declarations are unnecessary, remove `globalDtsConf` and the `indexDtsConf` reference banner from
   `scripts/rollup.config.mjs` together; do not edit generated declarations in `lib`.
 - Replace tests in `test/example.test.js` and add focused tests for the new behavior.
-- Update `examples/index.ts` so the playground imports the package root API through `../src`.
-- Replace API names, descriptions, and code samples in `README.md`, `site/index.html`, and
-  `examples/index.html`.
+- Update the React components under `examples/` so the playground imports the package root API
+  through `../src` without duplicating library behavior.
+- Replace API names, descriptions, and code samples in `README.md`, `site/index.html`,
+  `examples/index.html`, and the relevant files under `examples/components/`.
 
 Keep `src/index.ts` as the clear public entrypoint. Consumers should not need to import private
 source paths.
@@ -106,7 +113,10 @@ Replace the template-facing content in these source files:
 - `AGENTS.md`: package contract, output names, URLs, commands, and project-specific agent guidance.
 - `site/index.html`: navigation, headings, install snippets, API examples, package formats, and
   footer.
-- `examples/index.html`: playground title, descriptions, labels, fallback content, and footer.
+- `examples/index.html`: playground metadata, crawlable shell content, navigation, fallback content,
+  and footer.
+- `examples/App.tsx` and `examples/components/`: controlled playground behavior, form labels,
+  results, and errors.
 - `site/index.ts` and `site/pwa.ts`: page behavior or generic user-facing messages when the new
   project needs different interactions. Package identity and the install command are injected.
 
@@ -122,23 +132,24 @@ The public website is a GitHub Pages project site. Update all of these together:
 - `package.json#homepage` supplies the production site URL and its Pages base path.
 - `project.config.js` supplies branding, page metadata, theme colors, icon filenames, manifest
   settings, and all derived website/PWA URLs.
-- `site/index.html` and `examples/index.html` contain page-specific prose and API examples; identity,
-  install commands, bundle names, theme values, and update messages are injected automatically.
+- `site/index.html`, `examples/index.html`, and the React components under `examples/` contain
+  page-specific prose and API examples; identity, install commands, bundle names, theme values, and
+  update messages are injected automatically.
 - `site/service-worker.js` contains caching policy and build tokens. The Pages build replaces its
-  cache prefix and cache version; the worker derives the deployment root from its own URL.
+  project base, cache prefix, and cache version from central configuration.
 - `scripts/build-pages.js` generates `manifest.webmanifest`, `robots.txt`, and `sitemap.xml`, then
   transforms TypeDoc pages using central metadata.
 - Validators and tests consume `project.config.js`; update their behavior only when changing a
   contract rather than merely renaming the project.
 
-Canonical and social URLs should use the production Pages URL. Browser-loaded project assets and
-internal links use document-relative paths generated for each page depth. Manifest resources are
-relative to the manifest, and service-worker registration derives the deployment root from the
-page's manifest link. Do not replace these with a hard-coded production origin or project-root path.
+Canonical and social URLs should use the production Pages URL. Browser-loaded project assets such as
+the favicon, manifest, worker, and PWA icons should use the current origin with the project base path,
+for example `/my-library/images/favicon.png`. Do not hard-code the production origin for those local
+assets, because that breaks the local Pages preview.
 
-The manifest omits `id` and uses `./` for its start URL and scope. Its resolved start URL therefore
-becomes the installation identity: hosting the artifact at another host or path creates a separate
-app installation. Review that tradeoff before changing manifest identity behavior.
+If the site is hosted at a user or organization root instead of a project path, changing the scope to
+`/` is a deliberate architecture change. Review the manifest, worker, Webpack public path, validators,
+tests, preview server, and all internal links together.
 
 ## 7. Review Development And Release Automation
 
@@ -213,7 +224,7 @@ documentation, and validates SEO and PWA output.
 
 Inspect the generated package:
 
-- Confirm `lib/index.cjs.js`, `lib/index.esm.js`, declarations, and the IIFE bundle exist.
+- Confirm `lib/index.cjs`, `lib/index.esm.js`, declarations, and the IIFE bundle exist.
 - Confirm generated banners, declarations, source maps, and browser globals use the new identity.
 - Confirm `npm pack --dry-run` includes only intended consumer files and has a reasonable size.
 - Confirm no website or service-worker runtime is present in `src` or the npm package output.

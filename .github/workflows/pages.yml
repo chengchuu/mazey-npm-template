@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - main
+      - "release/v*"
   workflow_dispatch:
 
 permissions:
@@ -26,10 +27,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
@@ -42,14 +43,8 @@ jobs:
       - name: Run tests
         run: npm test -- --runInBand
 
-      - name: Build docs
+      - name: Build and validate docs
         run: npm run docs
-
-      - name: Validate generated SEO
-        run: npm run seo:validate
-
-      - name: Validate generated PWA
-        run: npm run pwa:validate
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

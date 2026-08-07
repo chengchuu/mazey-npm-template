@@ -85,9 +85,8 @@ test("site navigation and hero styling follow the shared template convention", (
     "utf8",
   );
   expect(css).toMatch(
-    /\.hero\s*{[^}]*background:\s*var\(--mn-surface\);[^}]*}/,
+    /\.hero\s*{[\s\S]*?radial-gradient\([\s\S]*?var\(--mn-primary-soft\)[\s\S]*?var\(--mn-surface\);[\s\S]*?}/,
   );
-  expect(css).not.toMatch(/\.hero\s*{[^}]*radial-gradient\(/);
   expect(css).toMatch(
     /\.site-header\s*{[^}]*background:\s*var\(--mn-background\);[^}]*}/,
   );

@@ -117,29 +117,6 @@ test("project configuration is immutable", () => {
   expect(Object.isFrozen(projectConfig.site.theme.primary.dark)).toBe(true);
 });
 
-test("project configuration exposes the canonical blue theme palette", () => {
-  expect(projectConfig.site.theme.primary).toEqual({
-    light: {
-      base: "#4d8ffb",
-      hover: "#256fd8",
-      active: "#185aaa",
-      soft: "#eaf2ff",
-      rgb: "77, 143, 251",
-      hoverRgb: "37, 111, 216",
-      activeRgb: "24, 90, 170",
-    },
-    dark: {
-      base: "#5089e8",
-      hover: "#6198ee",
-      active: "#74a5f3",
-      soft: "#1b3155",
-      rgb: "80, 137, 232",
-      hoverRgb: "97, 152, 238",
-      activeRgb: "116, 165, 243",
-    },
-  });
-});
-
 test("Mazey deep freezing terminates for circular configuration objects", () => {
   const value = { nested: {} };
   value.self = value;

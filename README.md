@@ -1,5 +1,3 @@
-<!-- markdownlint-disable MD041 -->
-
 ⚠️ Note: The project is a template for npm. Please don't use it directly.
 
 # mazey-npm-template

@@ -156,6 +156,8 @@ function validateThemeToggle(label, html) {
     const icon = matchingIcons[0];
     if (icon["aria-hidden"] !== "true" || icon.focusable !== "false")
       fail(`${label}: ${theme} theme icon must be decorative`);
+    if (icon.width !== "14" || icon.height !== "14")
+      fail(`${label}: ${theme} theme icon must be 14 by 14 pixels`);
     if (theme === "light" && Object.hasOwn(icon, "hidden"))
       fail(`${label}: initial light theme icon must be visible`);
     if (theme === "dark" && !Object.hasOwn(icon, "hidden"))

@@ -136,8 +136,42 @@ test("navbar templates use the official inline Bootstrap theme icons", () => {
     expect(html).toMatch(/data-theme-icon="dark"\s+hidden/);
     expect(html).not.toContain("data-theme-select");
     expect(html).not.toContain("aria-pressed");
+    const icons = [
+      ...html.matchAll(/<svg\b[^>]*data-theme-icon="(?:light|dark)"[^>]*>/g),
+    ];
+    expect(icons).toHaveLength(2);
+    for (const [icon] of icons) {
+      expect(icon).toContain('width="14"');
+      expect(icon).toContain('height="14"');
+    }
     for (const iconPath of iconPaths) expect(html).toContain(iconPath);
   }
+});
+
+test("theme toggles use circular targets and 14px rendered icons", () => {
+  const siteCss = readFileSync("site/site.css", "utf8");
+  const apiCss = readFileSync("site/api.css", "utf8");
+  const siteButton = siteCss.match(/\.theme-toggle\s*\{([^}]*)\}/)?.[1];
+  const siteIcon = siteCss.match(/\.theme-toggle svg\s*\{([^}]*)\}/)?.[1];
+  const apiButton = apiCss.match(
+    /\.site-project-links \.theme-toggle\s*\{([^}]*)\}/,
+  )?.[1];
+  const apiIcon = apiCss.match(
+    /\.site-project-links \.theme-toggle svg\s*\{([^}]*)\}/,
+  )?.[1];
+
+  expect(siteButton).toMatch(/(?:^|\s)width: 44px;/);
+  expect(siteButton).toMatch(/(?:^|\s)height: 44px;/);
+  expect(siteButton).toContain("box-sizing: border-box");
+  expect(siteButton).toContain("border-radius: 50%");
+  expect(siteIcon).toMatch(/(?:^|\s)width: 14px;/);
+  expect(siteIcon).toMatch(/(?:^|\s)height: 14px;/);
+  expect(apiButton).toMatch(/(?:^|\s)width: 28px;/);
+  expect(apiButton).toMatch(/(?:^|\s)height: 28px;/);
+  expect(apiButton).toContain("box-sizing: border-box");
+  expect(apiButton).toContain("border-radius: 50%");
+  expect(apiIcon).toMatch(/(?:^|\s)width: 14px;/);
+  expect(apiIcon).toMatch(/(?:^|\s)height: 14px;/);
 });
 
 test("URL preference overrides storage and initializes every theme side effect", () => {

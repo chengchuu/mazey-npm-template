@@ -38,9 +38,11 @@ const bootstrapThemeIconPaths = ["sun-fill.svg", "moon-stars-fill.svg"].flatMap(
     ].map((match) => match[1]),
 );
 
-const typeDocThemeSelector =
+const sourceTypeDocThemeSelector =
   '<div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div>';
-const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"><button id="tsd-search-trigger" aria-label="Search"></button><dialog id="tsd-search"><input id="tsd-search-input"><ul id="tsd-search-results"></ul></dialog></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main>${typeDocThemeSelector}</body></html>`;
+const outputTypeDocThemeSelector =
+  '<div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="light">Light</option><option value="dark">Dark</option></select></div>';
+const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"><button id="tsd-search-trigger" aria-label="Search"></button><dialog id="tsd-search"><input id="tsd-search-input"><ul id="tsd-search-results"></ul></dialog></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main>${sourceTypeDocThemeSelector}</body></html>`;
 
 function expectNavigationLabel(html, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -170,7 +172,7 @@ test("generated cross-page fragment links resolve inside the Pages artifact", ()
   }
 });
 
-test("API metadata transformation is complete and idempotent", () => {
+test("API metadata transformation is complete and removes only the OS option", () => {
   const transformed = transformApiHtml(typeDocHtml, "index.html");
   const theme = projectConfig.site.theme;
   expect(transformApiHtml(transformed, "index.html")).toBe(transformed);
@@ -225,7 +227,8 @@ test("API metadata transformation is complete and idempotent", () => {
   }
   for (const iconPath of bootstrapThemeIconPaths)
     expect(transformed).toContain(iconPath);
-  expect(transformed).toContain(typeDocThemeSelector);
+  expect(transformed).toContain(outputTypeDocThemeSelector);
+  expect(transformed).not.toContain('<option value="os">');
   expect(transformed.match(/id="tsd-theme"/g)).toHaveLength(1);
   expect(transformed).not.toContain("mazey-api-theme");
   expect(transformed).not.toContain('document.body.style.display="none"');
@@ -241,7 +244,7 @@ test("API metadata transformation is complete and idempotent", () => {
 });
 
 test("API subpages receive self-referencing canonical URLs", () => {
-  const source = `<html><head><title>createGreeting | ${displayName}</title></head><body><header><div class="tsd-toolbar-contents container"></div></header><main><h1>createGreeting</h1></main></body></html>`;
+  const source = `<html><head><title>createGreeting | ${displayName}</title></head><body><header><div class="tsd-toolbar-contents container"></div></header><main><h1>createGreeting</h1></main>${sourceTypeDocThemeSelector}</body></html>`;
   const transformed = transformApiHtml(source, "functions/createGreeting.html");
   expect(transformed).toContain(
     `href="${new URL("functions/createGreeting.html", pages.api.url).href}"`,
@@ -250,6 +253,30 @@ test("API subpages receive self-referencing canonical URLs", () => {
   expect(transformed).toContain(
     `createGreeting | ${displayName} API Reference`,
   );
+});
+
+test("API transformation requires the native selector and one OS option", () => {
+  expect(() =>
+    transformApiHtml(
+      typeDocHtml.replace(sourceTypeDocThemeSelector, ""),
+      "index.html",
+    ),
+  ).toThrow(/exactly one TypeDoc theme selector/);
+  expect(() =>
+    transformApiHtml(
+      typeDocHtml.replace('<option value="os">OS</option>', ""),
+      "index.html",
+    ),
+  ).toThrow(/exactly one TypeDoc OS theme option/);
+  expect(() =>
+    transformApiHtml(
+      typeDocHtml.replace(
+        '<option value="os">OS</option>',
+        '<option value="os">OS</option><option value="os">OS</option>',
+      ),
+      "index.html",
+    ),
+  ).toThrow(/exactly one TypeDoc OS theme option/);
 });
 
 test("generated TypeDoc headings are normalized without changing content", () => {

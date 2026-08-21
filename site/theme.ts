@@ -1,16 +1,7 @@
-import {
-  listenMediaQueryChanges,
-  resolveThemePreference,
-  setThemePreference,
-} from "mazey";
-import type { ResolvedTheme, ThemePreference } from "mazey";
+import { resolveThemePreference, setThemePreference } from "mazey";
+import type { ResolvedTheme } from "mazey";
 
-export type { ThemePreference } from "mazey";
-
-const systemThemeQuery = "(prefers-color-scheme: dark)";
-
-function preferenceFromTypeDoc(value: string): ThemePreference | null {
-  if (value === "os") return "system";
+function themeFromTypeDoc(value: string): ResolvedTheme | null {
   if (value === "light" || value === "dark") return value;
   return null;
 }
@@ -19,22 +10,9 @@ export function initializeThemeControls(storageKey: string): () => void {
   const root = document.documentElement;
   if (root.dataset.themeControlsReady === "true") return () => undefined;
 
-  let media: MediaQueryList | null = null;
-  try {
-    media = window.matchMedia(systemThemeQuery);
-  } catch {
-    // Mazey resolves to its light fallback when system detection fails.
-  }
+  let resolvedTheme: ResolvedTheme = resolveThemePreference(storageKey).value;
 
-  const initialTheme = resolveThemePreference(storageKey);
-  let selectedPreference: ThemePreference =
-    initialTheme.label === "System" ? "system" : initialTheme.value;
-  let resolvedTheme: ResolvedTheme = initialTheme.value;
-
-  const resolveSelectedTheme = (preference: ThemePreference): ResolvedTheme =>
-    preference === "system" ? (media?.matches ? "dark" : "light") : preference;
-
-  const apply = (preference: ThemePreference, theme: ResolvedTheme) => {
+  const apply = (theme: ResolvedTheme) => {
     resolvedTheme = theme;
     root.dataset.bsTheme = theme;
     root.dataset.theme = theme;
@@ -50,9 +28,8 @@ export function initializeThemeControls(storageKey: string): () => void {
           : (themeColor.dataset.themeColorLight ?? themeColor.content);
     }
 
-    const typeDocPreference = preference === "system" ? "os" : preference;
     try {
-      window.localStorage.setItem("tsd-theme", typeDocPreference);
+      window.localStorage.setItem("tsd-theme", theme);
     } catch {
       // TypeDoc synchronization is optional when storage is unavailable.
     }
@@ -60,9 +37,9 @@ export function initializeThemeControls(storageKey: string): () => void {
     const typeDocControl = document.getElementById("tsd-theme");
     if (
       typeDocControl instanceof HTMLSelectElement &&
-      typeDocControl.value !== typeDocPreference
+      typeDocControl.value !== theme
     ) {
-      typeDocControl.value = typeDocPreference;
+      typeDocControl.value = theme;
     }
 
     const currentTheme = theme === "light" ? "Light" : "Dark";
@@ -88,42 +65,34 @@ export function initializeThemeControls(storageKey: string): () => void {
     const button = target.closest<HTMLButtonElement>("[data-theme-toggle]");
     if (!button) return;
 
-    selectedPreference = resolvedTheme === "light" ? "dark" : "light";
-    setThemePreference(storageKey, selectedPreference);
-    apply(selectedPreference, selectedPreference);
+    const nextTheme: ResolvedTheme =
+      resolvedTheme === "light" ? "dark" : "light";
+    setThemePreference(storageKey, nextTheme);
+    apply(nextTheme);
   };
 
   const handleChange = (event: Event) => {
     const control = event.target;
     if (!(control instanceof HTMLSelectElement) || control.id !== "tsd-theme")
       return;
-    const preference = preferenceFromTypeDoc(control.value);
-    if (!preference) {
-      apply(selectedPreference, resolvedTheme);
+    const theme = themeFromTypeDoc(control.value);
+    if (!theme) {
+      apply(resolvedTheme);
       return;
     }
 
-    selectedPreference = preference;
-    setThemePreference(storageKey, preference);
-    apply(preference, resolveSelectedTheme(preference));
-  };
-
-  const handleSystemTheme = (event: MediaQueryListEvent) => {
-    if (selectedPreference === "system") {
-      apply("system", event.matches ? "dark" : "light");
-    }
+    setThemePreference(storageKey, theme);
+    apply(theme);
   };
 
   root.dataset.themeControlsReady = "true";
-  apply(selectedPreference, resolvedTheme);
+  apply(resolvedTheme);
   document.addEventListener("click", handleClick);
   document.addEventListener("change", handleChange);
-  const removeMediaListener = listenMediaQueryChanges(media, handleSystemTheme);
 
   return () => {
     document.removeEventListener("click", handleClick);
     document.removeEventListener("change", handleChange);
-    removeMediaListener();
     delete root.dataset.themeControlsReady;
   };
 }

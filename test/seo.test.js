@@ -220,8 +220,8 @@ test("API metadata transformation is complete and idempotent", () => {
   ];
   expect(themeIcons).toHaveLength(2);
   for (const [icon] of themeIcons) {
-    expect(icon).toContain('width="14"');
-    expect(icon).toContain('height="14"');
+    expect(icon).toContain('width="16"');
+    expect(icon).toContain('height="16"');
   }
   for (const iconPath of bootstrapThemeIconPaths)
     expect(transformed).toContain(iconPath);

@@ -138,9 +138,9 @@ a {
   justify-content: center;
   flex: none;
   box-sizing: border-box;
-  width: 44px;
-  height: 44px;
-  padding: 0.5rem;
+  width: 32px;
+  height: 32px;
+  padding: 7px;
   color: var(--mn-muted);
   background: transparent;
   border: 1px solid var(--mn-border);
@@ -154,8 +154,8 @@ a {
 }
 
 .theme-toggle svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .theme-toggle [hidden] {

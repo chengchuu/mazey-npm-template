@@ -184,12 +184,11 @@ function validateTypeDocThemeSelector(label, html) {
   if (
     JSON.stringify(options) !==
     JSON.stringify([
-      ["os", "OS"],
       ["light", "Light"],
       ["dark", "Dark"],
     ])
   )
-    fail(`${label}: native TypeDoc theme options must remain OS, Light, Dark`);
+    fail(`${label}: native TypeDoc theme options must be Light, Dark`);
 }
 
 function localFragmentError(sourceFile, href, outputRoot = docs) {

@@ -87,7 +87,32 @@ function ensurePrimaryApiHeading(html, isIndex) {
   return output;
 }
 
+function removeTypeDocOsThemeOption(html, relativeFile, alreadyTransformed) {
+  const selectorPattern =
+    /<select\b(?=[^>]*\bid=["']tsd-theme["'])[^>]*>[\s\S]*?<\/select>/gi;
+  const selectors = [...html.matchAll(selectorPattern)];
+  if (selectors.length !== 1)
+    throw new Error(
+      `Expected exactly one TypeDoc theme selector in ${relativeFile}`,
+    );
+
+  const [selector] = selectors;
+  const osOptionPattern =
+    /<option\b(?=[^>]*\bvalue=["']os["'])[^>]*>[\s\S]*?<\/option>/gi;
+  const osOptions = [...selector[0].matchAll(osOptionPattern)];
+  if (osOptions.length === 0 && alreadyTransformed) return html;
+  if (osOptions.length !== 1)
+    throw new Error(
+      `Expected exactly one TypeDoc OS theme option in ${relativeFile}`,
+    );
+
+  const start = selector.index;
+  const updatedSelector = selector[0].replace(osOptions[0][0], "");
+  return `${html.slice(0, start)}${updatedSelector}${html.slice(start + selector[0].length)}`;
+}
+
 function transformApiHtml(html, relativeFile) {
+  const alreadyTransformed = html.includes(seoStart);
   const cleanHtml = html
     .replace(markerExpression(seoStart, seoEnd), "")
     .replace(/<nav class="site-project-links"[\s\S]*?<\/nav>/g, "")
@@ -167,6 +192,8 @@ function transformApiHtml(html, relativeFile) {
     )
     .replace(/<html\b(?![^>]*data-bs-theme)/i, '<html data-bs-theme="light"')
     .replace("</head>", `${metadata}</head>`);
+
+  output = removeTypeDocOsThemeOption(output, relativeFile, alreadyTransformed);
 
   const toolbar = '<div class="tsd-toolbar-contents container">';
   if (!output.includes(toolbar))

@@ -10,32 +10,15 @@ import projectConfig from "../project.config.js";
 const { colorPrimary, colorLight, colorDark, storageKey } =
   projectConfig.site.theme;
 
-function mediaQuery(initialMatches = false, legacy = false) {
-  const listeners = [];
+function mediaQuery(initialMatches = false) {
   const media = {
     matches: initialMatches,
     change(matches) {
       media.matches = matches;
-      for (const listener of listeners) listener({ matches });
     },
+    addEventListener: jest.fn(),
+    removeEventListener: jest.fn(),
   };
-
-  if (legacy) {
-    media.addListener = jest.fn((listener) => listeners.push(listener));
-    media.removeListener = jest.fn((listener) => {
-      const index = listeners.indexOf(listener);
-      if (index !== -1) listeners.splice(index, 1);
-    });
-  } else {
-    media.addEventListener = jest.fn((_name, listener) =>
-      listeners.push(listener),
-    );
-    media.removeEventListener = jest.fn((_name, listener) => {
-      const index = listeners.indexOf(listener);
-      if (index !== -1) listeners.splice(index, 1);
-    });
-  }
-
   return media;
 }
 
@@ -54,7 +37,6 @@ function renderThemeControls({ typeDoc = false } = {}) {
     ${
       typeDoc
         ? `<select id="tsd-theme">
-            <option value="os">OS</option>
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>`
@@ -193,38 +175,37 @@ test("URL preference overrides storage and initializes every theme side effect",
 test.each([
   ["light", true],
   ["dark", false],
-])(
-  "saved %s preference ignores later system changes",
-  (preference, matches) => {
-    renderThemeControls();
-    localStorage.setItem(storageKey, preference);
-    const media = mediaQuery(matches);
-    installMatchMedia(media);
-
-    const cleanup = initializeThemeControls(storageKey);
-    expectRenderedTheme(preference);
-    media.change(!matches);
-    expectRenderedTheme(preference);
-    cleanup();
-  },
-);
-
-test("system preference follows both media directions and keeps TypeDoc on OS", () => {
-  renderThemeControls({ typeDoc: true });
-  localStorage.setItem(storageKey, "system");
-  const media = mediaQuery(false);
+])("saved %s preference ignores later OS changes", (preference, matches) => {
+  renderThemeControls();
+  localStorage.setItem(storageKey, preference);
+  const media = mediaQuery(matches);
   installMatchMedia(media);
 
   const cleanup = initializeThemeControls(storageKey);
-  expectRenderedTheme("light");
-  expect(document.querySelector("#tsd-theme").value).toBe("os");
-  expect(localStorage.getItem("tsd-theme")).toBe("os");
+  expectRenderedTheme(preference);
+  expect(media.addEventListener).not.toHaveBeenCalled();
+  media.change(!matches);
+  expectRenderedTheme(preference);
+  cleanup();
+});
 
-  media.change(true);
-  expectRenderedTheme("dark");
-  expect(document.querySelector("#tsd-theme").value).toBe("os");
-  media.change(false);
-  expectRenderedTheme("light");
+test.each([
+  [false, "light"],
+  [true, "dark"],
+])("missing preference resolves OS %s once as %s", (matches, expected) => {
+  renderThemeControls({ typeDoc: true });
+  const media = mediaQuery(matches);
+  installMatchMedia(media);
+
+  const cleanup = initializeThemeControls(storageKey);
+  expectRenderedTheme(expected);
+  expect(localStorage.getItem(storageKey)).toBeNull();
+  expect(document.querySelector("#tsd-theme").value).toBe(expected);
+  expect(localStorage.getItem("tsd-theme")).toBe(expected);
+  expect(media.addEventListener).not.toHaveBeenCalled();
+
+  media.change(!matches);
+  expectRenderedTheme(expected);
   cleanup();
 });
 
@@ -232,7 +213,7 @@ test.each([
   [false, "dark"],
   [true, "light"],
 ])(
-  "first navbar click from system %s selects and persists %s",
+  "first navbar click from OS %s selects and persists %s",
   (matches, expected) => {
     renderThemeControls();
     const media = mediaQuery(matches);
@@ -275,7 +256,7 @@ test.each([
   ["corrupted", true, "dark"],
   [null, false, "light"],
 ])(
-  "stored value %s falls through to the system theme",
+  "stored value %s falls through to the one-time OS theme",
   (stored, matches, expected) => {
     renderThemeControls();
     if (stored !== null) localStorage.setItem(storageKey, stored);
@@ -283,7 +264,8 @@ test.each([
 
     const cleanup = initializeThemeControls(storageKey);
     expectRenderedTheme(expected);
-    expect(localStorage.getItem("tsd-theme")).toBe("os");
+    expect(localStorage.getItem("tsd-theme")).toBe(expected);
+    expect(localStorage.getItem(storageKey)).toBe(stored);
     cleanup();
   },
 );
@@ -338,7 +320,7 @@ test("TypeDoc Settings and navbar remain synchronized without recursive changes"
   control.addEventListener("change", observedChanges);
 
   const cleanup = initializeThemeControls(storageKey);
-  expect(control.value).toBe("os");
+  expect(control.value).toBe("dark");
   expectRenderedTheme("dark");
 
   control.value = "light";
@@ -351,17 +333,6 @@ test("TypeDoc Settings and navbar remain synchronized without recursive changes"
   expectRenderedTheme("dark");
   expect(control.value).toBe("dark");
   expect(observedChanges).toHaveBeenCalledTimes(1);
-
-  control.value = "os";
-  control.dispatchEvent(new Event("change", { bubbles: true }));
-  expectRenderedTheme("dark");
-  expect(localStorage.getItem(storageKey)).toBe("system");
-  expect(localStorage.getItem("tsd-theme")).toBe("os");
-  expect(observedChanges).toHaveBeenCalledTimes(2);
-
-  media.change(false);
-  expectRenderedTheme("light");
-  expect(control.value).toBe("os");
   cleanup();
 });
 
@@ -379,36 +350,28 @@ test("unsupported TypeDoc theme values restore the last valid theme", () => {
   control.dispatchEvent(new Event("change", { bubbles: true }));
 
   expectRenderedTheme("light");
-  expect(control.value).toBe("os");
-  expect(localStorage.getItem("tsd-theme")).toBe("os");
+  expect(control.value).toBe("light");
+  expect(localStorage.getItem("tsd-theme")).toBe("light");
   expect(localStorage.getItem(storageKey)).toBeNull();
   cleanup();
 });
 
-test("Mazey registers and idempotently cleans up standard media listeners", () => {
+test("duplicate initialization and cleanup remain safe without media listeners", () => {
   renderThemeControls();
   const media = mediaQuery(false);
   installMatchMedia(media);
 
   const cleanup = initializeThemeControls(storageKey);
   const duplicateCleanup = initializeThemeControls(storageKey);
-  expect(media.addEventListener).toHaveBeenCalledTimes(1);
+  expect(media.addEventListener).not.toHaveBeenCalled();
   duplicateCleanup();
+  themeButton().click();
+  expectRenderedTheme("dark");
   cleanup();
   cleanup();
-  expect(media.removeEventListener).toHaveBeenCalledTimes(1);
-});
-
-test("Mazey leaves legacy-only media listeners untouched", () => {
-  renderThemeControls();
-  const media = mediaQuery(false, true);
-  installMatchMedia(media);
-
-  const cleanup = initializeThemeControls(storageKey);
-  expect(media.addListener).not.toHaveBeenCalled();
-  cleanup();
-  cleanup();
-  expect(media.removeListener).not.toHaveBeenCalled();
+  themeButton().click();
+  expectRenderedTheme("dark");
+  expect(media.removeEventListener).not.toHaveBeenCalled();
 });
 
 test("Bootstrap navigation closes on Escape and restores toggle focus", () => {

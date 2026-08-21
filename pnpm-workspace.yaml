@@ -1,2 +1,4 @@
-ignoredBuiltDependencies:
-  - unrs-resolver
+allowBuilds:
+  unrs-resolver: false
+minimumReleaseAgeExclude:
+  - mazey@5.7.3

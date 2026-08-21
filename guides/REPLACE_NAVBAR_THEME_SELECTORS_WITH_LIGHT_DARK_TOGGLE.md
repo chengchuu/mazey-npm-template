@@ -2,100 +2,65 @@
 
 ## Summary
 
-Replace the Home, Playground, and generated TypeDoc toolbar theme selectors with synchronized
-two-state icon buttons. Preserve TypeDoc 0.28.20's native `select#tsd-theme` Settings control and
-the project's three-state persisted preference model.
+The Home, Playground, and generated TypeDoc toolbar use synchronized two-state icon buttons.
+TypeDoc 0.28.20's native `select#tsd-theme` Settings control remains available with only its
+`Light` and `Dark` options.
 
 No npm package API changes are introduced. Keep
 `initializeThemeControls(storageKey): () => void` unchanged.
 
-## Implementation Changes
+## Theme Contract
 
-- Add `bootstrap-icons` with `pnpm add -D bootstrap-icons`, updating only `package.json` and
-  `pnpm-lock.yaml`. Inline the official `sun-fill.svg` and `moon-stars-fill.svg` path data; do not
-  ship Bootstrap Icons CSS, fonts, files, CDN requests, or runtime dependencies.
-- Replace navbar selects in the Home and Playground templates and the TypeDoc toolbar injection
-  with `button.theme-toggle[data-theme-toggle]`:
-  - Start with an internally consistent light state: show the sun and hide the moon.
-  - Mark both SVGs with `aria-hidden="true"`, `focusable="false"`, and
-    `data-theme-icon="light|dark"`.
-  - Update the accessible label to describe the current theme and the result of activation.
-  - Keep `type="button"` and do not add `aria-pressed`.
-- Stop replacing `.tsd-theme-toggle` in `scripts/build-pages.js`. Preserve TypeDoc's generated
-  `select#tsd-theme` with `os`, `light`, and `dark` options and synchronize it without
-  reconstructing its markup or dispatching synthetic events.
-- Refactor `site/theme.ts` to:
-  - Verify the restored Mazey declarations, then import `listenMediaQueryChanges`,
-    `resolveThemePreference`, and `setThemePreference` directly from Mazey.
-  - Retain separate `selectedPreference` and concrete `resolvedTheme` state. Always apply
-    `resolveThemePreference(storageKey).value` as the concrete initial theme; use the result label
-    only to identify whether the selected preference is system, light, or dark.
-  - Toggle explicitly to the opposite of the currently rendered theme and apply it even when
-    persistence returns `false`.
-  - Respond to `#tsd-theme` changes by mapping `os` to `system`.
-  - Follow media-query changes only while the selected preference is `system`.
-  - Preserve duplicate-initialization protection and cleanup through Mazey's standard media-query
-    listener support.
-- On every application, synchronize root `data-bs-theme`, root `data-theme`, `color-scheme`,
-  `theme-color`, every navbar button and icon, TypeDoc's `tsd-theme` storage value, and
-  `#tsd-theme` where present.
-- Replace select-specific navbar CSS with button and SVG styles. Use 32-by-32-pixel circular buttons
-  on Home and Playground, keep the TypeDoc toolbar button at 28 by 28 pixels, and render every theme
-  icon at 16 by 16 pixels. Preserve collapsed-menu alignment, focus-visible treatment, and existing
-  theme variables. Split TypeDoc Settings selectors from toolbar selectors so native Settings
-  styling remains intact.
-- Strengthen final-artifact validation:
-  - Require an accessible `button[data-theme-toggle]` with `type="button"`, both correctly
-    attributed SVG states, a valid label, and no `aria-pressed`.
-  - Reject navbar `data-theme-select` controls.
-  - Require exactly one native `select#tsd-theme` with the original ordered values and English
-    labels on every generated API page.
-- Update only the theme guidance in `AGENTS.md` to distinguish the two-state navbar control from the
-  persisted three-state model and TypeDoc Settings. Preserve all existing unrelated worktree
-  changes, including dependency and lockfile updates.
+- The application exposes and persists only `light` and `dark` preferences.
+- When neither a URL preference nor a persisted preference exists, Mazey resolves the OS color
+  scheme once during initialization. The project does not persist that fallback or react to later
+  `prefers-color-scheme` changes.
+- `?theme=light` and `?theme=dark` override storage through Mazey's existing resolution behavior.
+- Every explicit navbar or TypeDoc selection is persisted with
+  `setThemePreference(storageKey, theme)`.
+- A failed storage write does not block the selected theme from applying for the current session.
 
-## Test Plan
+## Implementation
 
-- Expand `test/theme.test.js` for:
-  - Template and button structure plus the exact Bootstrap icon paths.
-  - URL, persisted, system, invalid-storage, unavailable-storage, and light-fallback initialization.
-  - Icon visibility, accessible labels, root attributes, theme color, TypeDoc storage, and absence
-    of `aria-pressed`.
-  - System changes in both directions, explicit selections ignoring later system changes, repeated
-    toggles, and failed persistence retaining session state.
-  - Mazey standard media-listener registration, idempotent cleanup, and inert behavior for
-    legacy-only listener objects.
-  - Bidirectional synchronization with native `#tsd-theme`, including `os` mapping and no recursive
-    events.
-- Update Playground integration tests to click the theme button while retaining greeting and PWA
-  coverage.
-- Update SEO and TypeDoc transformation fixtures to retain the native Settings selector and assert
-  the toolbar button contract across generated API pages.
-- Run the focused Jest suites:
+- Home and Playground templates and the injected TypeDoc project toolbar use
+  `button.theme-toggle[data-theme-toggle]` with inline Bootstrap `sun-fill` and `moon-stars-fill`
+  icons.
+- Buttons use `type="button"` and a changing accessible label that describes the current theme and
+  the result of activation. They do not use `aria-pressed` because activation performs a command
+  whose label and icon change rather than exposing a persistent pressed state.
+- `site/theme.ts` imports `resolveThemePreference` and `setThemePreference` directly from Mazey. It
+  keeps only the current concrete `light | dark` theme in local state.
+- Applying a theme synchronizes:
+  - root `data-bs-theme` and `data-theme` attributes;
+  - root `color-scheme` styling;
+  - browser `theme-color` metadata;
+  - every navbar button label and icon;
+  - TypeDoc's `tsd-theme` storage value and native selector.
+- `scripts/build-pages.js` preserves TypeDoc's selector, markup, styles, and listener. During Pages
+  assembly, it removes exactly the generated `<option value="os">OS</option>` and fails clearly if
+  the expected selector or option is absent from fresh TypeDoc output.
+- TypeDoc's generated script initializes before the project API script. The project script then
+  applies a concrete theme and restores unsupported selector values without dispatching synthetic
+  change events.
 
-  ```bash
-  npm test -- --runInBand test/theme.test.js test/playground.test.tsx test/seo.test.js
-  ```
+## Validation Contract
 
-- Run the complete validation:
+Every generated API page must contain:
 
-  ```bash
-  npm run preview
-  npm run format:check
-  npm pack --dry-run
-  git diff --check
-  ```
+- one native `select#tsd-theme`;
+- exactly the ordered `light`/`Light` and `dark`/`Dark` options;
+- one project navbar theme button with both decorative theme icons;
+- no `OS` option, obsolete navbar theme selector, or `aria-pressed` attribute.
 
-- Inspect the packed manifest to confirm Bootstrap Icons and website code are absent. Run
-  `npm run pwa:preview` for manual Home, Playground, API, system-theme, persistence, accessibility,
-  responsive-navigation, and PWA verification, then stop the server.
+Tests cover URL and persisted precedence, one-time OS initialization, unavailable storage and media
+queries, repeated button toggles, TypeDoc synchronization, unsupported values, duplicate
+initialization, cleanup, and generated Pages validation.
 
-## Assumptions
+Run the focused checks while changing theme behavior:
 
-- Navbar activation always creates an explicit `light` or `dark` preference. Returning to `system`
-  remains available through TypeDoc Settings on API pages or an existing stored `system` value.
-- TypeDoc continues to own its native selector and listener. The project's delegated listener runs
-  afterward and restores concrete root theme attributes.
-- Generated directories are rebuilt only through their owning scripts and are not edited as
-  maintained source.
-- Existing unrelated worktree changes remain untouched.
+```bash
+npm test -- --runInBand test/theme.test.js test/playground.test.tsx test/seo.test.js
+```
+
+Then run the repository's complete preview, formatting, package, and diff checks documented in
+`AGENTS.md`.

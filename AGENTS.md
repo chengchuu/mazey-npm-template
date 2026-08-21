@@ -237,7 +237,8 @@ The test suites have these responsibilities:
   and immutable central configuration.
 - `test/seo.test.js`: API HTML transformation, canonical metadata, favicon paths, headings, and
   repeatable Pages assembly.
-- `test/theme.test.js`: system/light/dark preference and dynamic browser theme-color behavior.
+- `test/theme.test.js`: light/dark preference, one-time OS fallback, TypeDoc synchronization, and
+  dynamic browser theme-color behavior.
 - `test/pwa.test.js`: registration guards, install prompt behavior, installed state, and update UX.
 - `test/service-worker.test.js`: manifest icons, scoped requests, cache cleanup, cache failures, and
   network-first versus cache-first behavior.
@@ -280,12 +281,13 @@ SEO metadata comes from `project.config.js`, while page content lives under `sit
 Do not edit generated output under `docs`; update source templates, central configuration, the
 deterministic API transformation, or build scripts instead. The final artifact must
 include `robots.txt`, `sitemap.xml`, unique page metadata, one primary heading per page, crawlable
-content, and working project-subpath links. Keep theme values `system`, `light`, and `dark` stored
-under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap's
-`data-bs-theme` attribute. The Home, Playground, and TypeDoc project navbars expose a two-state
-light/dark button; TypeDoc's native Settings selector remains the three-state `OS`, `Light`, and
-`Dark` control. `site/theme.ts` keeps both controls, browser theme-color metadata, and TypeDoc's
-`tsd-theme` preference synchronized.
+content, and working project-subpath links. Store only explicit `light` and `dark` values under
+`mazey-npm-template-theme`, and apply the resolved value through Bootstrap's `data-bs-theme`
+attribute. When no explicit value exists, resolve the OS preference once during initialization;
+do not persist it or follow later color-scheme changes. The Home, Playground, and TypeDoc project
+navbars expose a two-state light/dark button. TypeDoc's native Settings selector remains in place
+with only its `Light` and `Dark` options. `site/theme.ts` keeps both controls, browser theme-color
+metadata, and TypeDoc's concrete `tsd-theme` preference synchronized.
 
 Canonical URLs, Open Graph URLs, and structured data should use the production site URL. Assets
 that the browser must load from the current deployment, including the favicon, manifest, worker,

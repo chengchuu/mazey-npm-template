@@ -34,15 +34,22 @@
   flex: none;
 }
 
-.site-project-links .theme-control {
+.site-project-links .theme-toggle {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   flex: none;
-  gap: 0.4rem;
   margin-left: auto;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  padding: 0.25rem;
+  border: 1px solid var(--color-accent);
+  border-radius: 0.35rem;
+  color: inherit;
+  background: var(--color-background-secondary, transparent);
+  cursor: pointer;
 }
 
-.site-project-links select,
 .tsd-theme-toggle select {
   min-height: 1.75rem;
   border: 1px solid var(--color-accent);
@@ -51,16 +58,28 @@
   background: var(--color-background-secondary, transparent);
 }
 
-.site-project-links select option,
 .tsd-theme-toggle select option {
   color: var(--color-text, CanvasText);
   background-color: var(--color-background, Canvas);
 }
 
-.site-project-links select:focus-visible,
 .tsd-theme-toggle select:focus-visible {
   outline: none;
   border: 1px solid var(--color-link);
+}
+
+.site-project-links .theme-toggle:focus-visible {
+  outline: 2px solid var(--color-focus-outline);
+  outline-offset: 2px;
+}
+
+.site-project-links .theme-toggle svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.site-project-links .theme-toggle [hidden] {
+  display: none;
 }
 
 .tsd-typography a {
@@ -129,14 +148,6 @@
 
   .site-project-links a:not(:first-child) {
     display: none;
-  }
-
-  .site-project-links .theme-control span {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
   }
 
   .site-pwa-update {

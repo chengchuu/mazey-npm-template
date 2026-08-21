@@ -52,6 +52,9 @@ importers:
       bootstrap:
         specifier: 5.3.8
         version: 5.3.8(@popperjs/core@2.11.8)
+      bootstrap-icons:
+        specifier: ^1.13.1
+        version: 1.13.1
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -80,8 +83,8 @@ importers:
         specifier: ^16.4.0
         version: 16.4.0
       mazey:
-        specifier: ^5.6.8
-        version: 5.6.8
+        specifier: ^5.7.3
+        version: 5.7.3
       mini-css-extract-plugin:
         specifier: ^2.10.2
         version: 2.10.2(webpack@5.108.4)
@@ -2188,7 +2191,6 @@ packages:
       }
     cpu: [arm]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-arm-musleabihf@4.62.2":
     resolution:
@@ -2197,7 +2199,6 @@ packages:
       }
     cpu: [arm]
     os: [linux]
-    libc: [musl]
 
   "@rollup/rollup-linux-arm64-gnu@4.62.2":
     resolution:
@@ -2206,7 +2207,6 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-arm64-musl@4.62.2":
     resolution:
@@ -2215,7 +2215,6 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   "@rollup/rollup-linux-loong64-gnu@4.62.2":
     resolution:
@@ -2224,7 +2223,6 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-loong64-musl@4.62.2":
     resolution:
@@ -2233,7 +2231,6 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
-    libc: [musl]
 
   "@rollup/rollup-linux-ppc64-gnu@4.62.2":
     resolution:
@@ -2242,7 +2239,6 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-ppc64-musl@4.62.2":
     resolution:
@@ -2251,7 +2247,6 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
-    libc: [musl]
 
   "@rollup/rollup-linux-riscv64-gnu@4.62.2":
     resolution:
@@ -2260,7 +2255,6 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-riscv64-musl@4.62.2":
     resolution:
@@ -2269,7 +2263,6 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
-    libc: [musl]
 
   "@rollup/rollup-linux-s390x-gnu@4.62.2":
     resolution:
@@ -2278,7 +2271,6 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-x64-gnu@4.62.2":
     resolution:
@@ -2287,7 +2279,6 @@ packages:
       }
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   "@rollup/rollup-linux-x64-musl@4.62.2":
     resolution:
@@ -2296,7 +2287,6 @@ packages:
       }
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   "@rollup/rollup-openbsd-x64@4.62.2":
     resolution:
@@ -2442,10 +2432,10 @@ packages:
     peerDependencies:
       "@testing-library/dom": ">=7.21.4"
 
-  "@tsconfig/node10@1.0.12":
+  "@tsconfig/node10@1.0.13":
     resolution:
       {
-        integrity: sha512-UCYBaeFvM11aU2y3YPZ//O5Rhj+xKyzy7mvcIoAjASbigy8mHMryP5cK7dgjlz2hWxh1g5pLw084E0a/wlUSFQ==,
+        integrity: sha512-gcLdvR9HO1ZJBypsOGqaP6TFEzb6vIta0KSTLt9NAQ6pXQO3cRgSVyCN6pzYqI9DlJgY71XKO0dpDhCf08b3pg==,
       }
 
   "@tsconfig/node12@1.0.11":
@@ -2872,7 +2862,6 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
-    libc: [glibc]
 
   "@unrs/resolver-binding-linux-arm64-musl@1.12.2":
     resolution:
@@ -2881,7 +2870,6 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
-    libc: [musl]
 
   "@unrs/resolver-binding-linux-loong64-gnu@1.12.2":
     resolution:
@@ -2890,7 +2878,6 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
-    libc: [glibc]
 
   "@unrs/resolver-binding-linux-loong64-musl@1.12.2":
     resolution:
@@ -2899,7 +2886,6 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
-    libc: [musl]
 
   "@unrs/resolver-binding-linux-ppc64-gnu@1.12.2":
     resolution:
@@ -2908,7 +2894,6 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
-    libc: [glibc]
 
   "@unrs/resolver-binding-linux-riscv64-gnu@1.12.2":
     resolution:
@@ -2917,7 +2902,6 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
-    libc: [glibc]
 
   "@unrs/resolver-binding-linux-riscv64-musl@1.12.2":
     resolution:
@@ -2926,7 +2910,6 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
-    libc: [musl]
 
   "@unrs/resolver-binding-linux-s390x-gnu@1.12.2":
     resolution:
@@ -2935,7 +2918,6 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
-    libc: [glibc]
 
   "@unrs/resolver-binding-linux-x64-gnu@1.12.2":
     resolution:
@@ -2944,7 +2926,6 @@ packages:
       }
     cpu: [x64]
     os: [linux]
-    libc: [glibc]
 
   "@unrs/resolver-binding-linux-x64-musl@1.12.2":
     resolution:
@@ -2953,7 +2934,6 @@ packages:
       }
     cpu: [x64]
     os: [linux]
-    libc: [musl]
 
   "@unrs/resolver-binding-openharmony-arm64@1.12.2":
     resolution:
@@ -3399,6 +3379,12 @@ packages:
     resolution:
       {
         integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==,
+      }
+
+  bootstrap-icons@1.13.1:
+    resolution:
+      {
+        integrity: sha512-ijombt4v6bv5CLeXvRWKy7CuM3TRTuPEuGaGKvTV5cz65rQSY8RQ2JcHt6b90cBBAC7s8fsf2EkQDldzCoXUjw==,
       }
 
   bootstrap@5.3.8:
@@ -5464,10 +5450,10 @@ packages:
       }
     engines: { node: ">= 0.4" }
 
-  mazey@5.6.8:
+  mazey@5.7.3:
     resolution:
       {
-        integrity: sha512-g412f/f53LmGg//eqb5ygRQaSTPs0E0C+T6zl1SlSYfjWCocm/BD6Pb9FM1cp6LGcsQdh5NA0+6I3jcxgEJRJg==,
+        integrity: sha512-SdBLOtT+ml+2ZlywDr8IDsUVLv23pkecO7ghvEp37PuiClsk86PgnD6D/uIQEt50aiMgek+GPD9voPttto3DOQ==,
       }
 
   mdurl@2.0.0:
@@ -9079,7 +9065,7 @@ snapshots:
     dependencies:
       "@testing-library/dom": 10.4.1
 
-  "@tsconfig/node10@1.0.12":
+  "@tsconfig/node10@1.0.13":
     optional: true
 
   "@tsconfig/node12@1.0.11":
@@ -9700,6 +9686,8 @@ snapshots:
       multicast-dns: 7.2.5
 
   boolbase@1.0.0: {}
+
+  bootstrap-icons@1.13.1: {}
 
   bootstrap@5.3.8(@popperjs/core@2.11.8):
     dependencies:
@@ -11063,7 +11051,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mazey@5.6.8: {}
+  mazey@5.7.3: {}
 
   mdurl@2.0.0: {}
 
@@ -11814,7 +11802,7 @@ snapshots:
   ts-node@10.9.2(@types/node@25.9.1)(typescript@6.0.3):
     dependencies:
       "@cspotcode/source-map-support": 0.8.1
-      "@tsconfig/node10": 1.0.12
+      "@tsconfig/node10": 1.0.13
       "@tsconfig/node12": 1.0.11
       "@tsconfig/node14": 1.0.3
       "@tsconfig/node16": 1.0.4

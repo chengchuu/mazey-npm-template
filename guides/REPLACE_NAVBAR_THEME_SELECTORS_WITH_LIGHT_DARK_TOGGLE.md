@@ -39,8 +39,9 @@ No npm package API changes are introduced. Keep
 - On every application, synchronize root `data-bs-theme`, root `data-theme`, `color-scheme`,
   `theme-color`, every navbar button and icon, TypeDoc's `tsd-theme` storage value, and
   `#tsd-theme` where present.
-- Replace select-specific navbar CSS with button and SVG styles. Keep a minimum 44-by-44-pixel
-  target on Home and Playground, collapsed-menu alignment, focus-visible treatment, and existing
+- Replace select-specific navbar CSS with button and SVG styles. Use 32-by-32-pixel circular buttons
+  on Home and Playground, keep the TypeDoc toolbar button at 28 by 28 pixels, and render every theme
+  icon at 16 by 16 pixels. Preserve collapsed-menu alignment, focus-visible treatment, and existing
   theme variables. Split TypeDoc Settings selectors from toolbar selectors so native Settings
   styling remains intact.
 - Strengthen final-artifact validation:

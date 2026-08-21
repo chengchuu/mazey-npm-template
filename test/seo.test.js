@@ -213,6 +213,16 @@ test("API metadata transformation is complete and idempotent", () => {
   expect(transformed).not.toContain("aria-pressed");
   expect(transformed).toContain('data-theme-icon="light"');
   expect(transformed).toContain('data-theme-icon="dark" hidden');
+  const themeIcons = [
+    ...transformed.matchAll(
+      /<svg\b[^>]*data-theme-icon="(?:light|dark)"[^>]*>/g,
+    ),
+  ];
+  expect(themeIcons).toHaveLength(2);
+  for (const [icon] of themeIcons) {
+    expect(icon).toContain('width="16"');
+    expect(icon).toContain('height="16"');
+  }
   for (const iconPath of bootstrapThemeIconPaths)
     expect(transformed).toContain(iconPath);
   expect(transformed).toContain(typeDocThemeSelector);

@@ -39,12 +39,13 @@
   align-items: center;
   justify-content: center;
   flex: none;
+  box-sizing: border-box;
   margin-left: auto;
-  min-width: 1.75rem;
-  min-height: 1.75rem;
+  width: 28px;
+  height: 28px;
   padding: 0.25rem;
   border: 1px solid var(--color-accent);
-  border-radius: 0.35rem;
+  border-radius: 50%;
   color: inherit;
   background: var(--color-background-secondary, transparent);
   cursor: pointer;
@@ -74,8 +75,8 @@
 }
 
 .site-project-links .theme-toggle svg {
-  width: 1rem;
-  height: 1rem;
+  width: 16px;
+  height: 16px;
 }
 
 .site-project-links .theme-toggle [hidden] {

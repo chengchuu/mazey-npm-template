@@ -149,11 +149,11 @@ test("coexists with the shared theme and PWA install controls", () => {
   document.body.insertAdjacentHTML(
     "afterbegin",
     `
-      <select data-theme-select aria-label="Choose playground theme">
-        <option value="system">System</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
+      <button type="button" data-theme-toggle
+        aria-label="Current theme: Light. Switch to dark theme.">
+        <svg data-theme-icon="light" aria-hidden="true" focusable="false"></svg>
+        <svg data-theme-icon="dark" aria-hidden="true" focusable="false" hidden></svg>
+      </button>
       <span data-pwa-install-container hidden>
         <button type="button" data-pwa-install hidden>Install app</button>
       </span>
@@ -164,9 +164,10 @@ test("coexists with the shared theme and PWA install controls", () => {
   renderApp();
 
   const removeTheme = initializeThemeControls(themeStorageKey);
-  fireEvent.change(
-    screen.getByRole("combobox", { name: "Choose playground theme" }),
-    { target: { value: "dark" } },
+  fireEvent.click(
+    screen.getByRole("button", {
+      name: "Current theme: Light. Switch to dark theme.",
+    }),
   );
   expect(document.documentElement.dataset.bsTheme).toBe("dark");
 

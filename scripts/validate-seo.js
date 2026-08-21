@@ -117,6 +117,79 @@ function validateJsonLd(label, html, expectedUrl) {
   }
 }
 
+function validateThemeToggle(label, html) {
+  const buttons = matches(
+    html,
+    /<button\b[^>]*data-theme-toggle[^>]*>[\s\S]*?<\/button>/gi,
+  );
+  if (buttons.length !== 1) {
+    fail(`${label}: expected exactly one navbar theme button`);
+    return;
+  }
+
+  const buttonAttributes = attributes(
+    buttons[0][0].match(/<button\b[^>]*>/i)[0],
+  );
+  if (buttonAttributes.type !== "button")
+    fail(`${label}: navbar theme button must use type=button`);
+  if (!buttonAttributes.class?.split(/\s+/).includes("theme-toggle"))
+    fail(`${label}: navbar theme button must use the theme-toggle class`);
+  if (
+    buttonAttributes["aria-label"] !==
+    "Current theme: Light. Switch to dark theme."
+  )
+    fail(`${label}: navbar theme button has an invalid accessible label`);
+  if (Object.hasOwn(buttonAttributes, "aria-pressed"))
+    fail(`${label}: navbar theme button must not use aria-pressed`);
+
+  const icons = matches(buttons[0][0], /<svg\b[^>]*>/gi).map((match) =>
+    attributes(match[0]),
+  );
+  for (const theme of ["light", "dark"]) {
+    const matchingIcons = icons.filter(
+      (icon) => icon["data-theme-icon"] === theme,
+    );
+    if (matchingIcons.length !== 1) {
+      fail(`${label}: expected one ${theme} theme icon`);
+      continue;
+    }
+    const icon = matchingIcons[0];
+    if (icon["aria-hidden"] !== "true" || icon.focusable !== "false")
+      fail(`${label}: ${theme} theme icon must be decorative`);
+    if (theme === "light" && Object.hasOwn(icon, "hidden"))
+      fail(`${label}: initial light theme icon must be visible`);
+    if (theme === "dark" && !Object.hasOwn(icon, "hidden"))
+      fail(`${label}: initial dark theme icon must be hidden`);
+  }
+
+  if (/<select\b[^>]*data-theme-select/i.test(html))
+    fail(`${label}: obsolete navbar theme selector is present`);
+}
+
+function validateTypeDocThemeSelector(label, html) {
+  const selectors = matches(
+    html,
+    /<select\b[^>]*id=["']tsd-theme["'][^>]*>([\s\S]*?)<\/select>/gi,
+  );
+  if (selectors.length !== 1) {
+    fail(`${label}: expected exactly one native TypeDoc theme selector`);
+    return;
+  }
+  const options = matches(
+    selectors[0][1],
+    /<option\b[^>]*value=["']([^"']+)["'][^>]*>([\s\S]*?)<\/option>/gi,
+  ).map((match) => [match[1], visibleText(match[2])]);
+  if (
+    JSON.stringify(options) !==
+    JSON.stringify([
+      ["os", "OS"],
+      ["light", "Light"],
+      ["dark", "Dark"],
+    ])
+  )
+    fail(`${label}: native TypeDoc theme options must remain OS, Light, Dark`);
+}
+
 function localFragmentError(sourceFile, href, outputRoot = docs) {
   const hashIndex = href.indexOf("#");
   if (hashIndex === -1) return null;
@@ -276,8 +349,7 @@ function validatePage({
     if (!attribute(html, "script", "src", script))
       fail(`${label}: missing generated script ${script}`);
   }
-  if (!/<select\b[^>]*data-theme-select/.test(html))
-    fail(`${label}: missing accessible theme selector`);
+  validateThemeToggle(label, html);
   if (
     requireNavigationToggle &&
     !/<button\b[^>]*aria-expanded="false"[^>]*data-nav-toggle/.test(html)
@@ -328,6 +400,8 @@ function validateApiPages() {
       fail(`API ${relative}: missing API theme stylesheet`);
     if (!attribute(html, "script", "src", `${assetPrefix}assets/api.js`))
       fail(`API ${relative}: missing API theme script`);
+    validateThemeToggle(`API ${relative}`, html);
+    validateTypeDocThemeSelector(`API ${relative}`, html);
     for (const control of [
       'id="tsd-search-trigger"',
       '<dialog id="tsd-search"',

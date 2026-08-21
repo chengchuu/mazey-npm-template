@@ -4,7 +4,8 @@ Guidance for automated coding agents working in `mazey-npm-template`.
 
 ## Scope And Goal
 
-This directory is the primary npm package. Improve maintainability, package quality, developer experience.
+This directory is the primary npm package. Improve maintainability, package quality, and developer
+experience without making the template specific to one downstream library.
 
 Keep the package generic, browser-friendly, and easy to rename.
 
@@ -13,7 +14,8 @@ Keep the package generic, browser-friendly, and easy to rename.
 - `src/index.ts`: package entrypoint and public runtime API.
 - `src/typing.d.ts`: public TypeScript interfaces and type aliases.
 - `types/global.d.ts`: ambient browser type augmentations.
-- `test`: Jest tests for public behavior.
+- `test/`: Jest 30 tests for the sample API, React playground, central configuration, theme, SEO,
+  PWA, and service-worker behavior.
 - `examples`: React 19 playground components, entrypoint, HTML shell, and scoped styles that exercise
   the framework-independent package root API.
 - `project.config.js`: central package-derived repository, site, theme, SEO, browser bundle, and PWA
@@ -36,11 +38,19 @@ Keep the package generic, browser-friendly, and easy to rename.
 - `scripts/preview-pages.js`: project-subpath-aware static server for the generated `docs` artifact.
 - `scripts/validate-seo.js`: validates the final generated Pages artifact.
 - `scripts/validate-pwa.js`: validates the final manifest, icons, entry pages, and service worker.
+- `scripts/validate-package-exports.js`: validates the built package through its ESM, CommonJS, and
+  `package.json` export conditions.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
 - `guides/CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
   identity before using the template for another library.
+- `guides/GITHUB_ACTIONS.md`: copyable npm-based Pages and npm publication workflow examples for
+  downstream repositories. These examples are documentation, not workflows executed by this repository.
+- `guides/TEMPLATE_BACKPORT_AUDIT.md`: historical record of reusable changes adopted from Mazey; do
+  not treat it as the current operational contract when code or this guide differs.
+- `eslint.config.mjs`: ESLint flat configuration for browser TypeScript, Node.js scripts, and Jest.
+- `pnpm-lock.yaml`: the only tracked dependency lockfile.
 - `lib`: generated publish output; do not edit it by hand.
-- `dist-dev`, `docs`, and `coverage`: generated development, documentation, and test output.
+- `dist`, `dist-dev`, `docs`, and `coverage`: ignored generated output.
 
 Keep `src/index.ts` as the clear root entrypoint. As the source grows, use internal modules and
 re-export the supported surface from `src/index.ts` rather than making consumers import internal
@@ -60,6 +70,11 @@ The published package currently provides:
 Preserve these formats unless the user requests a packaging change. Keep `package.json` fields,
 Rollup outputs, README examples, and generated files aligned.
 
+The package exports only the package root and `./package.json`. `npm run build` regenerates every
+publishable artifact and then runs `scripts/validate-package-exports.js`, which imports the package
+through both ESM and CommonJS and checks the metadata subpath. Keep that validation aligned with the
+sample API when replacing `createGreeting`.
+
 The package intentionally has no runtime dependencies. Put build, test, lint, and documentation
 tools in `devDependencies`. Do not add a runtime dependency unless it provides clear value and the
 user accepts the consumer impact.
@@ -77,9 +92,11 @@ and version metadata belong in `package.json` and release tooling.
 
 ## TypeScript
 
-The library targets ES2015 with ESNext modules and bundler-style module resolution. Preserve strict
-type checking and browser library support. Avoid weakening strictness globally to accommodate one
-implementation detail.
+The repository uses TypeScript 6. It targets ES2015 with ESNext modules, bundler-style module
+resolution, React's automatic JSX runtime, and the DOM, DOM iterable, and ES2015 libraries. The
+single TypeScript program covers `src`, `types`, `examples`, and `site`. Preserve strict type checking
+and browser library support. Avoid weakening strictness globally to accommodate one implementation
+detail.
 
 `tsconfig.json` intentionally uses `"types": []`. Library source does not need Node ambient types;
 Node-specific JavaScript configuration files are outside the TypeScript program. Add `@types/node`
@@ -123,6 +140,11 @@ bundled, and generated JavaScript must not acquire undeclared runtime helper imp
 Rollup may use the pure package helper, but it must not import `project.config.js` or require valid
 website/PWA metadata to build the npm package.
 
+TypeScript emits ES2015-oriented input for the build, and Babel's browser query is `> 1%`,
+`last 2 versions`, and `android>4.0`. Babel transpiles syntax but does not supply Web Platform or
+ECMAScript polyfills. Check the configured browser query and runtime API support before adding a new
+native dependency.
+
 Webpack owns the public landing page, local development server, and interactive playground.
 `npm run dev` serves the website on port 8080 and the React 19 playground at `/playground/`. Keep
 `examples/index.tsx` limited to application bootstrap, keep reusable components under
@@ -146,8 +168,21 @@ Webpack serializes the browser-safe subset of `project.config.js` as `__SITE_RUN
 Browser modules consume it through `site/runtime-config.ts`; do not reintroduce separate hard-coded
 package names, install commands, theme keys, PWA paths, or update labels in browser TypeScript.
 
-Never edit generated files under `lib`, `dist-dev`, `docs`, or `coverage` as source changes. Rebuild
-them through the owning command when verification needs them.
+Never edit generated files under `lib`, `dist`, `dist-dev`, `docs`, or `coverage` as source changes.
+Rebuild them through the owning command when verification needs them.
+
+## Dependencies And Lockfiles
+
+The package has no runtime dependencies. `mazey` is a development-only build and website dependency:
+`project.config.js` uses `deepFreeze`, `scripts/project-config-utils.js` uses repository parsing and
+JavaScript global-name helpers, and `site/theme.ts` uses the public theme-preference APIs. Verify the
+installed Mazey signatures before changing these call sites, and do not copy Mazey into the published
+runtime merely because the build uses it.
+
+The repository tracks `pnpm-lock.yaml` and ignores `package-lock.json`, but documented commands and
+GitHub Actions use npm and `npm install`. Preserve this mixed policy unless the task explicitly
+changes package-manager or lockfile behavior. Do not add, remove, or regenerate a lockfile as an
+incidental side effect.
 
 ## Tests And Quality Checks
 
@@ -157,6 +192,7 @@ Run commands from this directory. Match verification effort to the change:
 npm run typecheck
 npm run lint
 npm run build
+npm run package:validate
 npm run test
 npm run format:check
 ```
@@ -186,14 +222,19 @@ For narrow script changes, use focused checks such as:
 node --check scripts/change-package-name.js
 ```
 
-Add or update Jest tests when public behavior changes. Keep tests deterministic and independent of
-network services. For packaging changes, inspect the generated `lib` files and the `npm pack`
-manifest, not only whether Rollup exits successfully.
+Jest runs as ESM through Node.js with `--experimental-vm-modules`. Most tests import maintained
+TypeScript source directly; package-format verification belongs to `npm run build` and
+`npm run package:validate`. Add or update Jest tests when public behavior changes. Keep tests
+deterministic and independent of network services. For packaging changes, inspect the generated
+`lib` files and the `npm pack` manifest, not only whether Rollup exits successfully.
 
-Website and Pages changes are covered by dedicated suites:
+The test suites have these responsibilities:
 
+- `test/example.test.js`: public `createGreeting` behavior.
 - `test/playground.test.tsx`: controlled React form behavior, errors, announcements, and shared
   theme/PWA integration.
+- `test/project-config.test.js`: package/repository derivation, configured assets, manifest identity,
+  and immutable central configuration.
 - `test/seo.test.js`: API HTML transformation, canonical metadata, favicon paths, headings, and
   repeatable Pages assembly.
 - `test/theme.test.js`: system/light/dark preference and dynamic browser theme-color behavior.
@@ -222,6 +263,10 @@ Update `guides/CUSTOMIZE.md` when identity-bearing files, generated outputs, Pag
 steps change. Keep it explicit that the npm package name, repository name, Pages base path, browser
 bundle filename, and IIFE global can be different values.
 
+Update `guides/GITHUB_ACTIONS.md` when the reusable downstream workflow examples or their stated
+requirements change. Do not make that guide silently imply that its simplified npm-only publication
+example matches this repository's npm, GitHub Packages, and tagging workflow.
+
 TypeDoc configuration lives in `tsconfig.json`. `npm run docs` generates TypeDoc at `./docs/api`,
 builds the Webpack website and playground into `dist-dev`, runs `scripts/build-pages.js`, and
 validates the final artifact. The Pages assembly copies Webpack output, preserves the TypeDoc API
@@ -237,8 +282,10 @@ deterministic API transformation, or build scripts instead. The final artifact m
 include `robots.txt`, `sitemap.xml`, unique page metadata, one primary heading per page, crawlable
 content, and working project-subpath links. Keep theme values `system`, `light`, and `dark` stored
 under `mazey-npm-template-theme`, and apply the resolved value through Bootstrap's
-`data-bs-theme` attribute. `site/theme.ts` also keeps the browser's theme-color metadata and
-TypeDoc's `tsd-theme` preference synchronized.
+`data-bs-theme` attribute. The Home, Playground, and TypeDoc project navbars expose a two-state
+light/dark button; TypeDoc's native Settings selector remains the three-state `OS`, `Light`, and
+`Dark` control. `site/theme.ts` keeps both controls, browser theme-color metadata, and TypeDoc's
+`tsd-theme` preference synchronized.
 
 Canonical URLs, Open Graph URLs, and structured data should use the production site URL. Assets
 that the browser must load from the current deployment, including the favicon, manifest, worker,
@@ -279,18 +326,21 @@ Husky hooks live in `.husky/pre-commit` and `.husky/commit-msg`. Keep them execu
 with `#!/usr/bin/env sh`. This project uses Husky 9, so do not add the deprecated `husky.sh`
 bootstrap lines that will fail in Husky 10.
 
-The pre-commit hook runs lint-staged. The commit-message hook runs commitlint with the conventional
-configuration in `commitlint.config.js`. Preserve these checks when changing hook commands.
+The pre-commit hook runs lint-staged. `.lintstagedrc` formats JavaScript, TypeScript, JSON, Markdown,
+and YAML files and applies ESLint fixes to JavaScript and TypeScript. The commit-message hook runs
+commitlint with the conventional configuration in `commitlint.config.js`. Preserve these checks when
+changing hook commands.
 
 Follow the existing Prettier and ESLint configuration. Keep comments sparse and useful. Prefer
 small, reversible changes over broad cleanup unrelated to the request.
 
 ## Publishing And CI
 
-The npm publishing workflow is `.github/workflows/publish-npm.yml`. It tests before publishing to
-npm and GitHub Packages, derives the filename-safe package base from `package.json` through the pure
-configuration helper, temporarily scopes the package to the repository owner, restores modified
-files, and creates a version tag.
+The npm publishing workflow is `.github/workflows/publish-npm.yml`. Pull requests targeting `main`
+or `release/v*` and manual dispatches run its validation job without publishing. Pushes to
+`release/v*` run `npm run preview`, then publish to npm and GitHub Packages, derive the filename-safe
+package base from `package.json` through the pure configuration helper, temporarily scope the package
+to the repository owner, restore modified files, and create a version tag.
 
 - Keep `contents: write` for pushing release tags.
 - Keep `packages: write` for GitHub Packages publishing.
@@ -300,10 +350,10 @@ files, and creates a version tag.
 - Do not expose registry tokens in logs or committed configuration.
 - Do not publish, push tags, or trigger releases unless the user explicitly requests it.
 
-The Pages workflow is `.github/workflows/pages.yml`. It deploys on pushes to `main` and manual
-`workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`, checks types
-and lint, runs Jest, builds the complete Pages site with `npm run docs`, explicitly validates SEO and
-PWA output, uploads `docs`, and deploys through the `github-pages` environment.
+The Pages workflow is `.github/workflows/pages.yml`. It deploys on pushes to `main` and `release/v*`
+and on manual `workflow_dispatch` runs. It uses Node.js 22, installs dependencies with `npm install`,
+checks types and lint, runs Jest serially, builds and validates the complete Pages site with
+`npm run docs`, uploads `docs`, and deploys through the `github-pages` environment.
 
 - Keep its explicit permissions: `contents: read`, `pages: write`, and `id-token: write`.
 - Keep the deployment step id as `deployment`; the environment URL reads

@@ -1,5 +1,7 @@
 /** @jest-environment jsdom */
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { jest } from "@jest/globals";
 import { initializeNavigation } from "../site/navigation.ts";
 import { initializeThemeControls } from "../site/theme.ts";
@@ -8,155 +10,268 @@ import projectConfig from "../project.config.js";
 const { colorPrimary, colorLight, colorDark, storageKey } =
   projectConfig.site.theme;
 
-afterEach(() => {
-  jest.restoreAllMocks();
-  localStorage.clear();
-  history.replaceState({}, "", "/");
-});
+function mediaQuery(initialMatches = false, legacy = false) {
+  const listeners = [];
+  const media = {
+    matches: initialMatches,
+    change(matches) {
+      media.matches = matches;
+      for (const listener of listeners) listener({ matches });
+    },
+  };
 
-function renderThemeControl() {
+  if (legacy) {
+    media.addListener = jest.fn((listener) => listeners.push(listener));
+    media.removeListener = jest.fn((listener) => {
+      const index = listeners.indexOf(listener);
+      if (index !== -1) listeners.splice(index, 1);
+    });
+  } else {
+    media.addEventListener = jest.fn((_name, listener) =>
+      listeners.push(listener),
+    );
+    media.removeEventListener = jest.fn((_name, listener) => {
+      const index = listeners.indexOf(listener);
+      if (index !== -1) listeners.splice(index, 1);
+    });
+  }
+
+  return media;
+}
+
+function renderThemeControls({ typeDoc = false } = {}) {
   document.documentElement.removeAttribute("data-theme-controls-ready");
   document.head.innerHTML = `
     <meta name="theme-color" content="${colorPrimary}" data-theme-color
       data-theme-color-light="${colorLight}" data-theme-color-dark="${colorDark}">
   `;
   document.body.innerHTML = `
-    <label>Theme
-      <select data-theme-select>
-        <option value="system">System</option>
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-      </select>
-    </label>
+    <button type="button" data-theme-toggle
+      aria-label="Current theme: Light. Switch to dark theme.">
+      <svg data-theme-icon="light" aria-hidden="true" focusable="false"></svg>
+      <svg data-theme-icon="dark" aria-hidden="true" focusable="false" hidden></svg>
+    </button>
+    ${
+      typeDoc
+        ? `<select id="tsd-theme">
+            <option value="os">OS</option>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>`
+        : ""
+    }
   `;
 }
 
-test("initial theme follows URL, storage, system, and fallback precedence", () => {
-  renderThemeControl();
+function installMatchMedia(media) {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    value: jest.fn(() => media),
+  });
+}
+
+function themeButton() {
+  return document.querySelector("[data-theme-toggle]");
+}
+
+function expectRenderedTheme(theme) {
+  const button = themeButton();
+  const lightIcon = button.querySelector('[data-theme-icon="light"]');
+  const darkIcon = button.querySelector('[data-theme-icon="dark"]');
+  const current = theme === "light" ? "Light" : "Dark";
+  const next = theme === "light" ? "dark" : "light";
+
+  expect(document.documentElement.dataset.bsTheme).toBe(theme);
+  expect(document.documentElement.dataset.theme).toBe(theme);
+  expect(document.documentElement.style.colorScheme).toBe(theme);
+  expect(button.getAttribute("aria-label")).toBe(
+    `Current theme: ${current}. Switch to ${next} theme.`,
+  );
+  expect(button.hasAttribute("aria-pressed")).toBe(false);
+  expect(lightIcon.hasAttribute("hidden")).toBe(theme !== "light");
+  expect(darkIcon.hasAttribute("hidden")).toBe(theme !== "dark");
+  expect(document.querySelector('meta[name="theme-color"]').content).toBe(
+    theme === "light" ? colorLight : colorDark,
+  );
+}
+
+afterEach(() => {
+  jest.restoreAllMocks();
+  localStorage.clear();
+  history.replaceState({}, "", "/");
+  document.documentElement.removeAttribute("data-theme-controls-ready");
+  document.documentElement.removeAttribute("data-bs-theme");
+  document.documentElement.removeAttribute("data-theme");
+  document.documentElement.style.removeProperty("color-scheme");
+});
+
+test("navbar templates use the official inline Bootstrap theme icons", () => {
+  const sunSvg = readFileSync(
+    path.join("node_modules", "bootstrap-icons", "icons", "sun-fill.svg"),
+    "utf8",
+  );
+  const moonSvg = readFileSync(
+    path.join(
+      "node_modules",
+      "bootstrap-icons",
+      "icons",
+      "moon-stars-fill.svg",
+    ),
+    "utf8",
+  );
+  const iconPaths = [
+    ...sunSvg.matchAll(/d="([^"]+)"/g),
+    ...moonSvg.matchAll(/d="([^"]+)"/g),
+  ].map((match) => match[1]);
+
+  for (const file of ["site/index.html", "examples/index.html"]) {
+    const html = readFileSync(file, "utf8");
+    expect(html).toContain("button");
+    expect(html).toContain("data-theme-toggle");
+    expect(html).toContain('type="button"');
+    expect(html).toContain(
+      'aria-label="Current theme: Light. Switch to dark theme."',
+    );
+    expect(html).toContain('data-theme-icon="light"');
+    expect(html).toMatch(/data-theme-icon="dark"\s+hidden/);
+    expect(html).not.toContain("data-theme-select");
+    expect(html).not.toContain("aria-pressed");
+    for (const iconPath of iconPaths) expect(html).toContain(iconPath);
+  }
+});
+
+test("URL preference overrides storage and initializes every theme side effect", () => {
+  renderThemeControls({ typeDoc: true });
   history.replaceState({}, "", "/?theme=dark");
   localStorage.setItem(storageKey, "light");
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => ({
-      matches: false,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }),
-  });
-  const cleanup = initializeThemeControls(storageKey);
-  const select = document.querySelector("[data-theme-select]");
+  installMatchMedia(mediaQuery(false));
 
-  expect(document.documentElement.dataset.bsTheme).toBe("dark");
-  expect(select.value).toBe("dark");
+  const cleanup = initializeThemeControls(storageKey);
+
+  expectRenderedTheme("dark");
   expect(localStorage.getItem(storageKey)).toBe("dark");
   expect(localStorage.getItem("tsd-theme")).toBe("dark");
+  expect(document.querySelector("#tsd-theme").value).toBe("dark");
   cleanup();
 });
 
-test("persisted theme overrides the system color scheme", () => {
-  renderThemeControl();
-  localStorage.setItem(storageKey, "light");
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => ({
-      matches: true,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }),
-  });
+test.each([
+  ["light", true],
+  ["dark", false],
+])(
+  "saved %s preference ignores later system changes",
+  (preference, matches) => {
+    renderThemeControls();
+    localStorage.setItem(storageKey, preference);
+    const media = mediaQuery(matches);
+    installMatchMedia(media);
+
+    const cleanup = initializeThemeControls(storageKey);
+    expectRenderedTheme(preference);
+    media.change(!matches);
+    expectRenderedTheme(preference);
+    cleanup();
+  },
+);
+
+test("system preference follows both media directions and keeps TypeDoc on OS", () => {
+  renderThemeControls({ typeDoc: true });
+  localStorage.setItem(storageKey, "system");
+  const media = mediaQuery(false);
+  installMatchMedia(media);
+
   const cleanup = initializeThemeControls(storageKey);
-
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-  expect(document.querySelector("[data-theme-select]").value).toBe("light");
-  cleanup();
-});
-
-test("system preference tracks color-scheme changes until the user selects a theme", () => {
-  renderThemeControl();
-  const mediaListeners = [];
-  const media = {
-    matches: false,
-    addEventListener: (_name, listener) => mediaListeners.push(listener),
-    removeEventListener: jest.fn(),
-  };
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => media,
-  });
-  const cleanup = initializeThemeControls(storageKey);
-  const select = document.querySelector("[data-theme-select]");
-
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-  expect(select.value).toBe("system");
-  media.matches = true;
-  mediaListeners[0]();
-  expect(document.documentElement.dataset.bsTheme).toBe("dark");
-  expect(document.querySelector('meta[name="theme-color"]').content).toBe(
-    colorDark,
-  );
-
-  select.value = "light";
-  select.dispatchEvent(new Event("change", { bubbles: true }));
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-  expect(document.querySelector('meta[name="theme-color"]').content).toBe(
-    colorLight,
-  );
-  expect(localStorage.getItem(storageKey)).toBe("light");
-  expect(localStorage.getItem("tsd-theme")).toBe("light");
-  expect(mediaListeners).toHaveLength(1);
-
-  media.matches = false;
-  mediaListeners[0]();
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-  cleanup();
-});
-
-test("invalid stored preferences fall through to the system theme", () => {
-  renderThemeControl();
-  localStorage.setItem(storageKey, "corrupted");
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => ({
-      matches: true,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }),
-  });
-  const cleanup = initializeThemeControls(storageKey);
-
-  expect(document.documentElement.dataset.bsTheme).toBe("dark");
-  expect(document.querySelector("[data-theme-select]").value).toBe("system");
+  expectRenderedTheme("light");
+  expect(document.querySelector("#tsd-theme").value).toBe("os");
   expect(localStorage.getItem("tsd-theme")).toBe("os");
+
+  media.change(true);
+  expectRenderedTheme("dark");
+  expect(document.querySelector("#tsd-theme").value).toBe("os");
+  media.change(false);
+  expectRenderedTheme("light");
   cleanup();
 });
 
-test("theme initialization uses the light fallback without system detection", () => {
-  renderThemeControl();
+test.each([
+  [false, "dark"],
+  [true, "light"],
+])(
+  "first navbar click from system %s selects and persists %s",
+  (matches, expected) => {
+    renderThemeControls();
+    const media = mediaQuery(matches);
+    installMatchMedia(media);
+
+    const cleanup = initializeThemeControls(storageKey);
+    themeButton().click();
+    expectRenderedTheme(expected);
+    expect(localStorage.getItem(storageKey)).toBe(expected);
+    expect(localStorage.getItem("tsd-theme")).toBe(expected);
+
+    media.change(!matches);
+    expectRenderedTheme(expected);
+    cleanup();
+  },
+);
+
+test("repeated navbar toggles persist every explicit selection", () => {
+  renderThemeControls();
+  installMatchMedia(mediaQuery(false));
+  const setItem = jest.spyOn(Storage.prototype, "setItem");
+
+  const cleanup = initializeThemeControls(storageKey);
+  themeButton().click();
+  expectRenderedTheme("dark");
+  themeButton().click();
+  expectRenderedTheme("light");
+  themeButton().click();
+  expectRenderedTheme("dark");
+
+  expect(
+    setItem.mock.calls
+      .filter(([key]) => key === storageKey)
+      .map(([, value]) => value),
+  ).toEqual(["dark", "light", "dark"]);
+  cleanup();
+});
+
+test.each([
+  ["corrupted", true, "dark"],
+  [null, false, "light"],
+])(
+  "stored value %s falls through to the system theme",
+  (stored, matches, expected) => {
+    renderThemeControls();
+    if (stored !== null) localStorage.setItem(storageKey, stored);
+    installMatchMedia(mediaQuery(matches));
+
+    const cleanup = initializeThemeControls(storageKey);
+    expectRenderedTheme(expected);
+    expect(localStorage.getItem("tsd-theme")).toBe("os");
+    cleanup();
+  },
+);
+
+test("unavailable media queries use the light fallback", () => {
+  renderThemeControls();
   Object.defineProperty(window, "matchMedia", {
     configurable: true,
     value: () => {
       throw new Error("Media query unavailable");
     },
   });
-  const cleanup = initializeThemeControls(storageKey);
 
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-  expect(document.querySelector("[data-theme-select]").value).toBe("light");
+  const cleanup = initializeThemeControls(storageKey);
+  expectRenderedTheme("light");
+  expect(localStorage.getItem("tsd-theme")).toBe("light");
   cleanup();
 });
 
-test("unavailable storage does not prevent session-only theme selection", () => {
-  renderThemeControl();
-  const mediaListeners = [];
-  const media = {
-    matches: true,
-    addEventListener: (_name, listener) => mediaListeners.push(listener),
-    removeEventListener: jest.fn(),
-  };
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => media,
-  });
+test("failed persistence keeps the explicitly selected session theme", () => {
+  renderThemeControls();
+  const media = mediaQuery(true);
+  installMatchMedia(media);
   jest.spyOn(Storage.prototype, "getItem").mockImplementation(() => {
     throw new DOMException("Storage unavailable", "SecurityError");
   });
@@ -168,64 +283,97 @@ test("unavailable storage does not prevent session-only theme selection", () => 
   expect(() => {
     cleanup = initializeThemeControls(storageKey);
   }).not.toThrow();
-  expect(document.documentElement.dataset.bsTheme).toBe("dark");
-  const select = document.querySelector("[data-theme-select]");
-  select.value = "light";
-  expect(() =>
-    select.dispatchEvent(new Event("change", { bubbles: true })),
-  ).not.toThrow();
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-
-  media.matches = false;
-  mediaListeners[0]();
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
+  expectRenderedTheme("dark");
+  expect(() => themeButton().click()).not.toThrow();
+  expectRenderedTheme("light");
+  media.change(false);
+  expectRenderedTheme("light");
   cleanup();
 });
 
-test("unsupported control values are ignored without losing the selected theme", () => {
-  renderThemeControl();
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => ({
-      matches: false,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-    }),
+test("TypeDoc Settings and navbar remain synchronized without recursive changes", () => {
+  renderThemeControls({ typeDoc: true });
+  const media = mediaQuery(true);
+  installMatchMedia(media);
+  const control = document.querySelector("#tsd-theme");
+  const observedChanges = jest.fn(() => {
+    document.documentElement.dataset.theme = control.value;
+    localStorage.setItem("tsd-theme", control.value);
+  });
+  control.addEventListener("change", observedChanges);
+
+  const cleanup = initializeThemeControls(storageKey);
+  expect(control.value).toBe("os");
+  expectRenderedTheme("dark");
+
+  control.value = "light";
+  control.dispatchEvent(new Event("change", { bubbles: true }));
+  expectRenderedTheme("light");
+  expect(localStorage.getItem(storageKey)).toBe("light");
+  expect(observedChanges).toHaveBeenCalledTimes(1);
+
+  themeButton().click();
+  expectRenderedTheme("dark");
+  expect(control.value).toBe("dark");
+  expect(observedChanges).toHaveBeenCalledTimes(1);
+
+  control.value = "os";
+  control.dispatchEvent(new Event("change", { bubbles: true }));
+  expectRenderedTheme("dark");
+  expect(localStorage.getItem(storageKey)).toBe("system");
+  expect(localStorage.getItem("tsd-theme")).toBe("os");
+  expect(observedChanges).toHaveBeenCalledTimes(2);
+
+  media.change(false);
+  expectRenderedTheme("light");
+  expect(control.value).toBe("os");
+  cleanup();
+});
+
+test("unsupported TypeDoc theme values restore the last valid theme", () => {
+  renderThemeControls({ typeDoc: true });
+  installMatchMedia(mediaQuery(false));
+  const control = document.querySelector("#tsd-theme");
+  control.addEventListener("change", () => {
+    document.documentElement.dataset.theme = control.value;
+    localStorage.setItem("tsd-theme", control.value);
   });
   const cleanup = initializeThemeControls(storageKey);
-  const select = document.querySelector("[data-theme-select]");
-  const unsupported = document.createElement("option");
-  unsupported.value = "unsupported";
-  unsupported.textContent = "Unsupported";
-  select.append(unsupported);
-  select.value = unsupported.value;
+  control.append(new Option("Unsupported", "unsupported"));
+  control.value = "unsupported";
+  control.dispatchEvent(new Event("change", { bubbles: true }));
 
-  expect(() =>
-    select.dispatchEvent(new Event("change", { bubbles: true })),
-  ).not.toThrow();
-  expect(document.documentElement.dataset.bsTheme).toBe("light");
-  expect(select.value).toBe("system");
+  expectRenderedTheme("light");
+  expect(control.value).toBe("os");
+  expect(localStorage.getItem("tsd-theme")).toBe("os");
   expect(localStorage.getItem(storageKey)).toBeNull();
   cleanup();
 });
 
-test("theme changes support legacy MediaQueryList listeners", () => {
-  renderThemeControl();
-  localStorage.clear();
-  const media = {
-    matches: false,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-  };
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    value: () => media,
-  });
-  const cleanup = initializeThemeControls(storageKey);
+test("Mazey registers and idempotently cleans up standard media listeners", () => {
+  renderThemeControls();
+  const media = mediaQuery(false);
+  installMatchMedia(media);
 
-  expect(media.addListener).toHaveBeenCalledTimes(1);
+  const cleanup = initializeThemeControls(storageKey);
+  const duplicateCleanup = initializeThemeControls(storageKey);
+  expect(media.addEventListener).toHaveBeenCalledTimes(1);
+  duplicateCleanup();
   cleanup();
-  expect(media.removeListener).toHaveBeenCalledTimes(1);
+  cleanup();
+  expect(media.removeEventListener).toHaveBeenCalledTimes(1);
+});
+
+test("Mazey leaves legacy-only media listeners untouched", () => {
+  renderThemeControls();
+  const media = mediaQuery(false, true);
+  installMatchMedia(media);
+
+  const cleanup = initializeThemeControls(storageKey);
+  expect(media.addListener).not.toHaveBeenCalled();
+  cleanup();
+  cleanup();
+  expect(media.removeListener).not.toHaveBeenCalled();
 });
 
 test("Bootstrap navigation closes on Escape and restores toggle focus", () => {

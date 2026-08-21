@@ -22,8 +22,25 @@ import projectConfig from "../project.config.js";
 
 const { displayName } = projectConfig.brand;
 const { pages } = projectConfig.site;
+const bootstrapThemeIconPaths = ["sun-fill.svg", "moon-stars-fill.svg"].flatMap(
+  (file) =>
+    [
+      ...readFileSync(
+        path.join(
+          process.cwd(),
+          "node_modules",
+          "bootstrap-icons",
+          "icons",
+          file,
+        ),
+        "utf8",
+      ).matchAll(/d="([^"]+)"/g),
+    ].map((match) => match[1]),
+);
 
-const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"><button id="tsd-search-trigger" aria-label="Search"></button><dialog id="tsd-search"><input id="tsd-search-input"><ul id="tsd-search-results"></ul></dialog></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main></body></html>`;
+const typeDocThemeSelector =
+  '<div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div>';
+const typeDocHtml = `<!doctype html><html><head><title>${displayName}</title><meta name="description" content="old"><link rel="canonical" href="https://example.com/"><link rel="icon" href="old.png"></head><body><script>document.body.style.display="none"</script><header><div class="tsd-toolbar-contents container"><button id="tsd-search-trigger" aria-label="Search"></button><dialog id="tsd-search"><input id="tsd-search-input"><ul id="tsd-search-results"></ul></dialog></div></header><div class="tsd-page-title"><h1>${displayName}</h1></div><main><h1>${displayName}</h1><h2>API</h2><p>Public API documentation content.</p></main>${typeDocThemeSelector}</body></html>`;
 
 function expectNavigationLabel(html, label) {
   const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -57,6 +74,9 @@ test("site navigation and hero styling follow the shared template convention", (
     expect(html).not.toContain(">API/Docs</a>");
     expect(html).not.toContain("localStorage.getItem");
     expect(html).not.toContain("THEME_STORAGE_KEY_JSON");
+    expect(html).toContain("data-theme-toggle");
+    expect(html).not.toContain("data-theme-select");
+    expect(html).not.toContain("aria-pressed");
   }
 
   expect(homeHtml).toContain('href="#install">Install</a>');
@@ -185,6 +205,19 @@ test("API metadata transformation is complete and idempotent", () => {
   expect(transformed.match(/<h([1-6])\b/i)?.[1]).toBe("1");
   expect(transformed).toContain('id="tsd-search-trigger"');
   expect(transformed).toContain('<dialog id="tsd-search"');
+  expect(transformed).toContain("data-theme-toggle");
+  expect(transformed).toContain(
+    'aria-label="Current theme: Light. Switch to dark theme."',
+  );
+  expect(transformed).not.toContain("data-theme-select");
+  expect(transformed).not.toContain("aria-pressed");
+  expect(transformed).toContain('data-theme-icon="light"');
+  expect(transformed).toContain('data-theme-icon="dark" hidden');
+  for (const iconPath of bootstrapThemeIconPaths)
+    expect(transformed).toContain(iconPath);
+  expect(transformed).toContain(typeDocThemeSelector);
+  expect(transformed.match(/id="tsd-theme"/g)).toHaveLength(1);
+  expect(transformed).not.toContain("mazey-api-theme");
   expect(transformed).not.toContain('document.body.style.display="none"');
   expect(transformed).not.toContain("localStorage.getItem");
   expect(transformed).not.toContain('localStorage.setItem("tsd-theme"');

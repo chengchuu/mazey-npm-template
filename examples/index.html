@@ -1,20 +1,265 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Test Page: mazey-npm-template</title>
-  <link rel="shortcut icon" type="image/png" href="//i.mazey.net/icon/fav/logo-dark-circle-transparent-144x144.png">
-  <style>
-    .box {
-      color: #333;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="box">
-      <span>Content: mazey-npm-template </span>
-    </div>
-  </div>
-</body>
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= PLAYGROUND_TITLE %></title>
+    <meta name="description" content="<%= PLAYGROUND_DESCRIPTION %>" />
+    <link rel="canonical" href="<%= PLAYGROUND_URL %>" />
+    <link rel="icon" href="<%= FAVICON_URL %>" type="image/png" />
+    <% if (MANIFEST_URL) { %>
+    <link rel="manifest" href="<%= MANIFEST_URL %>" />
+    <% } %>
+    <meta
+      name="theme-color"
+      content="<%= THEME_COLOR_PRIMARY %>"
+      data-theme-color
+      data-theme-color-light="<%= THEME_COLOR_LIGHT %>"
+      data-theme-color-dark="<%= THEME_COLOR_DARK %>"
+    />
+    <style>
+      :root {
+        --project-theme-primary: <%= THEME_COLOR_PRIMARY %>;
+        --project-theme-primary-hover: <%= THEME_PRIMARY_HOVER %>;
+        --project-theme-primary-active: <%= THEME_PRIMARY_ACTIVE %>;
+        --project-theme-primary-soft: <%= THEME_PRIMARY_SOFT %>;
+        --project-theme-primary-rgb: <%= THEME_PRIMARY_RGB %>;
+        --project-theme-primary-hover-rgb: <%= THEME_PRIMARY_HOVER_RGB %>;
+        --project-theme-primary-dark: <%= THEME_PRIMARY_DARK %>;
+        --project-theme-primary-dark-hover: <%= THEME_PRIMARY_DARK_HOVER %>;
+        --project-theme-primary-dark-active: <%= THEME_PRIMARY_DARK_ACTIVE %>;
+        --project-theme-primary-dark-soft: <%= THEME_PRIMARY_DARK_SOFT %>;
+        --project-theme-primary-dark-rgb: <%= THEME_PRIMARY_DARK_RGB %>;
+        --project-theme-primary-dark-hover-rgb: <%= THEME_PRIMARY_DARK_HOVER_RGB
+          %>;
+        --project-theme-light: <%= THEME_COLOR_LIGHT %>;
+        --project-theme-dark: <%= THEME_COLOR_DARK %>;
+      }
+    </style>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="<%= DISPLAY_NAME %>" />
+    <meta property="og:title" content="<%= PLAYGROUND_TITLE %>" />
+    <meta property="og:description" content="<%= PLAYGROUND_DESCRIPTION %>" />
+    <meta property="og:url" content="<%= PLAYGROUND_URL %>" />
+    <meta property="og:image" content="<%= OPEN_GRAPH_IMAGE_URL %>" />
+    <meta property="og:image:type" content="<%= OPEN_GRAPH_IMAGE_TYPE %>" />
+    <meta property="og:image:width" content="<%= OPEN_GRAPH_IMAGE_WIDTH %>" />
+    <meta property="og:image:height" content="<%= OPEN_GRAPH_IMAGE_HEIGHT %>" />
+    <meta property="og:image:alt" content="<%= OPEN_GRAPH_IMAGE_ALT %>" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="<%= PLAYGROUND_TITLE %>" />
+    <meta name="twitter:description" content="<%= PLAYGROUND_DESCRIPTION %>" />
+    <meta name="twitter:image" content="<%= OPEN_GRAPH_IMAGE_URL %>" />
+    <meta name="twitter:image:alt" content="<%= OPEN_GRAPH_IMAGE_ALT %>" />
+    <script type="application/ld+json">
+      <%= PLAYGROUND_JSON_LD %>
+    </script>
+  </head>
+  <body id="top">
+    <a class="skip-link" href="#main-content">Skip to playground controls</a>
+    <header class="site-header">
+      <nav
+        class="navbar navbar-expand-xl site-navbar"
+        aria-label="Primary navigation"
+        data-site-navbar
+      >
+        <div class="container">
+          <a class="navbar-brand d-flex align-items-center gap-2" href="../">
+            <img
+              class="brand-logo"
+              src="<%= LOGO_URL %>"
+              width="32"
+              height="32"
+              alt=""
+            />
+            <span><%= DISPLAY_NAME %></span>
+          </a>
+          <button
+            class="navbar-toggler"
+            type="button"
+            aria-controls="playground-navigation"
+            aria-expanded="false"
+            aria-label="Toggle project navigation"
+            data-nav-toggle
+          >
+            <span class="navbar-toggler-icon" aria-hidden="true"></span>
+          </button>
+          <div
+            id="playground-navigation"
+            class="navbar-collapse"
+            data-mobile-nav
+          >
+            <ul class="navbar-nav ms-auto align-items-xl-center gap-xl-1">
+              <li class="nav-item"><a class="nav-link" href="../">Home</a></li>
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="./">Playground</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../#install">Install</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../#usage">Usage</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="../api/">API</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= GITHUB_URL %>">GitHub</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="<%= NPM_URL %>">npm</a>
+              </li>
+            </ul>
+            <button
+              class="theme-toggle ms-xl-3"
+              type="button"
+              data-theme-toggle
+              aria-label="Current theme: Light. Switch to dark theme."
+            >
+              <svg
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                focusable="false"
+                data-theme-icon="light"
+              >
+                <path
+                  d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M8 0a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 0m0 13a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-1 0v-2A.5.5 0 0 1 8 13m8-5a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2a.5.5 0 0 1 .5.5M3 8a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1 0-1h2A.5.5 0 0 1 3 8m10.657-5.657a.5.5 0 0 1 0 .707l-1.414 1.415a.5.5 0 1 1-.707-.708l1.414-1.414a.5.5 0 0 1 .707 0m-9.193 9.193a.5.5 0 0 1 0 .707L3.05 13.657a.5.5 0 0 1-.707-.707l1.414-1.414a.5.5 0 0 1 .707 0m9.193 2.121a.5.5 0 0 1-.707 0l-1.414-1.414a.5.5 0 0 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .707M4.464 4.465a.5.5 0 0 1-.707 0L2.343 3.05a.5.5 0 1 1 .707-.707l1.414 1.414a.5.5 0 0 1 0 .708"
+                />
+              </svg>
+              <svg
+                width="16"
+                height="16"
+                fill="currentColor"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                focusable="false"
+                data-theme-icon="dark"
+                hidden
+              >
+                <path
+                  d="M6 .278a.77.77 0 0 1 .08.858 7.2 7.2 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277q.792-.001 1.533-.16a.79.79 0 0 1 .81.316.73.73 0 0 1-.031.893A8.35 8.35 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.75.75 0 0 1 6 .278"
+                />
+                <path
+                  d="M10.794 3.148a.217.217 0 0 1 .412 0l.387 1.162c.173.518.579.924 1.097 1.097l1.162.387a.217.217 0 0 1 0 .412l-1.162.387a1.73 1.73 0 0 0-1.097 1.097l-.387 1.162a.217.217 0 0 1-.412 0l-.387-1.162A1.73 1.73 0 0 0 9.31 6.593l-1.162-.387a.217.217 0 0 1 0-.412l1.162-.387a1.73 1.73 0 0 0 1.097-1.097zM13.863.099a.145.145 0 0 1 .274 0l.258.774c.115.346.386.617.732.732l.774.258a.145.145 0 0 1 0 .274l-.774.258a1.16 1.16 0 0 0-.732.732l-.258.774a.145.145 0 0 1-.274 0l-.258-.774a1.16 1.16 0 0 0-.732-.732l-.774-.258a.145.145 0 0 1 0-.274l.774-.258c.346-.115.617-.386.732-.732z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <section class="section-band" aria-labelledby="playground-title">
+        <div class="container">
+          <div class="section-heading">
+            <p class="text-uppercase fw-semibold text-muted-custom mb-2">
+              Interactive example
+            </p>
+            <h1 id="playground-title">Greeting API playground</h1>
+            <p>
+              Enter a name, choose punctuation, and activate the generate button
+              to run <code>createGreeting</code>. The result is displayed below,
+              and unexpected errors are reported next to the controls.
+            </p>
+          </div>
+
+          <div id="playground-root"></div>
+        </div>
+      </section>
+
+      <section
+        class="section-band section-band--muted"
+        aria-labelledby="supported-title"
+      >
+        <div class="container">
+          <div class="row g-4">
+            <article class="col-md-6">
+              <h2 id="supported-title" class="h4">What this demonstrates</h2>
+              <p>
+                The playground imports the same root API used by package
+                consumers. It demonstrates name trimming, blank-name fallback,
+                and optional punctuation without private module imports.
+              </p>
+            </article>
+            <article class="col-md-6">
+              <h2 class="h4">Continue with the documentation</h2>
+              <ul>
+                <li><a href="../">Return to the project home page</a></li>
+                <li><a href="../api/">Read the API documentation</a></li>
+                <li>
+                  <a href="<%= GITHUB_URL %>">View the GitHub repository</a>
+                </li>
+                <li><a href="<%= NPM_URL %>">Open the npm package page</a></li>
+              </ul>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside
+      class="pwa-update-notice"
+      aria-label="Website update"
+      data-pwa-update
+      hidden
+    >
+      <span
+        >A new version of the <%= DISPLAY_NAME %> website is available.</span
+      >
+      <button class="btn btn-primary btn-sm" type="button" data-pwa-update-now>
+        Update now
+      </button>
+    </aside>
+
+    <noscript>
+      <div class="container py-4">
+        <p class="alert alert-warning">
+          JavaScript is required to run the interactive greeting examples. You
+          can still read the <a href="../api/">API documentation</a>, visit the
+          <a href="../">project home page</a>, or view the
+          <a href="<%= GITHUB_URL %>">GitHub repository</a>.
+        </p>
+      </div>
+    </noscript>
+
+    <footer class="site-footer">
+      <div class="container d-lg-flex justify-content-between gap-4">
+        <p class="mb-3 mb-lg-0">
+          <strong><%= DISPLAY_NAME %> playground</strong><br />Runs the public
+          greeting API in your browser.
+        </p>
+        <nav aria-label="Footer navigation">
+          <ul class="list-inline d-flex flex-wrap gap-3">
+            <li><a href="../">Project home</a></li>
+            <li><a href="../api/">API documentation</a></li>
+            <li><a href="<%= GITHUB_URL %>">GitHub repository</a></li>
+            <li><a href="<%= NPM_URL %>">npm package</a></li>
+            <li data-pwa-install-container hidden>
+              <button
+                class="pwa-footer-install"
+                type="button"
+                data-pwa-install
+                hidden
+              >
+                Install app
+              </button>
+            </li>
+            <li data-pwa-install-help>
+              <a href="../#website-app-help">Website app help</a>
+            </li>
+          </ul>
+        </nav>
+        <span
+          class="visually-hidden"
+          role="status"
+          aria-live="polite"
+          data-pwa-status
+        ></span>
+      </div>
+    </footer>
+  </body>
 </html>

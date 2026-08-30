@@ -2,20 +2,23 @@
  * @author Cheng
  */
 
-/**
- * Foo foo foo, Foo description.
- *
- * @returns {boolean} true or false
- */
-export function foo(): boolean {
-  return true;
-}
+import type { CreateGreetingOptions } from "./typing";
+
+export type { CreateGreetingOptions } from "./typing";
 
 /**
- * Bar bar bar, Bar description.
+ * Create a friendly greeting message.
  *
- * @returns {boolean} true or false
+ * @param name - The name to include in the greeting.
+ * @param options - Optional formatting options.
+ * @returns The generated greeting message.
  */
-export function bar(): boolean {
-  return false;
+export function createGreeting(
+  name: string,
+  options: CreateGreetingOptions = {},
+): string {
+  const normalizedName = name.trim();
+  const punctuation = options.punctuation ?? "!";
+
+  return `Hello, ${normalizedName || "friend"}${punctuation}`;
 }

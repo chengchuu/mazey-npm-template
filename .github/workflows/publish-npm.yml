@@ -1,20 +1,21 @@
 name: Publish npm Packages
 
 env:
-  NODE_VERSION: '22'
-  PROJECT_NAME: 'mazey-npm-template'
+  NODE_VERSION: "22"
+
+permissions:
+  contents: read
 
 on:
   # Test on pull requests to main or release branches
   pull_request:
     branches:
       - main
-      - 'release/v*'
-  # Publish on pushes to release branches
+      - "release/v*"
+  # Publish
   push:
     branches:
-      - main
-      - 'release/v*'
+      - "release/v*"
   workflow_dispatch:
 
 jobs:
@@ -22,35 +23,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build package
-        run: npm run build --if-present
-
-      - name: Run tests
-        run: npm test
+      - name: Validate package and documentation
+        run: npm run preview
 
   publish:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
+    permissions:
+      contents: write
+      packages: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://registry.npmjs.org/'
+          registry-url: "https://registry.npmjs.org/"
 
       - name: Install dependencies
         run: npm install
@@ -65,7 +66,7 @@ jobs:
 
       - name: Configure .npmrc for GitHub Packages
         run: |
-          echo "@${{ github.actor }}:registry=https://npm.pkg.github.com/" > .npmrc
+          echo "@${{ github.repository_owner }}:registry=https://npm.pkg.github.com/" > .npmrc
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" >> .npmrc
 
       - name: Publish to GitHub Packages
@@ -73,7 +74,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          node scripts/change-package-name.js "@${{ github.actor }}/${{ env.PROJECT_NAME }}"
+          PROJECT_NAME=$(node --input-type=module -e 'import pkg from "./package.json" with { type: "json" }; import { packageDetails } from "./scripts/project-config-utils.js"; process.stdout.write(packageDetails(pkg).bundleBaseName)')
+          node scripts/change-package-name.js "@${{ github.repository_owner }}/${PROJECT_NAME}"
           npm publish --registry=https://npm.pkg.github.com/
 
       - name: Restore modified files
@@ -83,7 +85,7 @@ jobs:
       - name: Create git tag for version
         if: success()
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=$(node --input-type=module -e 'import pkg from "./package.json" with { type: "json" }; process.stdout.write(pkg.version)')
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "v$VERSION" -m "Release v$VERSION"

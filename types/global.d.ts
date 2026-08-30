@@ -1,7 +1,7 @@
 /**
  * @author Cheng
  */
-import $ from "jquery";
+export {};
 
 declare global {
   interface PerformanceEntry {
@@ -33,10 +33,5 @@ declare global {
     column?: number;
     stack?: string;
     name?: string;
-  }
-
-  interface Window {
-    $: typeof $;
-    jQuery: typeof $;
   }
 }

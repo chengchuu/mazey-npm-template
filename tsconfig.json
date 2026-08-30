@@ -3,34 +3,28 @@
   "compilerOptions": {
     "target": "ES2015",
     "module": "ESNext",
-    "lib": ["es5", "DOM", "ScriptHost", "ESNext"],
-    "allowJs": true,
-    "declaration": true,
-    "declarationMap": true,
+    "lib": ["DOM", "DOM.Iterable", "ES2015"],
     "sourceMap": true,
-    "outDir": "./lib",
     "rootDir": ".",
-    "importHelpers": true,
     "strict": true,
-    "noImplicitThis": false,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "moduleResolution": "bundler",
-    "paths": {
-      "tslib": ["./node_modules/tslib/tslib.d.ts"],
-      "mazey": ["./node_modules/mazey/lib/index.d.ts"]
-    },
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "types": ["global", "node"],
-    "allowSyntheticDefaultImports": true,
+    "types": [],
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [
     "./src/**/*.ts",
+    "./examples/**/*.ts",
+    "./site/**/*.ts",
     "./types/**/*.ts"
   ],
+  "exclude": ["./coverage", "./dist-dev", "./docs", "./lib", "./node_modules"],
   "typedocOptions": {
-    "entryPoints": ["./src"],
-    "out": "docs"
+    "entryPoints": ["./src/index.ts"],
+    "out": "./docs/api",
+    "highlightLanguages": ["bash", "html", "javascript", "typescript"]
   }
 }

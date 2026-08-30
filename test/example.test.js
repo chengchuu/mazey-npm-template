@@ -1,0 +1,18 @@
+/**
+ * @jest-environment node
+ */
+import { createGreeting } from "../src/index.ts";
+
+test("creates a default greeting", () => {
+  expect(createGreeting("Cheng")).toBe("Hello, Cheng!");
+});
+
+test("creates a greeting with custom punctuation", () => {
+  expect(createGreeting("community", { punctuation: "." })).toBe(
+    "Hello, community.",
+  );
+});
+
+test("falls back to a friendly name when input is blank", () => {
+  expect(createGreeting("   ")).toBe("Hello, friend!");
+});

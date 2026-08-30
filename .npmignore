@@ -23,7 +23,6 @@ scripts/
 # Code Linters & Formatters
 .editorconfig
 .eslintignore
-.dockerignore
 .lintstagedrc
 .prettierignore
 .prettierrc
@@ -67,5 +66,4 @@ README_ZH.md
 Thumbs.db
 
 # Additional files
-Dockerfile
 AGENTS.md

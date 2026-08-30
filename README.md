@@ -1,94 +1,137 @@
-⚠️ Note: The project is a template for npm. Please don't use it directly.
+> **Note:** This package is a working npm library template. Use it as a starting point and replace
+> the sample package identity and API before publishing your own library.
 
 # mazey-npm-template
 
-[![npm version][npm-image]][npm-url]
-[![l][l-image]][l-url]
+[![npm version][npm-version-image]][npm-url]
+[![license][license-image]][license-url]
 
-[npm-image]: https://img.shields.io/npm/v/mazey-npm-template
-[npm-url]: https://npmjs.org/package/mazey-npm-template
-[l-image]: https://img.shields.io/npm/l/mazey-npm-template
-[l-url]: https://github.com/chengchuu/mazey-npm-template
+[npm-version-image]: https://img.shields.io/npm/v/mazey-npm-template.svg
+[npm-url]: https://www.npmjs.com/package/mazey-npm-template
+[license-image]: https://img.shields.io/npm/l/mazey-npm-template.svg
+[license-url]: https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE
 
-npm template description.
+A TypeScript template for publishing npm packages in CJS, ESM, and browser formats.
 
-## Install
+## Installation
 
 Use mazey-npm-template via [npm](https://www.npmjs.com/package/mazey-npm-template).
 
 ```bash
-npm install mazey-npm-template --save
+npm install mazey-npm-template
 ```
 
 Of course, you can also download this file and serve it yourself. The file locates at the `lib/mazey-npm-template.min.js`.
 
+## Quick Start
+
+```ts
+import { createGreeting } from "mazey-npm-template";
+
+const message = createGreeting("Cheng");
+
+console.log(message); // "Hello, Cheng!"
+```
+
 ## Usage
 
-Foo foo foo example.
+### ESM And TypeScript
 
-```javascript
-import { foo } from "mazey-npm-template";
+Import runtime values and public types from the package root:
 
-foo(); // true
+```ts
+import {
+  createGreeting,
+  packageInfo,
+  type CreateGreetingOptions,
+} from "mazey-npm-template";
+
+const options: CreateGreetingOptions = {
+  punctuation: ".",
+};
+
+console.log(createGreeting("community", options)); // "Hello, community."
+console.log(packageInfo.name); // "mazey-npm-template"
 ```
 
-Bar bar bar example.
+### CommonJS
 
-```javascript
-import { bar } from "mazey-npm-template";
+```js
+const { createGreeting, packageInfo } = require("mazey-npm-template");
 
-bar(); // false
+console.log(createGreeting("CommonJS")); // "Hello, CommonJS!"
+console.log(packageInfo.version);
 ```
 
-## Contributing
+### Browser Script
 
-### Development Environment
+Load the IIFE bundle directly from a CDN when a package manager or bundler is not available:
 
-| Dependency | Version  |
-|------------|----------|
-| Node.js    | v22.21.1 |
-| TypeScript | v5.1.6   |
+```html
+<script src="https://cdn.jsdelivr.net/npm/mazey-npm-template/lib/mazey-npm-template.min.js"></script>
+<script>
+  const { createGreeting } = MAZEY_NPM_TEMPLATE;
 
-### Scripts
+  document.querySelector("#message").textContent = createGreeting("browser");
+</script>
+```
 
-Install Dependencies:
+Pin an exact package version in the CDN URL for production applications.
+
+## API Reference
+
+### `createGreeting(name, options?)`
+
+Creates a greeting and returns it as a string.
+
+| Parameter             | Type                    | Description                                    |
+| --------------------- | ----------------------- | ---------------------------------------------- |
+| `name`                | `string`                | Name included in the greeting.                 |
+| `options`             | `CreateGreetingOptions` | Optional output formatting.                    |
+| `options.punctuation` | `string`                | Final punctuation. Defaults to an exclamation. |
+
+Whitespace is trimmed from `name`. A blank name falls back to `"friend"`.
+
+```ts
+createGreeting("Cheng"); // "Hello, Cheng!"
+createGreeting("  team  ", { punctuation: "." }); // "Hello, team."
+createGreeting("   "); // "Hello, friend!"
+```
+
+### `packageInfo`
+
+Exposes the package name and version:
+
+```ts
+interface PackageInfo {
+  name: string;
+  version: string;
+}
+```
+
+## Package Formats
+
+| Consumer           | Package field | Published file                  |
+| ------------------ | ------------- | ------------------------------- |
+| ESM and bundlers   | `module`      | `lib/index.esm.js`              |
+| Node.js CommonJS   | `main`        | `lib/index.cjs.js`              |
+| Browser/CDN        | `unpkg`       | `lib/mazey-npm-template.min.js` |
+| TypeScript tooling | `types`       | `lib/index.d.ts`                |
+
+Source maps are generated for all JavaScript bundles. The root declarations also load the
+published browser type augmentations from `lib/global.d.ts`.
+
+## Development
+
+Repository workflows use Node.js 22. Install dependencies and start the example development server:
 
 ```bash
-npm i
-```
-
-Development:
-
-```bash
+npm install
 npm run dev
 ```
 
-Build:
-
-```bash
-npm run build
-```
-
-Test:
-
-```bash
-npm run test
-```
-
-Documentation:
-
-```bash
-npm run docs
-```
-
-Docker:
-
-```bash
-docker compose up -d --build
-```
-
-Visit: <http://localhost:8080>
+The example is served at <http://localhost:8080> and imports the public API directly from `src`.
 
 ## License
 
-This software is released under the terms of the [MIT license](https://github.com/chengchuu/mazey-npm-template/blob/main/LICENSE).
+This project is released under the [MIT License][license-url].

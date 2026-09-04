@@ -21,7 +21,8 @@ No npm package API changes are required. Keep
     `listenMediaQueryChanges`.
   - Persist only `light` or `dark` through `setThemePreference()`.
   - Keep the selected theme active for the session when persistence returns `false`.
-  - Preserve Mazey's existing explicit `?theme=light|dark` behavior.
+  - Preserve Mazey's key-specific, read-only URL preference behavior. For this template, the
+    parameter is `?mazey-npm-template-theme=light|dark`.
   - Do not write the project storage key when the initial theme only came from the OS. TypeDoc's
     separate `tsd-theme` value may still be synchronized to the concrete theme.
 - Restrict TypeDoc to two states during Pages assembly:

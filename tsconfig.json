@@ -19,7 +19,7 @@
       "mazey": ["./node_modules/mazey/lib/index.d.ts"]
     },
     "typeRoots": ["./node_modules/@types", "./types"],
-    "types": ["global", "node"],
+    "types": ["global"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

@@ -24,20 +24,18 @@ Of course, you can also download this file and serve it yourself. The file locat
 
 ## Usage
 
-Foo foo foo example.
+Import the package in your application code.
 
-```javascript
-import { foo } from "mazey-npm-template";
+```typescript
+import { createGreeting, packageInfo } from "mazey-npm-template";
 
-foo(); // true
-```
+createGreeting("Cheng"); // "Hello, Cheng!"
 
-Bar bar bar example.
+createGreeting("community", {
+  punctuation: ".",
+}); // "Hello, community."
 
-```javascript
-import { bar } from "mazey-npm-template";
-
-bar(); // false
+packageInfo.name; // "mazey-npm-template"
 ```
 
 ## Contributing

@@ -11,13 +11,13 @@ module.exports = {
   },
   output: {
     filename: "[name].js",
-    path: _resolve("../dist"),
+    path: _resolve("../dist-dev"),
   },
   devServer: {
     port: 8080,
     host: "0.0.0.0",
     static: {
-      directory: _resolve("../dist"),
+      directory: _resolve("../dist-dev"),
     },
     allowedHosts: [
       ".mazey.net",
@@ -34,11 +34,11 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      filename: _resolve("../dist/index.html"),
+      filename: _resolve("../dist-dev/index.html"),
       template: _resolve("../examples/index.html"),
       inject: true,
     }),
-    new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: [ _resolve("../dist") ] }),
+    new CleanWebpackPlugin({ cleanOnceBeforeBuildPatterns: [ _resolve("../dist-dev") ] }),
   ],
   resolve: {
     extensions: [ ".tsx", ".ts", ".js" ],

@@ -44,7 +44,7 @@ const plugins = [
   }),
 ];
 const iifePlugins = [];
-const dTsConf = {
+const typingDtsConf = {
   input: _resolve("../src/typing.d.ts"),
   // https://rollupjs.org/guide/en/#outputformat
   output: [
@@ -71,7 +71,7 @@ const indexDtsConf = {
   ],
   external: [],
 };
-const gTsConf = {
+const globalDtsConf = {
   input: _resolve("../types/global.d.ts"),
   output: [
     {
@@ -144,6 +144,6 @@ export default [
     external,
   },
   indexDtsConf,
-  dTsConf,
-  gTsConf,
+  typingDtsConf,
+  globalDtsConf,
 ];

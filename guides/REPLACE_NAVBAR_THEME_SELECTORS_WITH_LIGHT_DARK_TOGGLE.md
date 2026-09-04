@@ -15,7 +15,9 @@ No npm package API changes are introduced. Keep
 - When neither a URL preference nor a persisted preference exists, Mazey resolves the OS color
   scheme once during initialization. The project does not persist that fallback or react to later
   `prefers-color-scheme` changes.
-- `?theme=light` and `?theme=dark` override storage through Mazey's existing resolution behavior.
+- URL preferences use the configured storage key as the query parameter. For this template,
+  `?mazey-npm-template-theme=light` and `?mazey-npm-template-theme=dark` override storage without
+  rewriting it.
 - Every explicit navbar or TypeDoc selection is persisted with
   `setThemePreference(storageKey, theme)`.
 - A failed storage write does not block the selected theme from applying for the current session.

@@ -5,7 +5,7 @@ import {
   repositoryDetails,
 } from "./scripts/project-config-utils.js";
 
-const shortName = "mazey template";
+const shortName = "npm Template";
 const packageConfig = packageDetails(pkg);
 const repository = repositoryDetails(pkg.repository);
 const siteUrl = new URL(pkg.homepage);

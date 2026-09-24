@@ -83,8 +83,8 @@ importers:
         specifier: ^16.4.0
         version: 16.4.0
       mazey:
-        specifier: ^5.9.1
-        version: 5.9.1
+        specifier: ^5.10.1
+        version: 5.10.1
       mini-css-extract-plugin:
         specifier: ^2.10.2
         version: 2.10.2(webpack@5.109.2)
@@ -325,6 +325,14 @@ packages:
     resolution:
       {
         integrity: sha512-E8lTAYNB1KW+FH+VGJuZM1ioAx2E6oVlvQFRrf5P8ZZmsiJXYAD9vTFV7yyEURNzgh1dFqMZuO6tUwcARbqFCA==,
+      }
+    engines: { node: ">=6.0.0" }
+    hasBin: true
+
+  "@babel/parser@7.29.9":
+    resolution:
+      {
+        integrity: sha512-CjXrNHTnvqBVqHgdBysY3vk2T8tpJHb5/RMeHJBTyVa9xgugCB0CJTx/3oO8RV2QRQP391RWpB7D6hLjm8V9uA==,
       }
     engines: { node: ">=6.0.0" }
     hasBin: true
@@ -1846,6 +1854,7 @@ packages:
     engines: { node: ^22.20 || ^24.12 || >=25 }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@napi-rs/wasm-runtime@1.2.3":
     resolution:
@@ -2078,6 +2087,7 @@ packages:
       }
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-arm-musleabihf@4.62.4":
     resolution:
@@ -2086,6 +2096,7 @@ packages:
       }
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   "@rollup/rollup-linux-arm64-gnu@4.62.4":
     resolution:
@@ -2094,6 +2105,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-arm64-musl@4.62.4":
     resolution:
@@ -2102,6 +2114,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@rollup/rollup-linux-loong64-gnu@4.62.4":
     resolution:
@@ -2110,6 +2123,7 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-loong64-musl@4.62.4":
     resolution:
@@ -2118,6 +2132,7 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
+    libc: [musl]
 
   "@rollup/rollup-linux-ppc64-gnu@4.62.4":
     resolution:
@@ -2126,6 +2141,7 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-ppc64-musl@4.62.4":
     resolution:
@@ -2134,6 +2150,7 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
+    libc: [musl]
 
   "@rollup/rollup-linux-riscv64-gnu@4.62.4":
     resolution:
@@ -2142,6 +2159,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-riscv64-musl@4.62.4":
     resolution:
@@ -2150,6 +2168,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   "@rollup/rollup-linux-s390x-gnu@4.62.4":
     resolution:
@@ -2158,6 +2177,7 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-x64-gnu@4.62.4":
     resolution:
@@ -2166,6 +2186,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@rollup/rollup-linux-x64-musl@4.62.4":
     resolution:
@@ -2174,6 +2195,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@rollup/rollup-openbsd-x64@4.62.4":
     resolution:
@@ -2695,6 +2717,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-arm64-musl@1.12.2":
     resolution:
@@ -2703,6 +2726,7 @@ packages:
       }
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-linux-loong64-gnu@1.12.2":
     resolution:
@@ -2711,6 +2735,7 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-loong64-musl@1.12.2":
     resolution:
@@ -2719,6 +2744,7 @@ packages:
       }
     cpu: [loong64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-linux-ppc64-gnu@1.12.2":
     resolution:
@@ -2727,6 +2753,7 @@ packages:
       }
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-riscv64-gnu@1.12.2":
     resolution:
@@ -2735,6 +2762,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-riscv64-musl@1.12.2":
     resolution:
@@ -2743,6 +2771,7 @@ packages:
       }
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-linux-s390x-gnu@1.12.2":
     resolution:
@@ -2751,6 +2780,7 @@ packages:
       }
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-x64-gnu@1.12.2":
     resolution:
@@ -2759,6 +2789,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   "@unrs/resolver-binding-linux-x64-musl@1.12.2":
     resolution:
@@ -2767,6 +2798,7 @@ packages:
       }
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   "@unrs/resolver-binding-openharmony-arm64@1.12.2":
     resolution:
@@ -3054,10 +3086,10 @@ packages:
         integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==,
       }
 
-  argue-cli@3.1.0:
+  argue-cli@3.2.0:
     resolution:
       {
-        integrity: sha512-DhBpBfXL4SS2uC0N922MMajKR3CdrTG0u2or1PNYgXMsrSzViJrbtvT0nCLlLGUI0plam/ZZCs7aAauHtW9thw==,
+        integrity: sha512-VipTB0gXgGIFO2Rg9yEVN5wLt2AurJcZqDbgmYSwPwsykhLrQhs240/bfceev4w68lI8JshoOJIk9uW7tFzROw==,
       }
     engines: { node: ">=22" }
 
@@ -5234,10 +5266,10 @@ packages:
       }
     engines: { node: ">= 0.4" }
 
-  mazey@5.9.1:
+  mazey@5.10.1:
     resolution:
       {
-        integrity: sha512-TsEf61YVZJo0JeEUhnvJC5LXtu/Sjfd7Id7zjkUlHAgsj1SwH82ArwbGtnAK4H7sARfn+KsmuCgtDpGC6Y/jaw==,
+        integrity: sha512-/mqazEmAzSXAfCrfjaf2EG3cPKiH5eU9XzI6NUPwx0MCkYu2b3OP7addjTuHk8CaBc1YQ/0tVDkM2DUc79+o6Q==,
       }
 
   mdurl@2.1.0:
@@ -5925,10 +5957,10 @@ packages:
         integrity: sha512-/LLMVyas0ljjAtoYiPqYiL8VWXzUUdThrmU5+n20DZv+a+ClRoevUzw5JxU+Ieh5/c87ytoTBV9G1FiKfNJdmg==,
       }
 
-  react-is@19.2.8:
+  react-is@19.3.0:
     resolution:
       {
-        integrity: sha512-s5un28nYxKJw5gvUHyW5PCC28CvBqLu9r3cWgzHT4Vo/5fqqkFcdRYsGcKf50WMPpjjFZS5d76fn3YCo2njKwQ==,
+        integrity: sha512-UpMYezM4v5/18F28aC66AEsjXIgE02kyEMH6yLdgLXu/UTfa1Ntwck/nNLrbqJsEXW7gPb0coNO9FQse9WTovA==,
       }
 
   react@19.2.8:
@@ -7212,6 +7244,10 @@ snapshots:
       "@babel/types": 7.29.8
 
   "@babel/parser@7.29.8":
+    dependencies:
+      "@babel/types": 7.29.8
+
+  "@babel/parser@7.29.9":
     dependencies:
       "@babel/types": 7.29.8
 
@@ -8739,7 +8775,7 @@ snapshots:
 
   "@types/babel__core@7.20.5":
     dependencies:
-      "@babel/parser": 7.29.8
+      "@babel/parser": 7.29.9
       "@babel/types": 7.29.8
       "@types/babel__generator": 7.27.0
       "@types/babel__template": 7.4.4
@@ -8751,7 +8787,7 @@ snapshots:
 
   "@types/babel__template@7.4.4":
     dependencies:
-      "@babel/parser": 7.29.8
+      "@babel/parser": 7.29.9
       "@babel/types": 7.29.8
 
   "@types/babel__traverse@7.28.0":
@@ -9181,7 +9217,7 @@ snapshots:
 
   argparse@2.0.1: {}
 
-  argue-cli@3.1.0: {}
+  argue-cli@3.2.0: {}
 
   aria-query@5.3.0:
     dependencies:
@@ -9469,7 +9505,7 @@ snapshots:
   conventional-commits-parser@7.1.2:
     dependencies:
       "@simple-libs/stream-utils": 2.0.0
-      argue-cli: 3.1.0
+      argue-cli: 3.2.0
 
   convert-source-map@2.0.0: {}
 
@@ -10653,7 +10689,7 @@ snapshots:
 
   math-intrinsics@1.1.0: {}
 
-  mazey@5.9.1: {}
+  mazey@5.10.1: {}
 
   mdurl@2.1.0: {}
 
@@ -10958,7 +10994,7 @@ snapshots:
       "@jest/schemas": 30.4.1
       ansi-styles: 5.2.0
       react-is-18: react-is@18.3.1
-      react-is-19: react-is@19.2.8
+      react-is-19: react-is@19.3.0
 
   proxy-addr@2.0.7:
     dependencies:
@@ -11000,7 +11036,7 @@ snapshots:
 
   react-is@18.3.1: {}
 
-  react-is@19.2.8: {}
+  react-is@19.3.0: {}
 
   react@19.2.8: {}
 

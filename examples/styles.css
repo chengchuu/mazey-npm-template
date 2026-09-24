@@ -1,0 +1,59 @@
+.playground-panel {
+  border: 1px solid var(--mn-border);
+  border-radius: 0.5rem;
+  background: var(--mn-surface);
+}
+
+.playground-output {
+  min-height: 5.5rem;
+  padding: 1rem;
+  border-left: 4px solid var(--mn-primary);
+  color: var(--mn-text);
+  background: var(--mn-primary-soft);
+}
+
+.playground-output code {
+  color: inherit;
+  font-size: 1.05rem;
+}
+
+.playground-code-panel {
+  max-width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--mn-code-border);
+  border-radius: 0.5rem;
+  color: var(--mn-code-text);
+  background: var(--mn-code-background);
+}
+
+.playground-code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 3rem;
+  padding: 0.55rem 1rem;
+  border-bottom: 1px solid var(--mn-code-border);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.playground-code-header span {
+  color: #c7d2fe;
+  text-align: right;
+}
+
+.playground-code-panel pre {
+  max-width: 100%;
+  margin: 0;
+  padding: 1.25rem;
+  overflow-x: auto;
+  color: inherit;
+  background: transparent;
+  font-size: 0.925rem;
+  line-height: 1.7;
+}
+
+.playground-code-panel code {
+  color: inherit;
+}

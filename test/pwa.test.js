@@ -4,7 +4,6 @@ import { jest } from "@jest/globals";
 import {
   initializeInstallExperience,
   isStandaloneMode,
-  monitorServiceWorkerUpdates,
   registerSiteServiceWorker,
   shouldRegisterSiteServiceWorker,
 } from "../site/pwa.ts";
@@ -157,11 +156,16 @@ test("standalone mode and appinstalled hide installation controls", () => {
 });
 
 test("service-worker registration is production-scoped and uses exact paths", async () => {
+  const registrationAddEventListener = jest.fn();
+  const waiting = { postMessage: jest.fn() };
   const registration = Object.assign(new EventTarget(), {
+    addEventListener: registrationAddEventListener,
     installing: null,
-    waiting: null,
+    waiting,
   });
+  const serviceWorkerAddEventListener = jest.fn();
   const serviceWorker = Object.assign(new EventTarget(), {
+    addEventListener: serviceWorkerAddEventListener,
     controller: null,
     register: jest.fn().mockResolvedValue(registration),
   });
@@ -193,11 +197,14 @@ test("service-worker registration is production-scoped and uses exact paths", as
     ),
   ).toBe(false);
 
-  await registerSiteServiceWorker(config, document, windowRef, navigatorRef);
+  await registerSiteServiceWorker(config, windowRef, navigatorRef);
   expect(serviceWorker.register).toHaveBeenCalledWith(
     projectConfig.pwa.serviceWorkerUrl,
     { scope: projectConfig.site.basePath },
   );
+  expect(registrationAddEventListener).not.toHaveBeenCalled();
+  expect(serviceWorkerAddEventListener).not.toHaveBeenCalled();
+  expect(waiting.postMessage).not.toHaveBeenCalled();
 });
 
 test("service-worker registration requires a usable browser API", () => {
@@ -233,70 +240,4 @@ test("service-worker registration requires a usable browser API", () => {
       inaccessibleNavigator,
     ),
   ).toBe(false);
-});
-
-test("waiting updates activate only after confirmation and reload once", () => {
-  document.body.innerHTML = `
-    <aside data-pwa-update hidden>
-      <span>Update available</span>
-      <button type="button" data-pwa-update-now>Update now</button>
-    </aside>
-    <p data-pwa-status></p>
-  `;
-  const waiting = { postMessage: jest.fn() };
-  const registration = Object.assign(new EventTarget(), {
-    installing: null,
-    waiting,
-  });
-  const serviceWorker = Object.assign(new EventTarget(), {
-    controller: {},
-  });
-  const navigatorRef = { serviceWorker };
-  const windowRef = { location: { reload: jest.fn() } };
-
-  const cleanup = monitorServiceWorkerUpdates(
-    registration,
-    document,
-    navigatorRef,
-    windowRef,
-    appName,
-  );
-  expect(document.querySelector("[data-pwa-update]").hidden).toBe(false);
-  serviceWorker.dispatchEvent(new Event("controllerchange"));
-  expect(windowRef.location.reload).not.toHaveBeenCalled();
-
-  document.querySelector("[data-pwa-update-now]").click();
-  expect(waiting.postMessage).toHaveBeenCalledWith({ type: "SKIP_WAITING" });
-  serviceWorker.dispatchEvent(new Event("controllerchange"));
-  serviceWorker.dispatchEvent(new Event("controllerchange"));
-  expect(windowRef.location.reload).toHaveBeenCalledTimes(1);
-  cleanup();
-});
-
-test("an update already installing at registration is announced", () => {
-  document.body.innerHTML = `
-    <aside data-pwa-update hidden><button data-pwa-update-now>Update now</button></aside>
-    <p data-pwa-status></p>
-  `;
-  const installing = Object.assign(new EventTarget(), { state: "installing" });
-  const registration = Object.assign(new EventTarget(), {
-    installing,
-    waiting: null,
-  });
-  const serviceWorker = Object.assign(new EventTarget(), { controller: {} });
-  const cleanup = monitorServiceWorkerUpdates(
-    registration,
-    document,
-    { serviceWorker },
-    { location: { reload: jest.fn() } },
-    appName,
-  );
-
-  installing.state = "installed";
-  installing.dispatchEvent(new Event("statechange"));
-  expect(document.querySelector("[data-pwa-update]").hidden).toBe(false);
-  expect(document.querySelector("[data-pwa-status]").textContent).toBe(
-    `A new version of the ${appName} website is available.`,
-  );
-  cleanup();
 });

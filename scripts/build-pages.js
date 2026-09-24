@@ -21,8 +21,6 @@ const socialImage = projectConfig.seo.openGraphImage;
 const markerPrefix = projectConfig.site.markerPrefix;
 const seoStart = `<!-- ${markerPrefix}-seo:start -->`;
 const seoEnd = `<!-- ${markerPrefix}-seo:end -->`;
-const pwaUiStart = `<!-- ${markerPrefix}-pwa-ui:start -->`;
-const pwaUiEnd = `<!-- ${markerPrefix}-pwa-ui:end -->`;
 
 function escapeAttribute(value) {
   return value
@@ -115,8 +113,7 @@ function transformApiHtml(html, relativeFile) {
   const alreadyTransformed = html.includes(seoStart);
   const cleanHtml = html
     .replace(markerExpression(seoStart, seoEnd), "")
-    .replace(/<nav class="site-project-links"[\s\S]*?<\/nav>/g, "")
-    .replace(markerExpression(pwaUiStart, pwaUiEnd), "");
+    .replace(/<nav class="site-project-links"[\s\S]*?<\/nav>/g, "");
   const isIndex = relativeFile === "index.html";
   const routeName = path.basename(relativeFile, ".html");
   const existingTitle = cleanHtml
@@ -203,15 +200,6 @@ function transformApiHtml(html, relativeFile) {
     `${toolbar}<nav class="site-project-links" aria-label="Project links"><a href="${pages.home.url}">Project home</a><a href="${pages.api.url}">API overview</a><a href="${projectConfig.urls.github}">GitHub</a><a href="${projectConfig.urls.npm}">npm package</a><span class="site-pwa-status" role="status" aria-live="polite" data-pwa-status></span>${themeToggleHtml()}</nav>`,
   );
 
-  const pwaUi = [
-    pwaUiStart,
-    '<aside class="site-pwa-update" aria-label="Website update" data-pwa-update hidden>',
-    `<span>A new version of the ${escapeAttribute(displayName)} website is available.</span>`,
-    '<button type="button" data-pwa-update-now>Update now</button>',
-    "</aside>",
-    pwaUiEnd,
-  ].join("");
-  output = output.replace("</body>", `${pwaUi}</body>`);
   output = ensurePrimaryApiHeading(output, isIndex);
   return normalizeHeadingOrder(output);
 }

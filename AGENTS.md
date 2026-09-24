@@ -26,7 +26,7 @@ Keep the package generic, browser-friendly, and easy to rename.
 - `site/shared.ts`, `site/navigation.ts`, and `site/theme.ts`: shared Bootstrap, navigation, and theme
   behavior for the website and playground.
 - `site/pwa.ts` and `site/runtime-config.ts`: website-only install, registration, installed-state,
-  service-worker update behavior, and Webpack-injected runtime configuration.
+  and Webpack-injected runtime configuration.
 - `site/service-worker.js`: source caching policy with build-time project, cache-prefix, and version
   tokens.
 - `site/api.ts` and `site/api.css`: behavior and styling added to generated TypeDoc pages.
@@ -308,9 +308,9 @@ Preserve the current PWA behavior:
 - The generated manifest provides 192x192 and 512x512 PNG icons plus a padded maskable 512x512 icon.
 - The homepage and playground may expose an accessible `Install app` button only after the browser
   fires `beforeinstallprompt`; TypeDoc API pages intentionally do not show an install button.
-- All three entry experiences keep an update notice, explicit `Update now` action, and live status
-  region. A waiting worker activates only after the user's action and reloads once after
-  `controllerchange`.
+- All three entry experiences retain live status regions for installation and error feedback.
+  Service-worker updates activate through the browser's normal lifecycle without prompting or
+  reloading an open page.
 - Standalone mode hides install controls. Unsupported browsers receive guidance without a broken or
   automatic prompt.
 - Service-worker registration is delayed until page load/idle time, allowed only when enabled, on

@@ -132,18 +132,34 @@ a {
   height: 1.25rem;
 }
 
-.theme-control {
-  display: flex;
+.theme-toggle {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  flex: none;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  padding: 7px;
   color: var(--mn-muted);
-  font-size: 0.875rem;
-  font-weight: 600;
+  background: transparent;
+  border: 1px solid var(--mn-border);
+  border-radius: 50%;
+  cursor: pointer;
 }
 
-.theme-control .form-select {
-  color: var(--mn-muted);
-  border-color: var(--mn-border);
+.theme-toggle:hover {
+  color: var(--mn-text);
+  background: var(--mn-surface-muted);
+}
+
+.theme-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.theme-toggle [hidden] {
+  display: none;
 }
 
 .hero {
@@ -390,10 +406,8 @@ a {
     align-items: center;
   }
 
-  .theme-control {
+  .theme-toggle {
     margin-top: 0.5rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--mn-border);
   }
 }
 

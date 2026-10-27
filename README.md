@@ -19,7 +19,7 @@ A TypeScript template for publishing npm packages in CJS, ESM, and browser forma
 - [Live playground](https://chengchuu.github.io/mazey-npm-template/playground/)
 - [API documentation](https://chengchuu.github.io/mazey-npm-template/api/)
 
-## Installation
+## Install
 
 Use mazey-npm-template via [npm](https://www.npmjs.com/package/mazey-npm-template).
 
@@ -165,10 +165,11 @@ Build and serve a production-like local PWA at
 npm run pwa:preview
 ```
 
-Normal `npm run dev` does not register the production service worker. When testing worker updates,
-use the browser's Application tools to unregister older workers or clear site data before a clean
-install. Do not open generated HTML directly from the filesystem; service workers require HTTPS or
-a trusted local origin such as `localhost`.
+Normal `npm run dev` does not register the production service worker. Updated workers activate
+through the browser's normal lifecycle after existing controlled tabs close. Use the browser's
+Application tools to unregister older workers or clear site data before a clean install. Do not
+open generated HTML directly from the filesystem; service workers require HTTPS or a trusted local
+origin such as `localhost`.
 
 ## License
 

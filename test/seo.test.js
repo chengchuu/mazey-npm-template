@@ -391,11 +391,10 @@ test("Pages assembly is repeatable without duplicating API metadata", () => {
         new RegExp(`${projectConfig.site.markerPrefix}-seo:start`, "g"),
       ),
     ).toHaveLength(1);
-    expect(
-      second.match(
-        new RegExp(`${projectConfig.site.markerPrefix}-pwa-ui:start`, "g"),
-      ),
-    ).toHaveLength(1);
+    expect(second).not.toContain(
+      `${projectConfig.site.markerPrefix}-pwa-ui:start`,
+    );
+    expect(second.match(/data-pwa-status/g)).toHaveLength(1);
     expect(firstWorker).not.toMatch(/__PWA_[A-Z_]+__/);
   } finally {
     rmSync(rootDir, { recursive: true, force: true });

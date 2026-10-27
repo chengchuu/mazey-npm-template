@@ -72,6 +72,10 @@ const runtimeConfig = {
 
 export default {
   mode: "development",
+  experiments: {
+    // HtmlWebpackPlugin owns template rendering and HTML minification.
+    html: false,
+  },
   entry: {
     shared: [_resolve("../site/shared.ts"), ...siteImageEntries],
     home: {

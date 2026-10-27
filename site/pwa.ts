@@ -176,79 +176,8 @@ export function initializeInstallExperience(
   };
 }
 
-export function monitorServiceWorkerUpdates(
-  registration: ServiceWorkerRegistration,
-  documentRef: Document,
-  navigatorRef: Navigator,
-  windowRef: Window,
-  appName: string,
-): () => void {
-  const notice = documentRef.querySelector<HTMLElement>("[data-pwa-update]");
-  const updateButton = documentRef.querySelector<HTMLButtonElement>(
-    "[data-pwa-update-now]",
-  );
-  const announce = statusAnnouncer(documentRef);
-  let waitingWorker: ServiceWorker | null = registration.waiting;
-  let installingWorker: ServiceWorker | null = null;
-  let reloadRequested = false;
-
-  const showUpdate = (worker: ServiceWorker) => {
-    waitingWorker = worker;
-    if (notice) notice.hidden = false;
-    announce(`A new version of the ${appName} website is available.`);
-  };
-
-  const handleStateChange = () => {
-    if (
-      installingWorker?.state === "installed" &&
-      navigatorRef.serviceWorker.controller
-    )
-      showUpdate(installingWorker);
-  };
-  const handleUpdateFound = () => {
-    installingWorker?.removeEventListener("statechange", handleStateChange);
-    installingWorker = registration.installing;
-    installingWorker?.addEventListener("statechange", handleStateChange);
-    handleStateChange();
-  };
-  const handleUpdate = () => {
-    if (!waitingWorker) return;
-    reloadRequested = true;
-    if (updateButton) updateButton.disabled = true;
-    announce("Updating the website now.");
-    waitingWorker.postMessage({ type: "SKIP_WAITING" });
-  };
-  const handleControllerChange = () => {
-    if (notice) notice.hidden = true;
-    if (!reloadRequested) return;
-    reloadRequested = false;
-    windowRef.location.reload();
-  };
-
-  if (registration.waiting && navigatorRef.serviceWorker.controller)
-    showUpdate(registration.waiting);
-  registration.addEventListener("updatefound", handleUpdateFound);
-  if (registration.installing) handleUpdateFound();
-  updateButton?.addEventListener("click", handleUpdate);
-  navigatorRef.serviceWorker.addEventListener(
-    "controllerchange",
-    handleControllerChange,
-  );
-
-  return () => {
-    registration.removeEventListener("updatefound", handleUpdateFound);
-    installingWorker?.removeEventListener("statechange", handleStateChange);
-    updateButton?.removeEventListener("click", handleUpdate);
-    navigatorRef.serviceWorker.removeEventListener(
-      "controllerchange",
-      handleControllerChange,
-    );
-  };
-}
-
 export async function registerSiteServiceWorker(
   config: SitePwaConfig,
-  documentRef: Document,
   windowRef: Window,
   navigatorRef: Navigator,
 ): Promise<ServiceWorkerRegistration | null> {
@@ -259,18 +188,9 @@ export async function registerSiteServiceWorker(
   }
 
   try {
-    const registration = await navigatorRef.serviceWorker.register(
-      config.serviceWorkerUrl,
-      { scope: config.scope },
-    );
-    monitorServiceWorkerUpdates(
-      registration,
-      documentRef,
-      navigatorRef,
-      windowRef,
-      config.appName,
-    );
-    return registration;
+    return await navigatorRef.serviceWorker.register(config.serviceWorkerUrl, {
+      scope: config.scope,
+    });
   } catch (error) {
     console.error(
       `Failed to register the ${config.appName} service worker.`,
@@ -300,11 +220,11 @@ export function initializeSitePwa(config: SitePwaConfig): void {
     const idleWindow = window as unknown as WindowWithIdleCallback;
     if (idleWindow.requestIdleCallback) {
       idleWindow.requestIdleCallback(() => {
-        void registerSiteServiceWorker(config, document, window, navigator);
+        void registerSiteServiceWorker(config, window, navigator);
       });
     } else {
       window.setTimeout(() => {
-        void registerSiteServiceWorker(config, document, window, navigator);
+        void registerSiteServiceWorker(config, window, navigator);
       }, 0);
     }
   };

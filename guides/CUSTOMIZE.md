@@ -213,7 +213,7 @@ rg -n --hidden \
 Run the complete verification pipeline:
 
 ```bash
-npm install
+pnpm install
 npm run preview
 npm pack --dry-run
 npm publish --dry-run --access public

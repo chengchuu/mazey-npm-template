@@ -115,10 +115,11 @@ published browser type augmentations from `lib/global.d.ts`.
 
 ## Development
 
-Repository workflows use Node.js 22. Install dependencies and start the example development server:
+Repository workflows use Node.js 22 and `npm install` with npm caching disabled.
+Use your locally provisioned pnpm for dependency operations and npm for development scripts:
 
 ```bash
-npm install
+pnpm install
 npm run dev
 ```
 

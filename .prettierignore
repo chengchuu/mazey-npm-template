@@ -5,3 +5,4 @@ dist-dev/
 docs/
 lib/
 .pnpm-store/
+pnpm-lock.yaml

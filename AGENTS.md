@@ -43,10 +43,6 @@ Keep the package generic, browser-friendly, and easy to rename.
 - `scripts/change-package-name.js`: automation helper that changes only the package name.
 - `guides/CUSTOMIZE.md`: ordered post-fork checklist for replacing package, API, site, PWA, and workflow
   identity before using the template for another library.
-- `guides/GITHUB_ACTIONS.md`: copyable npm-based Pages and npm publication workflow examples for
-  downstream repositories. These examples are documentation, not workflows executed by this repository.
-- `guides/TEMPLATE_BACKPORT_AUDIT.md`: historical record of reusable changes adopted from Mazey; do
-  not treat it as the current operational contract when code or this guide differs.
 - `eslint.config.mjs`: ESLint flat configuration for browser TypeScript, Node.js scripts, and Jest.
 - `pnpm-lock.yaml`: the only tracked dependency lockfile.
 - `lib`: generated publish output; do not edit it by hand.
@@ -179,10 +175,14 @@ JavaScript global-name helpers, and `site/theme.ts` uses the public theme-prefer
 installed Mazey signatures before changing these call sites, and do not copy Mazey into the published
 runtime merely because the build uses it.
 
-The repository tracks `pnpm-lock.yaml` and ignores `package-lock.json`, but documented commands and
-GitHub Actions use npm and `npm install`. Preserve this mixed policy unless the task explicitly
-changes package-manager or lockfile behavior. Do not add, remove, or regenerate a lockfile as an
-incidental side effect.
+Use pnpm for local dependency operations and npm for scripts and publishing. GitHub Actions uses
+`npm install` with `package-manager-cache: false` on `actions/setup-node`; do not use `npm ci` or
+dependency caching. Developers provision pnpm; do not add a `packageManager` field, Corepack setup,
+or repository-owned installer to enforce this boundary. Preserve the tracked `pnpm-lock.yaml`.
+CI does not consume that lockfile, so verify lockfile updates locally with pnpm as well.
+Do not add `package-lock.json` or regenerate the lockfile incidentally. Prettier ignores the lockfile.
+Dependabot groups weekly minor/patch updates and security updates separately; major updates remain
+individual PRs. Validate dependency updates with `npm run preview` before merging.
 
 ## Tests And Quality Checks
 
@@ -263,10 +263,6 @@ Update `README.md` when changing:
 Update `guides/CUSTOMIZE.md` when identity-bearing files, generated outputs, Pages/PWA paths, or release
 steps change. Keep it explicit that the npm package name, repository name, Pages base path, browser
 bundle filename, and IIFE global can be different values.
-
-Update `guides/GITHUB_ACTIONS.md` when the reusable downstream workflow examples or their stated
-requirements change. Do not make that guide silently imply that its simplified npm-only publication
-example matches this repository's npm, GitHub Packages, and tagging workflow.
 
 TypeDoc configuration lives in `tsconfig.json`. `npm run docs` generates TypeDoc at `./docs/api`,
 builds the Webpack website and playground into `dist-dev`, runs `scripts/build-pages.js`, and
